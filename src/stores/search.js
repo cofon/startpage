@@ -49,7 +49,8 @@ export const useSearchStore = defineStore('search', () => {
 
   const currentTags = computed(() => {
     if (!isLocalSearch.value) return []
-    // 在本地搜索模式下，显示所有 tags
+    // 只在输入框为空时显示 tags
+    if (query.value.trim()) return []
     return websiteStore.allTags
   })
 
