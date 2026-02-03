@@ -184,12 +184,38 @@ onMounted(async () => {
 
     <!-- 显示模块 -->
     <div class="display-module">
-      <!-- 已标记网站列表 / 搜索结果 -->
-      <div v-if="searchStore.results.length > 0" class="website-list" :class="settingStore.searchResultLayout">
+      <!-- 已标记网站列表 -->
+      <div v-if="!searchStore.query && searchStore.isLocalSearch" class="website-list grid">
+        <div
+          v-for="website in searchStore.results"
+          :key="website.id"
+          class="website-item grid"
+          @click="handleWebsiteClick(website)"
+        >
+          <WebsiteIcon :src="website.icon" :alt="website.name" />
+          <div class="website-info">
+            <div class="website-name">{{ website.name }}</div>
+          </div>
+          <div class="website-actions">
+            <button class="action-icon-button" @click.stop="toggleWebsiteMark(website)">
+              {{ website.isMarked ? '★' : '☆' }}
+            </button>
+            <button class="action-icon-button" @click.stop="openEditWebsite(website)">
+              ✎
+            </button>
+            <button class="action-icon-button delete" @click.stop="deleteWebsite(website)">
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- 搜索结果 -->
+      <div v-else-if="searchStore.results.length > 0" class="website-list" :class="settingStore.searchResultLayout">
         <div
           v-for="website in searchStore.results"
           :key="website.id"
           class="website-item"
+          :class="settingStore.searchResultLayout"
           @click="handleWebsiteClick(website)"
         >
           <WebsiteIcon :src="website.icon" :alt="website.name" />
