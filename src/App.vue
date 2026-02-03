@@ -284,6 +284,7 @@ onMounted(async () => {
   border-radius: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s ease;
+  position: relative;
 }
 
 .search-box:hover {
@@ -319,6 +320,7 @@ onMounted(async () => {
   font-size: 18px;
   color: #333;
   background-color: transparent;
+  transition: flex 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input::placeholder {

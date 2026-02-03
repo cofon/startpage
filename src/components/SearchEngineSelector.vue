@@ -16,9 +16,15 @@ const searchEngines = computed(() => {
   }))
 })
 
+// 当前选中的搜索引擎
+const selectedEngine = computed(() => {
+  const currentId = settingStore.selectedSearchEngine;
+  return searchEngines.value.find(engine => engine.id === currentId) || searchEngines.value[0];
+})
+
 // 切换搜索引擎
-function selectEngine(engineId) {
-  settingStore.setSelectedSearchEngine(engineId)
+function selectEngine(engine) {
+  settingStore.setSelectedSearchEngine(engine.id)
   isOpen.value = false
 }
 
@@ -47,105 +53,107 @@ onUnmounted(() => {
 
 <template>
   <div class="engine-selector">
-    <div class="engine-current" @click="toggleDropdown">
+    <div class="engine-icon-container" @click="toggleDropdown">
       <div class="engine-icon" v-html="searchStore.currentEngineIcon"></div>
-      <span class="engine-name">{{ searchStore.currentEngine?.name }}</span>
-      <span class="dropdown-arrow" :class="{ open: isOpen }">▼</span>
-    </div>
-
-    <div v-if="isOpen" class="engine-dropdown">
-      <div
-        v-for="engine in searchEngines"
-        :key="engine.id"
-        class="engine-option"
-        :class="{ active: engine.id === settingStore.selectedSearchEngine }"
-        @click="selectEngine(engine.id)"
-      >
-        <div class="engine-icon" v-html="searchStore.engineIcons[engine.id]"></div>
-        <span class="engine-name">{{ engine.name }}</span>
-      </div>
+      <transition-group name="slide" tag="div" class="engine-list-container">
+        <div
+          v-for="(engine, index) in isOpen ? searchEngines : []"
+          :key="engine.id"
+          class="engine-item"
+          :class="{ 'selected': engine.id === settingStore.selectedSearchEngine }"
+          :style="{ transitionDelay: `${index * 0.05}s` }"
+          @click.stop="selectEngine(engine)"
+        >
+          <div class="engine-icon" v-html="searchStore.engineIcons[engine.id]"></div>
+        </div>
+      </transition-group>
     </div>
   </div>
 </template>
 
 <style scoped>
 .engine-selector {
-  position: relative;
-  display: inline-block;
-}
-
-.engine-current {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
-.engine-current:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+.engine-icon-container {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .engine-icon {
-  width: 24px;
-  height: 24px;
   display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-.engine-icon :deep(svg) {
-  width: 100%;
+  align-items: center;
+  width: 50px;
   height: 100%;
+  font-size: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #667eea;
+  transition: color 0.3s ease;
+  padding-left: 8px;
 }
 
-.engine-name {
-  font-size: 14px;
-  color: #333;
+.engine-icon:hover {
+  color: #764ba2;
 }
 
-.dropdown-arrow {
-  font-size: 10px;
-  color: #666;
-  transition: transform 0.2s ease;
+.engine-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 100%;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex-shrink: 0;
+  color: #667eea;
 }
 
-.dropdown-arrow.open {
-  transform: rotate(180deg);
+.engine-item:hover {
+  background-color: #f8f9ff;
+  color: #764ba2;
 }
 
-.engine-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  min-width: 200px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 1000;
+.engine-item.selected {
+  background-color: #f0f4ff;
+  color: #764ba2;
 }
 
-.engine-option {
+/* transition-group 动画效果 */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  width: 0;
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.slide-enter-to,
+.slide-leave-from {
+  width: 50px;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 确保transition-group布局正常 */
+.slide-move {
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.engine-list-container {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.engine-option:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.engine-option.active {
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-.engine-option .engine-name {
-  flex: 1;
+  height: 100%;
 }
 </style>
