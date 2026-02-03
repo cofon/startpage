@@ -1,0 +1,136 @@
+/**
+ * Website Store - 网站数据管理
+ * 负责管理网站的增删改查、标记、搜索等功能
+ */
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+export const useWebsiteStore = defineStore('website', () => {
+  // 状态
+  const websites = ref([])
+  const loading = ref(false)
+  const error = ref(null)
+
+  // 计算属性
+  const markedWebsites = computed(() => {
+    return websites.value
+      .filter(w => w.isMarked && w.isActive)
+      .sort((a, b) => a.markOrder - b.markOrder)
+  })
+
+  const activeWebsites = computed(() => {
+    return websites.value.filter(w => w.isActive)
+  })
+
+  const allTags = computed(() => {
+    const tags = new Set()
+    websites.value.forEach(w => {
+      if (w.isActive && w.tags) {
+        w.tags.forEach(tag => tags.add(tag))
+      }
+    })
+    return Array.from(tags)
+  })
+
+  // Actions
+  function setWebsites(data) {
+    websites.value = data
+  }
+
+  function addWebsite(website) {
+    websites.value.push({
+      ...website,
+      id: Date.now(),
+      visitCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true
+    })
+  }
+
+  function updateWebsite(id, data) {
+    const index = websites.value.findIndex(w => w.id === id)
+    if (index !== -1) {
+      websites.value[index] = {
+        ...websites.value[index],
+        ...data,
+        updatedAt: new Date()
+      }
+    }
+  }
+
+  function deleteWebsite(id) {
+    const index = websites.value.findIndex(w => w.id === id)
+    if (index !== -1) {
+      websites.value[index].isActive = false
+      websites.value[index].updatedAt = new Date()
+    }
+  }
+
+  function markWebsite(id, order) {
+    const website = websites.value.find(w => w.id === id)
+    if (website) {
+      website.isMarked = true
+      website.markOrder = order
+      website.updatedAt = new Date()
+    }
+  }
+
+  function unmarkWebsite(id) {
+    const website = websites.value.find(w => w.id === id)
+    if (website) {
+      website.isMarked = false
+      website.markOrder = null
+      website.updatedAt = new Date()
+    }
+  }
+
+  function incrementVisitCount(id) {
+    const website = websites.value.find(w => w.id === id)
+    if (website) {
+      website.visitCount++
+      website.lastVisited = new Date()
+      website.updatedAt = new Date()
+    }
+  }
+
+  function searchWebsites(query) {
+    const keyword = query.toLowerCase().trim()
+    if (!keyword) return markedWebsites.value
+
+    return activeWebsites.value.filter(w => {
+      const nameMatch = w.name.toLowerCase().includes(keyword)
+      const urlMatch = w.url.toLowerCase().includes(keyword)
+      const descMatch = w.description?.toLowerCase().includes(keyword)
+      const tagMatch = w.tags?.some(tag => tag.toLowerCase().includes(keyword))
+      return nameMatch || urlMatch || descMatch || tagMatch
+    })
+  }
+
+  function searchByTag(tag) {
+    return activeWebsites.value.filter(w => 
+      w.tags?.includes(tag)
+    )
+  }
+
+  return {
+    // State
+    websites,
+    loading,
+    error,
+    // Computed
+    markedWebsites,
+    activeWebsites,
+    allTags,
+    // Actions
+    setWebsites,
+    addWebsite,
+    updateWebsite,
+    deleteWebsite,
+    markWebsite,
+    unmarkWebsite,
+    incrementVisitCount,
+    searchWebsites,
+    searchByTag
+  }
+})
