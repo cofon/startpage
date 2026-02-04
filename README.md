@@ -236,7 +236,7 @@ lastVisited: Date, // 最近访问时间
 createdAt: Date, // 创建时间
 updatedAt: Date, // 更新时间
 isActive: boolean // 是否激活状态（用于软删除）
-isHidden: boolean // 是否隐藏状态（用于软删除）
+isHidden: boolean // 是否隐藏状态（用于）
 }
 主键：id (自增)
 索引：

@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'StartPageDB'
-const DB_VERSION = 2
+const DB_VERSION = 4
 
 // 表名
 const STORE_WEBSITES = 'websites'
@@ -38,9 +38,9 @@ class IndexedDB {
 
         // 创建 websites 表
         if (!db.objectStoreNames.contains(STORE_WEBSITES)) {
-          const websiteStore = db.createObjectStore(STORE_WEBSITES, { 
-            keyPath: 'id', 
-            autoIncrement: true 
+          const websiteStore = db.createObjectStore(STORE_WEBSITES, {
+            keyPath: 'id',
+            autoIncrement: true
           })
 
           // 创建索引
@@ -48,8 +48,9 @@ class IndexedDB {
           websiteStore.createIndex('markOrder', 'markOrder', { unique: false })
           websiteStore.createIndex('tags', 'tags', { unique: false, multiEntry: true })
           websiteStore.createIndex('isActive', 'isActive', { unique: false })
-          websiteStore.createIndex('iconUrl', 'iconUrl', { unique: false })
-          websiteStore.createIndex('iconCanFetch', 'iconCanFetch', { unique: false })
+          websiteStore.createIndex('isHidden', 'isHidden', { unique: false }) // 添加isHidden索引
+        } else {
+          // 如果websites存储已存在，我们不需要做任何事，因为索引已经存在或将在数据库版本升级时添加
         }
 
         // 创建 settings 表
@@ -57,184 +58,249 @@ class IndexedDB {
           db.createObjectStore(STORE_SETTINGS, { keyPath: 'id' })
         }
 
-        // 创建 icons 表（版本 2）
-        if (oldVersion < 2 && !db.objectStoreNames.contains(STORE_ICONS)) {
-          const iconStore = db.createObjectStore(STORE_ICONS, { keyPath: 'url' })
-          iconStore.createIndex('timestamp', 'timestamp', { unique: false })
+        // 如果是从老版本升级，需要确保所有索引都已创建
+        if (oldVersion < 4) {
+          // 在老版本升级情况下，可能需要重新创建对象存储以添加新索引
+          // 但IndexedDB不允许在同一个upgrade事务中删除和重建存储，所以我们只处理特殊情况
+        }
+
+        // 版本 4：删除 icons 表
+        if (oldVersion < 4 && db.objectStoreNames.contains(STORE_ICONS)) {
+          db.deleteObjectStore(STORE_ICONS)
         }
       }
     })
   }
 
-  /**
-   * Website 操作
-   */
-  async getAllWebsites() {
-    return this.getAll(STORE_WEBSITES)
-  }
-
-  async getWebsite(id) {
-    return this.get(STORE_WEBSITES, id)
-  }
-
+  // 添加网站
   async addWebsite(website) {
-    return this.add(STORE_WEBSITES, website)
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
+    const store = transaction.objectStore(STORE_WEBSITES)
+    
+    // 确保website对象是一个纯净的JavaScript对象，而不是响应式对象
+    const plainWebsite = {
+      ...website
+    }
+    
+    return new Promise((resolve, reject) => {
+      const request = store.add(plainWebsite)
+      
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+      
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
   }
 
+  // 更新网站
   async updateWebsite(website) {
-    return this.put(STORE_WEBSITES, website)
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
+    const store = transaction.objectStore(STORE_WEBSITES)
+    
+    // 确保website对象是一个纯净的JavaScript对象，而不是响应式对象
+    const plainWebsite = {
+      ...website
+    }
+    
+    return new Promise((resolve, reject) => {
+      const request = store.put(plainWebsite)
+      
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+      
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
   }
 
+  // 删除网站
   async deleteWebsite(id) {
-    return this.delete(STORE_WEBSITES, id)
-  }
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
 
-  async getMarkedWebsites() {
-    return this.getByIndex(STORE_WEBSITES, 'isMarked', true)
-  }
-
-  async searchByTag(tag) {
-    return this.getByIndex(STORE_WEBSITES, 'tags', tag)
-  }
-
-  /**
-   * Setting 操作
-   */
-  async getSettings() {
-    const settings = await this.getAll(STORE_SETTINGS)
-    // settings 表应该只有一条记录，id 为 'global'
-    return settings.find(s => s.id === 'global') || null
-  }
-
-  async saveSettings(settings) {
-    const data = { id: 'global', ...settings }
-    return this.put(STORE_SETTINGS, data)
-  }
-
-  /**
-   * 通用操作
-   */
-  async getAll(storeName) {
+    const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
+    const store = transaction.objectStore(STORE_WEBSITES)
+    
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readonly')
-      const store = transaction.objectStore(storeName)
+      const request = store.delete(id)
+      
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+      
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 获取所有网站
+  async getAllWebsites() {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_WEBSITES], 'readonly')
+    const store = transaction.objectStore(STORE_WEBSITES)
+    
+    return new Promise((resolve, reject) => {
       const request = store.getAll()
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
+      
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+      
+      request.onerror = () => {
+        reject(request.error)
+      }
     })
   }
 
-  async get(storeName, key) {
+  // 获取设置
+  async getSettings() {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SETTINGS], 'readonly')
+    const store = transaction.objectStore(STORE_SETTINGS)
+    
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readonly')
-      const store = transaction.objectStore(storeName)
-      const request = store.get(key)
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
+      const request = store.get('settings')
+      
+      request.onsuccess = () => {
+        // 如果没有找到设置，返回null
+        resolve(request.result || null)
+      }
+      
+      request.onerror = () => {
+        reject(request.error)
+      }
     })
   }
 
-  async add(storeName, data) {
+  // 保存设置
+  async saveSettings(settings) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SETTINGS], 'readwrite')
+    const store = transaction.objectStore(STORE_SETTINGS)
+    
+    const settingsToSave = {
+      id: 'settings',
+      ...settings
+    }
+    
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readwrite')
-      const store = transaction.objectStore(storeName)
-      const request = store.add(data)
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
+      const request = store.put(settingsToSave)
+      
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+      
+      request.onerror = () => {
+        reject(request.error)
+      }
     })
   }
 
-  async put(storeName, data) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readwrite')
-      const store = transaction.objectStore(storeName)
-      const request = store.put(data)
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-  }
-
-  async delete(storeName, key) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readwrite')
-      const store = transaction.objectStore(storeName)
-      const request = store.delete(key)
-
-      request.onsuccess = () => resolve()
-      request.onerror = () => reject(request.error)
-    })
-  }
-
-  async getByIndex(storeName, indexName, value) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readonly')
-      const store = transaction.objectStore(storeName)
-      const index = store.index(indexName)
-      const request = index.getAll(value)
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-  }
-
-  /**
-   * 导出所有数据
-   */
+  // 导出数据
   async exportData() {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
     const websites = await this.getAllWebsites()
     const settings = await this.getSettings()
+    
     return {
-      version: DB_VERSION,
-      exportTime: new Date().toISOString(),
-      data: {
-        websites,
-        settings
-      }
+      websites,
+      settings: settings || {}
     }
   }
 
-  /**
-   * 导入数据
-   */
-  async importData(exportedData) {
-    const { websites, settings } = exportedData.data
-
-    // 导入网站数据
-    for (const website of websites) {
-      await this.put(STORE_WEBSITES, website)
+  // 导入数据
+  async importData(data) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
     }
 
-    // 导入设置数据
-    if (settings) {
-      await this.saveSettings(settings)
-    }
-  }
-
-  /**
-   * 清空所有数据
-   */
-  async clearAll() {
-    await this.clearStore(STORE_WEBSITES)
-    await this.clearStore(STORE_SETTINGS)
-  }
-
-  async clearStore(storeName) {
+    // 开启事务处理导入过程
+    const transaction = this.db.transaction([STORE_WEBSITES, STORE_SETTINGS], 'readwrite')
+    const websitesStore = transaction.objectStore(STORE_WEBSITES)
+    const settingsStore = transaction.objectStore(STORE_SETTINGS)
+    
     return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readwrite')
-      const store = transaction.objectStore(storeName)
-      const request = store.clear()
-
-      request.onsuccess = () => resolve()
-      request.onerror = () => reject(request.error)
+      // 清空现有数据
+      const clearWebsitesReq = websitesStore.clear()
+      
+      clearWebsitesReq.onsuccess = () => {
+        // 添加网站数据
+        if (data.websites && data.websites.length > 0) {
+          let count = 0
+          const total = data.websites.length
+          
+          for (const website of data.websites) {
+            const addReq = websitesStore.add(website)
+            
+            addReq.onsuccess = () => {
+              count++
+              if (count === total) {
+                // 所有网站添加完成后，添加设置
+                if (data.settings) {
+                  const putSettingsReq = settingsStore.put(data.settings)
+                  
+                  putSettingsReq.onsuccess = () => resolve()
+                  putSettingsReq.onerror = () => reject(putSettingsReq.error)
+                } else {
+                  resolve()
+                }
+              }
+            }
+            
+            addReq.onerror = () => reject(addReq.error)
+          }
+          
+          if (total === 0 && data.settings) {
+            // 如果没有网站数据但有设置数据
+            const putSettingsReq = settingsStore.put(data.settings)
+            
+            putSettingsReq.onsuccess = () => resolve()
+            putSettingsReq.onerror = () => reject(putSettingsReq.error)
+          }
+        } else if (data.settings) {
+          // 如果没有网站数据但有设置数据
+          const putSettingsReq = settingsStore.put(data.settings)
+          
+          putSettingsReq.onsuccess = () => resolve()
+          putSettingsReq.onerror = () => reject(putSettingsReq.error)
+        } else {
+          // 如果都没有数据
+          resolve()
+        }
+      }
+      
+      clearWebsitesReq.onerror = () => reject(clearWebsitesReq.error)
     })
   }
 }
 
-// 创建单例实例
-const db = new IndexedDB()
-
-export default db
+// 创建并导出实例
+const dbInstance = new IndexedDB();
+export default dbInstance;

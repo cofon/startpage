@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useWebsiteStore } from '../stores/website'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -15,15 +14,23 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'save'])
 
-const websiteStore = useWebsiteStore()
+// 由于websiteStore目前未被使用，暂时注释掉相关代码
+// const websiteStore = useWebsiteStore()
 
 // 表单数据
 const form = ref({
   name: '',
   url: '',
   description: '',
-  icon: '',
-  tags: []
+  iconUrl: '',
+  tags: [],
+  // 图标相关字段
+  iconData: null,
+  iconGenerateData: null,
+  iconCanFetch: true,
+  iconFetchAttempts: 0,
+  iconLastFetchTime: null,
+  iconError: null
 })
 
 // 标签输入
@@ -41,16 +48,30 @@ function openDialog() {
       name: props.website.name,
       url: props.website.url,
       description: props.website.description || '',
-      icon: props.website.icon || '',
-      tags: props.website.tags ? [...props.website.tags] : []
+      iconUrl: props.website.iconUrl || '',
+      tags: props.website.tags ? [...props.website.tags] : [],
+      // 保留现有的图标相关字段
+      iconData: props.website.iconData || null,
+      iconGenerateData: props.website.iconGenerateData || null,
+      iconCanFetch: props.website.iconCanFetch !== undefined ? props.website.iconCanFetch : true,
+      iconFetchAttempts: props.website.iconFetchAttempts || 0,
+      iconLastFetchTime: props.website.iconLastFetchTime || null,
+      iconError: props.website.iconError || null
     }
   } else {
+    // 新建网站时初始化所有字段
     form.value = {
       name: '',
       url: '',
       description: '',
-      icon: '',
-      tags: []
+      iconUrl: '',
+      tags: [],
+      iconData: null,
+      iconGenerateData: null,
+      iconCanFetch: true,
+      iconFetchAttempts: 0,
+      iconLastFetchTime: null,
+      iconError: null
     }
   }
 }
@@ -93,13 +114,20 @@ function saveWebsite() {
     url = 'https://' + url
   }
 
-  // 如果没有提供图标，使用默认图标
-  const icon = form.value.icon || '/icons/default-website.svg'
+  // 如果没有提供图标URL，使用默认图标URL
+  const iconUrl = form.value.iconUrl || url
 
   const websiteData = {
     ...form.value,
     url,
-    icon
+    iconUrl,
+    // 确保包含所有图标相关字段
+    iconData: form.value.iconData,
+    iconGenerateData: form.value.iconGenerateData,
+    iconCanFetch: form.value.iconCanFetch,
+    iconFetchAttempts: form.value.iconFetchAttempts,
+    iconLastFetchTime: form.value.iconLastFetchTime,
+    iconError: form.value.iconError
   }
 
   emit('save', websiteData)
@@ -112,7 +140,6 @@ function closeDialog() {
 }
 
 // 监听对话框打开
-import { watch } from 'vue'
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
     openDialog()
@@ -166,7 +193,7 @@ watch(() => props.modelValue, (newValue) => {
           <label for="website-icon">图标URL</label>
           <input
             id="website-icon"
-            v-model="form.icon"
+            v-model="form.iconUrl"
             type="text"
             placeholder="图标URL（可选）"
             class="form-input"
@@ -273,14 +300,13 @@ watch(() => props.modelValue, (newValue) => {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-size: 14px;
   font-weight: 500;
   color: #333;
 }
 
 .form-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 14px;
@@ -289,100 +315,89 @@ watch(() => props.modelValue, (newValue) => {
 
 .form-input:focus {
   outline: none;
-  border-color: #1890ff;
-}
-
-.form-input::placeholder {
-  color: #999;
+  border-color: #409eff;
 }
 
 .tags-input-container {
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+  min-height: 40px;
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-bottom: 8px;
 }
 
 .tag-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background-color: #f0f0f0;
-  border-radius: 16px;
-  font-size: 13px;
-  color: #333;
+  background-color: #e6f7ff;
+  color: #1890ff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
 .tag-remove {
+  margin-left: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  color: #1890ff;
+  padding: 0;
   width: 16px;
   height: 16px;
-  border: none;
-  background: none;
-  font-size: 14px;
-  cursor: pointer;
-  color: #999;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-}
-
-.tag-remove:hover {
-  color: #666;
 }
 
 .tag-input {
-  flex: 1;
-  min-width: 120px;
+  width: 100%;
   border: none;
   outline: none;
   font-size: 14px;
-  padding: 4px;
 }
 
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 20px 24px;
+  padding: 16px 24px;
   border-top: 1px solid #eee;
 }
 
 .button {
-  padding: 8px 20px;
+  padding: 10px 20px;
   border-radius: 8px;
+  border: none;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
+  transition: background-color 0.2s ease;
 }
 
 .button-secondary {
-  background-color: #f5f5f5;
+  background-color: #f0f0f0;
   color: #333;
 }
 
 .button-secondary:hover {
-  background-color: #e8e8e8;
+  background-color: #e0e0e0;
 }
 
 .button-primary {
-  background-color: #1890ff;
+  background-color: #409eff;
   color: white;
 }
 
 .button-primary:hover {
-  background-color: #40a9ff;
+  background-color: #66b1ff;
 }
 </style>

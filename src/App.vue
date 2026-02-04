@@ -42,12 +42,44 @@ async function saveWebsite(websiteData) {
   if (editingWebsite.value) {
     // 更新现有网站
     await websiteStore.updateWebsite(editingWebsite.value.id, websiteData)
-    await db.updateWebsite({ ...websiteData, id: editingWebsite.value.id })
+    // 创建一个普通对象副本传递给数据库
+    const websiteToUpdate = {
+      id: editingWebsite.value.id,
+      name: websiteData.name,
+      url: websiteData.url,
+      description: websiteData.description || '',
+      tags: Array.isArray(websiteData.tags) ? [...websiteData.tags] : [], // 确保tags是普通数组
+      visitCount: websiteData.visitCount || 0,
+      isMarked: websiteData.isMarked,
+      markOrder: websiteData.markOrder || 0,
+      iconData: websiteData.iconData,
+      iconGenerateData: websiteData.iconGenerateData,
+      iconCanFetch: websiteData.iconCanFetch,
+      iconFetchAttempts: websiteData.iconFetchAttempts,
+      iconUrl: websiteData.iconUrl
+    };
+    await db.updateWebsite(websiteToUpdate)
   } else {
     // 添加新网站
     await websiteStore.addWebsite(websiteData)
     const newWebsite = websiteStore.websites[websiteStore.websites.length - 1]
-    await db.addWebsite(newWebsite)
+    // 创建一个普通对象副本传递给数据库
+    const websiteToAdd = {
+      id: newWebsite.id,
+      name: newWebsite.name,
+      url: newWebsite.url,
+      description: newWebsite.description || '',
+      tags: Array.isArray(newWebsite.tags) ? [...newWebsite.tags] : [], // 确保tags是普通数组
+      visitCount: newWebsite.visitCount || 0,
+      isMarked: newWebsite.isMarked,
+      markOrder: newWebsite.markOrder || 0,
+      iconData: newWebsite.iconData,
+      iconGenerateData: newWebsite.iconGenerateData,
+      iconCanFetch: newWebsite.iconCanFetch,
+      iconFetchAttempts: newWebsite.iconFetchAttempts,
+      iconUrl: newWebsite.iconUrl
+    };
+    await db.addWebsite(websiteToAdd)
   }
 }
 
@@ -68,13 +100,45 @@ async function toggleWebsiteMark(website) {
     const maxOrder = Math.max(0, ...websiteStore.markedWebsites.map(w => w.markOrder))
     await websiteStore.markWebsite(website.id, maxOrder + 1)
   }
-  await db.updateWebsite(website)
+  // 创建一个普通对象副本传递给数据库，避免传递响应式对象
+  const websiteToUpdate = {
+    id: website.id,
+    name: website.name,
+    url: website.url,
+    description: website.description || '',
+    tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
+    visitCount: website.visitCount || 0,
+    isMarked: website.isMarked,
+    markOrder: website.markOrder,
+    iconData: website.iconData,
+    iconGenerateData: website.iconGenerateData,
+    iconCanFetch: website.iconCanFetch,
+    iconFetchAttempts: website.iconFetchAttempts,
+    iconUrl: website.iconUrl
+  };
+  await db.updateWebsite(websiteToUpdate)
 }
 
 // 点击网站
 function handleWebsiteClick(website) {
   websiteStore.incrementVisitCount(website.id)
-  db.updateWebsite(website)
+  // 创建一个普通对象副本传递给数据库，避免传递响应式对象
+  const websiteToUpdate = {
+    id: website.id,
+    name: website.name,
+    url: website.url,
+    description: website.description || '',
+    tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
+    visitCount: website.visitCount || 0,
+    isMarked: website.isMarked,
+    markOrder: website.markOrder,
+    iconData: website.iconData,
+    iconGenerateData: website.iconGenerateData,
+    iconCanFetch: website.iconCanFetch,
+    iconFetchAttempts: website.iconFetchAttempts,
+    iconUrl: website.iconUrl
+  };
+  db.updateWebsite(websiteToUpdate)
   window.open(website.url, '_blank')
 }
 

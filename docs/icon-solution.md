@@ -32,7 +32,7 @@
    └─ 如果不存在或无效 → 继续
    ↓
 3. 生成 SVG 图标
-   ├─ 保存到 iconGenerateData
+   ├─ 保存到数据库 website表的iconGenerateData(任何一个网站第一次显示的时候都会走到这一步,除非是导入数据的时候iconData或者iconGenerateData已经有值)
    ├─ 显示在网页上
    └─ 继续
    ↓
@@ -43,13 +43,12 @@
    │   └─ 结束
    └─ 继续
    ↓
-5. 从网络获取 icon（仅一次）
-   ├─ iconFetchAttempts++
+5. 从网络获取 icon（仅一次，第一次失败不再尝试，下一次打开网页显示的时候才会再次获取）
    ├─ iconLastFetchTime = 当前时间
    ├─ 如果获取成功
    │   ├─ 转换为 string
-   │   ├─ 保存到 iconData
-   │   ├─ 替换网页上显示的 icon
+   │   ├─ 保存到数据库website表的iconData
+   │   ├─ 替换网页上显示的 icon(此时网页上显示的应该是生成的icon，替换成从网络上获取的icon)
    │   └─ 结束
    └─ 如果获取失败
        ├─ iconFetchAttempts++
@@ -107,7 +106,7 @@ iconFetchAttempts 只记录**失败次数**，不记录成功次数
 ```
 第 1 次访问：获取失败 → iconFetchAttempts = 1
 第 2 次访问：获取失败 → iconFetchAttempts = 2
-第 3 次访问：获取成功 → iconFetchAttempts = 2（不变）
+第 3 次访问：获取成功 → iconFetchAttempts = 0（获取成功则归零）
   ↓
 保存到 iconData
   ↓

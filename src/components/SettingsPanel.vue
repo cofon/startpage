@@ -202,17 +202,24 @@ async function clearIconCache() {
 
       // 清除数据库中的图标数据
       const websites = await websiteStore.websites
-      websites.forEach(website => {
+      for (const website of websites) {
         if (website.iconData || website.iconGenerateData) {
           websiteStore.updateWebsite(website.id, {
             iconData: null,
             iconGenerateData: null,
             iconCanFetch: true,
-            iconFetchAttempts: 0,
-            iconError: null
+            iconFetchAttempts: 0
+          })
+          // 同步更新到 IndexedDB
+          await db.updateWebsite({
+            id: website.id,
+            iconData: null,
+            iconGenerateData: null,
+            iconCanFetch: true,
+            iconFetchAttempts: 0
           })
         }
-      })
+      }
 
       alert('图标缓存已清除')
     } catch (error) {

@@ -34,18 +34,40 @@ export const useWebsiteStore = defineStore('website', () => {
 
   // Actions
   function setWebsites(data) {
-    websites.value = data
+    websites.value = data.map(website => ({
+      // 确保每个网站都有图标相关的字段
+      iconUrl: website.url || '',
+      iconData: website.iconData || null,
+      iconGenerateData: website.iconGenerateData || null,
+      iconCanFetch: website.iconCanFetch !== undefined ? website.iconCanFetch : true,
+      iconFetchAttempts: website.iconFetchAttempts || 0,
+      iconLastFetchTime: website.iconLastFetchTime || null,
+      iconError: website.iconError || null,
+      isHidden: website.isHidden || false,  // 添加isHidden字段的处理
+      ...website
+    }))
   }
 
   function addWebsite(website) {
-    websites.value.push({
+    const websiteWithDefaults = {
       ...website,
       id: Date.now(),
       visitCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isActive: true
-    })
+      isActive: true,
+      isHidden: false,  // 默认为false
+      // 图标相关字段
+      iconUrl: website.url || '',
+      iconData: null,
+      iconGenerateData: null,
+      iconCanFetch: true,
+      iconFetchAttempts: 0,
+      iconLastFetchTime: null,
+      iconError: null
+    }
+    
+    websites.value.push(websiteWithDefaults)
   }
 
   function updateWebsite(id, data) {
@@ -99,11 +121,13 @@ export const useWebsiteStore = defineStore('website', () => {
     if (!keyword) return markedWebsites.value
 
     return activeWebsites.value.filter(w => {
-      const nameMatch = w.name.toLowerCase().includes(keyword)
-      const urlMatch = w.url.toLowerCase().includes(keyword)
-      const descMatch = w.description?.toLowerCase().includes(keyword)
-      const tagMatch = w.tags?.some(tag => tag.toLowerCase().includes(keyword))
-      return nameMatch || urlMatch || descMatch || tagMatch
+      const matchesQuery = 
+        (w.name && w.name.toLowerCase().includes(keyword)) ||
+        (w.url && w.url.toLowerCase().includes(keyword)) ||
+        (w.description && w.description.toLowerCase().includes(keyword)) ||
+        (w.tags && w.tags.some(tag => tag.toLowerCase().includes(keyword)))
+
+      return matchesQuery && w.isActive
     })
   }
 
