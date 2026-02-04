@@ -52,6 +52,8 @@ async function saveWebsite(websiteData) {
       visitCount: websiteData.visitCount || 0,
       isMarked: websiteData.isMarked,
       markOrder: websiteData.markOrder || 0,
+      isActive: websiteData.isActive !== undefined ? websiteData.isActive : true,
+      isHidden: websiteData.isHidden !== undefined ? websiteData.isHidden : false,
       iconData: websiteData.iconData,
       iconGenerateData: websiteData.iconGenerateData,
       iconCanFetch: websiteData.iconCanFetch,
@@ -73,6 +75,8 @@ async function saveWebsite(websiteData) {
       visitCount: newWebsite.visitCount || 0,
       isMarked: newWebsite.isMarked,
       markOrder: newWebsite.markOrder || 0,
+      isActive: newWebsite.isActive !== undefined ? newWebsite.isActive : true,
+      isHidden: newWebsite.isHidden !== undefined ? newWebsite.isHidden : false,
       iconData: newWebsite.iconData,
       iconGenerateData: newWebsite.iconGenerateData,
       iconCanFetch: newWebsite.iconCanFetch,
@@ -83,23 +87,64 @@ async function saveWebsite(websiteData) {
   }
 }
 
-// 删除网站
+// 删除网站（软删除）
 async function deleteWebsite(website) {
   if (confirm(`确定要删除 "${website.name}" 吗？`)) {
+    // 更新store中的状态
     await websiteStore.deleteWebsite(website.id)
-    await db.deleteWebsite(website.id)
+    
+    // 创建一个普通对象副本传递给数据库，避免传递响应式对象
+    const websiteToUpdate = {
+      id: website.id,
+      name: website.name,
+      url: website.url,
+      description: website.description || '',
+      tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
+      visitCount: website.visitCount || 0,
+      isMarked: website.isMarked,
+      markOrder: website.markOrder,
+      isActive: false, // 设置为false，表示已删除
+      isHidden: website.isHidden !== undefined ? website.isHidden : false,
+      iconData: website.iconData,
+      iconGenerateData: website.iconGenerateData,
+      iconCanFetch: website.iconCanFetch,
+      iconFetchAttempts: website.iconFetchAttempts,
+      iconUrl: website.iconUrl,
+      updatedAt: new Date()
+    };
+    await db.updateWebsite(websiteToUpdate)
+    
+    // 根据当前显示模式刷新UI
+    if (searchStore.displayMode === 'marked') {
+      // 如果当前显示的是标记网站列表，更新为标记网站列表
+      searchStore.results = websiteStore.markedWebsites
+    } else if (searchStore.displayMode === 'search') {
+      // 如果当前显示的是搜索结果，更新为搜索结果
+      searchStore.results = websiteStore.searchWebsites(searchStore.query)
+    }
   }
 }
 
 // 切换网站标记状态
 async function toggleWebsiteMark(website) {
+  let newIsMarked;
+  let newMarkOrder;
+  
   if (website.isMarked) {
+    // 取消标记
     await websiteStore.unmarkWebsite(website.id)
+    newIsMarked = false;
+    newMarkOrder = 0; // 取消标记后，markOrder设为0
   } else {
     // 计算新的标记顺序
     const maxOrder = Math.max(0, ...websiteStore.markedWebsites.map(w => w.markOrder))
-    await websiteStore.markWebsite(website.id, maxOrder + 1)
+    const newOrder = maxOrder + 1;
+    // 标记网站并设置新顺序
+    await websiteStore.markWebsite(website.id, newOrder)
+    newIsMarked = true;
+    newMarkOrder = newOrder;
   }
+  
   // 创建一个普通对象副本传递给数据库，避免传递响应式对象
   const websiteToUpdate = {
     id: website.id,
@@ -108,8 +153,10 @@ async function toggleWebsiteMark(website) {
     description: website.description || '',
     tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
     visitCount: website.visitCount || 0,
-    isMarked: website.isMarked,
-    markOrder: website.markOrder,
+    isMarked: newIsMarked, // 新的标记状态
+    markOrder: newMarkOrder, // 新的标记顺序
+    isActive: website.isActive !== undefined ? website.isActive : true,
+    isHidden: website.isHidden !== undefined ? website.isHidden : false,
     iconData: website.iconData,
     iconGenerateData: website.iconGenerateData,
     iconCanFetch: website.iconCanFetch,
@@ -117,6 +164,16 @@ async function toggleWebsiteMark(website) {
     iconUrl: website.iconUrl
   };
   await db.updateWebsite(websiteToUpdate)
+
+  
+  // 如果当前显示的是标记网站列表或搜索结果，需要更新列表显示
+  if (searchStore.displayMode === 'marked') {
+    // 重新计算标记网站列表
+    searchStore.results = websiteStore.markedWebsites
+  } else if (searchStore.displayMode === 'search') {
+    // 重新计算搜索结果
+    searchStore.results = websiteStore.searchWebsites(searchStore.query)
+  }
 }
 
 // 点击网站
@@ -132,6 +189,8 @@ function handleWebsiteClick(website) {
     visitCount: website.visitCount || 0,
     isMarked: website.isMarked,
     markOrder: website.markOrder,
+    isActive: website.isActive !== undefined ? website.isActive : true,
+    isHidden: website.isHidden !== undefined ? website.isHidden : false,
     iconData: website.iconData,
     iconGenerateData: website.iconGenerateData,
     iconCanFetch: website.iconCanFetch,
@@ -191,7 +250,16 @@ onMounted(async () => {
     // 加载网站数据
     const websites = await db.getAllWebsites()
     if (websites.length > 0) {
-      websiteStore.setWebsites(websites)
+      // 迁移网站数据，添加缺失的字段
+      const migratedCount = await db.migrateWebsites()
+      if (migratedCount > 0) {
+        console.log(`已迁移 ${migratedCount} 个网站数据`)
+        // 重新加载网站数据
+        const updatedWebsites = await db.getAllWebsites()
+        websiteStore.setWebsites(updatedWebsites)
+      } else {
+        websiteStore.setWebsites(websites)
+      }
     } else {
       // 首次使用，加载默认网站
       isFirstTime.value = true
@@ -647,4 +715,5 @@ onMounted(async () => {
   transform: rotate(90deg);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
+
 </style>

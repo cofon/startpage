@@ -43,7 +43,8 @@ export const useWebsiteStore = defineStore('website', () => {
       iconFetchAttempts: website.iconFetchAttempts || 0,
       iconLastFetchTime: website.iconLastFetchTime || null,
       iconError: website.iconError || null,
-      isHidden: website.isHidden || false,  // 添加isHidden字段的处理
+      isActive: website.isActive !== undefined ? website.isActive : true,  // 添加isActive字段的处理
+      isHidden: website.isHidden !== undefined ? website.isHidden : false,  // 添加isHidden字段的处理
       ...website
     }))
   }
@@ -118,22 +119,26 @@ export const useWebsiteStore = defineStore('website', () => {
 
   function searchWebsites(query) {
     const keyword = query.toLowerCase().trim()
-    if (!keyword) return markedWebsites.value
+    if (!keyword) {
+      // 返回所有非隐藏的网站，无论是否标记
+      return websites.value.filter(w => w.isActive && !w.isHidden)
+    }
 
-    return activeWebsites.value.filter(w => {
+    const filtered = websites.value.filter(w => {
       const matchesQuery = 
         (w.name && w.name.toLowerCase().includes(keyword)) ||
         (w.url && w.url.toLowerCase().includes(keyword)) ||
         (w.description && w.description.toLowerCase().includes(keyword)) ||
         (w.tags && w.tags.some(tag => tag.toLowerCase().includes(keyword)))
 
-      return matchesQuery && w.isActive
+      return matchesQuery && w.isActive && !w.isHidden
     })
+    return filtered
   }
 
   function searchByTag(tag) {
-    return activeWebsites.value.filter(w => 
-      w.tags?.includes(tag)
+    return websites.value.filter(w => 
+      w.isActive && !w.isHidden && w.tags?.includes(tag)
     )
   }
 

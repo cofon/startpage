@@ -79,6 +79,8 @@ export const useSearchStore = defineStore('search', () => {
       if (query.value.trim()) {
         setDisplayMode('search')
       } else {
+        // 当查询词为空时，显示已标记的网站
+        results.value = websiteStore.markedWebsites
         setDisplayMode('marked')
       }
     }
@@ -108,6 +110,7 @@ export const useSearchStore = defineStore('search', () => {
     }
 
     if (!query.value.trim()) {
+      // 查询词为空时显示已标记的网站
       results.value = websiteStore.markedWebsites
       setDisplayMode('marked')
       return

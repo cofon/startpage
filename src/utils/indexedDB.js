@@ -235,6 +235,41 @@ class IndexedDB {
     }
   }
 
+  // 迁移网站数据，添加缺失的字段
+  async migrateWebsites() {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const websites = await this.getAllWebsites()
+    let migratedCount = 0
+
+    for (const website of websites) {
+      let needsUpdate = false
+      const updatedWebsite = { ...website }
+
+      // 如果isActive字段不存在或为undefined，设置为true
+      if (updatedWebsite.isActive === undefined) {
+        updatedWebsite.isActive = true
+        needsUpdate = true
+      }
+
+      // 如果isHidden字段不存在或为undefined，设置为false
+      if (updatedWebsite.isHidden === undefined) {
+        updatedWebsite.isHidden = false
+        needsUpdate = true
+      }
+
+      // 如果需要更新，则更新数据库
+      if (needsUpdate) {
+        await this.updateWebsite(updatedWebsite)
+        migratedCount++
+      }
+    }
+
+    return migratedCount
+  }
+
   // 导入数据
   async importData(data) {
     if (!this.db) {
