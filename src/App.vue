@@ -192,7 +192,10 @@ onMounted(async () => {
           class="website-item grid"
           @click="handleWebsiteClick(website)"
         >
-          <WebsiteIcon :src="website.icon" :alt="website.name" />
+          <WebsiteIcon 
+            :website="website" 
+ 
+          />
           <div class="website-info">
             <div class="website-name">{{ website.name }}</div>
           </div>
@@ -219,7 +222,10 @@ onMounted(async () => {
           :class="settingStore.searchResultLayout"
           @click="handleWebsiteClick(website)"
         >
-          <WebsiteIcon :src="website.icon" :alt="website.name" />
+          <WebsiteIcon 
+            :website="website" 
+ 
+          />
           <div class="website-info">
             <div class="website-name">{{ website.name }}</div>
             <div class="website-description">{{ website.description }}</div>

@@ -4,11 +4,12 @@
  */
 
 const DB_NAME = 'StartPageDB'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 // 表名
 const STORE_WEBSITES = 'websites'
 const STORE_SETTINGS = 'settings'
+const STORE_ICONS = 'icons'
 
 class IndexedDB {
   constructor() {
@@ -33,6 +34,7 @@ class IndexedDB {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result
+        const oldVersion = event.oldVersion || 0
 
         // 创建 websites 表
         if (!db.objectStoreNames.contains(STORE_WEBSITES)) {
@@ -46,11 +48,19 @@ class IndexedDB {
           websiteStore.createIndex('markOrder', 'markOrder', { unique: false })
           websiteStore.createIndex('tags', 'tags', { unique: false, multiEntry: true })
           websiteStore.createIndex('isActive', 'isActive', { unique: false })
+          websiteStore.createIndex('iconUrl', 'iconUrl', { unique: false })
+          websiteStore.createIndex('iconCanFetch', 'iconCanFetch', { unique: false })
         }
 
         // 创建 settings 表
         if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
           db.createObjectStore(STORE_SETTINGS, { keyPath: 'id' })
+        }
+
+        // 创建 icons 表（版本 2）
+        if (oldVersion < 2 && !db.objectStoreNames.contains(STORE_ICONS)) {
+          const iconStore = db.createObjectStore(STORE_ICONS, { keyPath: 'url' })
+          iconStore.createIndex('timestamp', 'timestamp', { unique: false })
         }
       }
     })

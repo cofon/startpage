@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useSettingStore } from '../stores/setting'
 import { useWebsiteStore } from '../stores/website'
 import db from '../utils/indexedDB'
+import iconManager from '../utils/iconManager'
 
 const props = defineProps({
   modelValue: {
@@ -191,6 +192,35 @@ function openAddWebsite() {
   closePanel()
   emit('openAddWebsite')
 }
+
+// 清除图标缓存
+async function clearIconCache() {
+  if (confirm('确定要清除所有图标缓存吗？这将重新从网络获取图标。')) {
+    try {
+      // 清除内存缓存
+      iconManager.clearCache()
+
+      // 清除数据库中的图标数据
+      const websites = await websiteStore.websites
+      websites.forEach(website => {
+        if (website.iconData || website.iconGenerateData) {
+          websiteStore.updateWebsite(website.id, {
+            iconData: null,
+            iconGenerateData: null,
+            iconCanFetch: true,
+            iconFetchAttempts: 0,
+            iconError: null
+          })
+        }
+      })
+
+      alert('图标缓存已清除')
+    } catch (error) {
+      console.error('清除图标缓存失败:', error)
+      alert('清除图标缓存失败，请查看控制台获取详细信息')
+    }
+  }
+}
 </script>
 
 <template>
@@ -317,6 +347,20 @@ function openAddWebsite() {
           <div v-if="settingStore.lastBackupTime" class="backup-info">
             上次备份时间：{{ new Date(settingStore.lastBackupTime).toLocaleString() }}
           </div>
+        </section>
+
+        <!-- 图标缓存管理 -->
+        <section class="settings-section">
+          <h3>图标缓存</h3>
+          <div class="data-actions">
+            <button class="action-button" @click="clearIconCache">
+              <span class="action-icon">🗑</span>
+              <span>清除图标缓存</span>
+            </button>
+          </div>
+          <p class="info-text">
+            图标会被缓存到本地，以加快加载速度。如果图标显示异常，可以清除缓存重新获取。
+          </p>
         </section>
       </div>
     </div>
@@ -641,5 +685,15 @@ function openAddWebsite() {
   border-radius: 6px;
   font-size: 13px;
   color: #096dd9;
+}
+
+.info-text {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
 }
 </style>
