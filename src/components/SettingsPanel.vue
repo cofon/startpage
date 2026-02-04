@@ -36,12 +36,14 @@ const currentTheme = computed(() => settingStore.selectedTheme)
 function setTheme(themeId) {
   settingStore.setTheme(themeId)
   saveSettings()
+  closePanel()
 }
 
 // 切换显示模式
 function setLayout(layout) {
   settingStore.setSearchResultLayout(layout)
   saveSettings()
+  closePanel()
 }
 
 // 添加搜索引擎

@@ -16,12 +16,6 @@ const searchEngines = computed(() => {
   }))
 })
 
-// 当前选中的搜索引擎
-const selectedEngine = computed(() => {
-  const currentId = settingStore.selectedSearchEngine;
-  return searchEngines.value.find(engine => engine.id === currentId) || searchEngines.value[0];
-})
-
 // 切换搜索引擎
 function selectEngine(engine) {
   settingStore.setSelectedSearchEngine(engine.id)

@@ -210,12 +210,12 @@ onMounted(async () => {
         </div>
       </div>
       <!-- 搜索结果 -->
-      <div v-else-if="searchStore.results.length > 0" class="website-list" :class="settingStore.searchResultLayout">
+      <div v-else-if="searchStore.results.length > 0" class="website-list" :class="!searchStore.query ? 'grid' : settingStore.searchResultLayout">
         <div
           v-for="website in searchStore.results"
           :key="website.id"
           class="website-item"
-          :class="settingStore.searchResultLayout"
+          :class="!searchStore.query ? 'grid' : settingStore.searchResultLayout"
           @click="handleWebsiteClick(website)"
         >
           <WebsiteIcon :src="website.icon" :alt="website.name" />
