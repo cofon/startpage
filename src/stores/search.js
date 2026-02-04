@@ -17,6 +17,9 @@ export const useSearchStore = defineStore('search', () => {
   const results = ref([])
   const showTagsList = ref(false)
 
+  // 显示模式 - 控制显示模块应该显示什么内容
+  const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty'
+
   // 计算属性
   const isLocalSearch = computed(() => {
     return settingStore.selectedSearchEngine === 'local'
@@ -60,10 +63,12 @@ export const useSearchStore = defineStore('search', () => {
       // 切换到本地搜索，清空输入框
       query.value = ''
       results.value = websiteStore.markedWebsites
+      setDisplayMode('marked')
     } else if (oldEngine === 'local' && newEngine !== 'local') {
       // 从本地切换到网络搜索，清空输入框和结果
       query.value = ''
       results.value = websiteStore.markedWebsites
+      setDisplayMode('marked')
     }
   })
 
@@ -71,6 +76,11 @@ export const useSearchStore = defineStore('search', () => {
   watch(query, () => {
     if (isLocalSearch.value) {
       performSearch()
+      if (query.value.trim()) {
+        setDisplayMode('search')
+      } else {
+        setDisplayMode('marked')
+      }
     }
   })
 
@@ -87,16 +97,19 @@ export const useSearchStore = defineStore('search', () => {
   function clearQuery() {
     query.value = ''
     results.value = websiteStore.markedWebsites
+    setDisplayMode('marked')
   }
 
   function performSearch() {
     if (!isLocalSearch.value) {
       results.value = websiteStore.markedWebsites
+      setDisplayMode('marked')
       return
     }
 
     if (!query.value.trim()) {
       results.value = websiteStore.markedWebsites
+      setDisplayMode('marked')
       return
     }
 
@@ -104,11 +117,13 @@ export const useSearchStore = defineStore('search', () => {
     if (query.value.startsWith('--')) {
       // 特殊命令处理，后续实现
       results.value = []
+      setDisplayMode('empty')
       return
     }
 
     // 执行本地搜索
     results.value = websiteStore.searchWebsites(query.value)
+    setDisplayMode('search')
   }
 
   function searchByTag(tag) {
@@ -136,12 +151,21 @@ export const useSearchStore = defineStore('search', () => {
     }
   }
 
+  function setDisplayMode(mode) {
+    displayMode.value = mode
+  }
+
+  function getDisplayMode() {
+    return displayMode.value
+  }
+
   return {
     // State
     query,
     results,
     showTagsList,
     engineIcons,
+    displayMode,
     // Computed
     isLocalSearch,
     currentEngine,
@@ -156,6 +180,8 @@ export const useSearchStore = defineStore('search', () => {
     setShowTagsList,
     toggleTagsList,
     executeSearch,
-    loadEngineIcons
+    loadEngineIcons,
+    setDisplayMode,
+    getDisplayMode
   }
 })

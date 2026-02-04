@@ -185,7 +185,7 @@ onMounted(async () => {
     <!-- 显示模块 -->
     <div class="display-module">
       <!-- 已标记网站列表 -->
-      <div v-if="!searchStore.query && searchStore.isLocalSearch" class="website-list grid">
+      <div v-if="searchStore.displayMode === 'marked'" class="website-list grid">
         <div
           v-for="website in searchStore.results"
           :key="website.id"
@@ -209,13 +209,14 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+
       <!-- 搜索结果 -->
-      <div v-else-if="searchStore.results.length > 0" class="website-list" :class="!searchStore.query ? 'grid' : settingStore.searchResultLayout">
+      <div v-else-if="searchStore.displayMode === 'search'" class="website-list" :class="settingStore.searchResultLayout">
         <div
           v-for="website in searchStore.results"
           :key="website.id"
           class="website-item"
-          :class="!searchStore.query ? 'grid' : settingStore.searchResultLayout"
+          :class="settingStore.searchResultLayout"
           @click="handleWebsiteClick(website)"
         >
           <WebsiteIcon :src="website.icon" :alt="website.name" />
@@ -239,9 +240,25 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-      <div v-else class="empty-state">
+
+      <!-- 空状态 -->
+      <div v-else-if="searchStore.displayMode === 'empty'" class="empty-state">
         <p>暂无内容</p>
         <button class="button-primary" @click="openAddWebsite">添加第一个网站</button>
+      </div>
+
+      <!-- 历史记录 (预留) -->
+      <div v-else-if="searchStore.displayMode === 'history'" class="website-list grid">
+        <div class="empty-state">
+          <p>历史记录功能开发中...</p>
+        </div>
+      </div>
+
+      <!-- 收藏夹 (预留) -->
+      <div v-else-if="searchStore.displayMode === 'favorites'" class="website-list grid">
+        <div class="empty-state">
+          <p>收藏夹功能开发中...</p>
+        </div>
       </div>
     </div>
 
