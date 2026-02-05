@@ -25,6 +25,7 @@ const showSettingsPanel = ref(false)
 // 是否首次使用
 const isFirstTime = ref(false)
 
+
 // 打开添加网站对话框
 function openAddWebsite() {
   editingWebsite.value = null
@@ -92,7 +93,7 @@ async function deleteWebsite(website) {
   if (confirm(`确定要删除 "${website.name}" 吗？`)) {
     // 更新store中的状态
     await websiteStore.deleteWebsite(website.id)
-    
+
     // 创建一个普通对象副本传递给数据库，避免传递响应式对象
     const websiteToUpdate = {
       id: website.id,
@@ -113,7 +114,7 @@ async function deleteWebsite(website) {
       updatedAt: new Date()
     };
     await db.updateWebsite(websiteToUpdate)
-    
+
     // 根据当前显示模式刷新UI
     if (searchStore.displayMode === 'marked') {
       // 如果当前显示的是标记网站列表，更新为标记网站列表
@@ -129,7 +130,7 @@ async function deleteWebsite(website) {
 async function toggleWebsiteMark(website) {
   let newIsMarked;
   let newMarkOrder;
-  
+
   if (website.isMarked) {
     // 取消标记
     await websiteStore.unmarkWebsite(website.id)
@@ -144,7 +145,7 @@ async function toggleWebsiteMark(website) {
     newIsMarked = true;
     newMarkOrder = newOrder;
   }
-  
+
   // 创建一个普通对象副本传递给数据库，避免传递响应式对象
   const websiteToUpdate = {
     id: website.id,
@@ -165,7 +166,7 @@ async function toggleWebsiteMark(website) {
   };
   await db.updateWebsite(websiteToUpdate)
 
-  
+
   // 如果当前显示的是标记网站列表或搜索结果，需要更新列表显示
   if (searchStore.displayMode === 'marked') {
     // 重新计算标记网站列表
@@ -275,6 +276,7 @@ onMounted(async () => {
 
     // 初始化搜索结果
     searchStore.init()
+
   } catch (error) {
     console.error('初始化应用失败:', error)
   }
@@ -324,12 +326,12 @@ onMounted(async () => {
           class="website-item grid"
           @click="handleWebsiteClick(website)"
         >
-          <WebsiteIcon 
-            :website="website" 
- 
+          <WebsiteIcon
+            :website="website"
+
           />
           <div class="website-info">
-            <div class="website-name">{{ website.name }}</div>
+            <div class="website-name" :title="website.name">{{ website.name }}</div>
           </div>
           <div class="website-actions">
             <button class="action-icon-button" @click.stop="toggleWebsiteMark(website)">
@@ -354,12 +356,12 @@ onMounted(async () => {
           :class="settingStore.searchResultLayout"
           @click="handleWebsiteClick(website)"
         >
-          <WebsiteIcon 
-            :website="website" 
- 
+          <WebsiteIcon
+            :website="website"
+
           />
           <div class="website-info">
-            <div class="website-name">{{ website.name }}</div>
+            <div class="website-name" :title="website.name">{{ website.name }}</div>
             <div class="website-description">{{ website.description }}</div>
             <div v-if="website.tags && website.tags.length > 0" class="website-tags">
               <span v-for="tag in website.tags" :key="tag" class="tag">{{ tag }}</span>
@@ -546,6 +548,7 @@ onMounted(async () => {
 .website-list {
   display: grid;
   gap: 20px;
+  width: 100%;
 }
 
 /* 网格模式 */
@@ -568,6 +571,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
+  overflow: hidden;
 }
 
 .website-item:hover {
@@ -582,17 +586,22 @@ onMounted(async () => {
 .website-item.grid {
   flex-direction: column;
   text-align: center;
+  min-height: 120px; /* 减少最小高度 */
+  height: 140px; /* 固定高度，使网格更规整 */
+  justify-content: space-between; /* 让内容在容器中分布得更合理 */
+  padding: 10px; /* 调整内边距 */
 }
 
 .website-item.list {
   flex-direction: row;
   text-align: left;
+  align-items: center;
 }
 
 .website-icon {
   width: 48px;
   height: 48px;
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* 调整图标下方间距 */
 }
 
 .website-item.list .website-icon {
@@ -603,27 +612,69 @@ onMounted(async () => {
 .website-info {
   flex: 1;
   overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px; /* 调整内边距 */
+  flex-grow: 1; /* 让website-info占据可用空间 */
+}
+
+.website-item.grid .website-info {
+  padding: 0 8px; /* 减少网格模式下的内边距 */
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  flex-grow: 1;
+  justify-content: center; /* 让内容垂直居中 */
 }
 
 .website-name {
-  font-size: 16px;
+  font-size: 14px; /* 稍微减小字体 */
   font-weight: 500;
   margin-bottom: 5px;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap; /* 确保不换行 */
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.website-item.grid .website-name {
+  text-align: center;
+  max-width: 100%;
+  display: block;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap; /* 确保不换行 */
+  width: 100%;
+  min-width: 0;
+  padding: 0 5px;
+  flex-shrink: 1;
 }
 
 .website-description {
-  font-size: 14px;
+  font-size: 13px; /* 减小字体 */
   color: #666;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  width: 100%;
+  display: none; /* 在grid模式下隐藏描述 */
 }
 
 .website-tags {
-  margin-top: 8px;
+  margin-top: 6px; /* 调整标签间距 */
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  display: none; /* 在grid模式下隐藏标签 */
 }
 
 .website-tags .tag {
