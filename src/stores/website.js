@@ -142,6 +142,17 @@ export const useWebsiteStore = defineStore('website', () => {
     )
   }
 
+  function reorderMarkedWebsites(newOrder) {
+    // newOrder 是一个包含网站ID的数组，按照新的顺序排列
+    newOrder.forEach((websiteId, index) => {
+      const website = websites.value.find(w => w.id === websiteId)
+      if (website) {
+        website.markOrder = index + 1
+        website.updatedAt = new Date()
+      }
+    })
+  }
+
   return {
     // State
     websites,
@@ -160,6 +171,7 @@ export const useWebsiteStore = defineStore('website', () => {
     unmarkWebsite,
     incrementVisitCount,
     searchWebsites,
-    searchByTag
+    searchByTag,
+    reorderMarkedWebsites
   }
 })

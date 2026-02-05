@@ -30,6 +30,76 @@ const showSettingsPanel = ref(false)
 // 是否首次使用
 const isFirstTime = ref(false)
 
+// 拖拽排序相关状态
+const draggedItem = ref(null)
+const draggedIndex = ref(-1)
+
+// 拖拽开始
+function handleDragStart(website, index) {
+  draggedItem.value = website
+  draggedIndex.value = index
+}
+
+// 拖拽结束
+function handleDragEnd() {
+  draggedItem.value = null
+  draggedIndex.value = -1
+}
+
+// 拖拽放置
+async function handleDrop(targetIndex) {
+  if (draggedIndex.value === -1 || draggedIndex.value === targetIndex) {
+    return
+  }
+
+  // 获取当前标记网站列表
+  const markedWebsites = [...websiteStore.markedWebsites]
+
+  // 检查markedWebsites是否存在且为数组
+  if (!markedWebsites || !Array.isArray(markedWebsites)) {
+    console.error('markedWebsites is not an array', markedWebsites)
+    return
+  }
+
+  // 获取当前标记网站的ID列表
+  const currentOrder = markedWebsites.map(w => w.id)
+
+  // 创建新的顺序
+  const newOrder = [...currentOrder]
+  const [movedItem] = newOrder.splice(draggedIndex.value, 1)
+  newOrder.splice(targetIndex, 0, movedItem)
+
+  // 更新store中的顺序
+  websiteStore.reorderMarkedWebsites(newOrder)
+
+  // 更新searchStore.results
+  // 使用.value来更新ref的值，而不是替换整个ref对象
+  searchStore.results.value = [...websiteStore.markedWebsites]
+
+  // 更新数据库中的顺序
+  for (let i = 0; i < newOrder.length; i++) {
+    const website = websiteStore.websites.find(w => w.id === newOrder[i])
+    if (website) {
+      await db.updateWebsite({
+        id: website.id,
+        name: website.name,
+        url: website.url,
+        description: website.description || '',
+        tags: Array.isArray(website.tags) ? [...website.tags] : [],
+        visitCount: website.visitCount || 0,
+        isMarked: website.isMarked,
+        markOrder: i + 1,
+        isActive: website.isActive !== undefined ? website.isActive : true,
+        isHidden: website.isHidden !== undefined ? website.isHidden : false,
+        iconData: website.iconData,
+        iconGenerateData: website.iconGenerateData,
+        iconCanFetch: website.iconCanFetch,
+        iconFetchAttempts: website.iconFetchAttempts,
+        iconUrl: website.iconUrl
+      })
+    }
+  }
+}
 
 // 打开添加网站对话框
 function openAddWebsite() {
@@ -370,10 +440,16 @@ onMounted(async () => {
       <!-- 已标记网站列表 -->
       <div v-if="searchStore.displayMode === 'marked'" class="website-list grid">
         <div
-          v-for="website in searchStore.results"
+          v-for="(website, index) in searchStore.results"
           :key="website.id"
           class="website-item grid"
+          :class="{ 'dragging': draggedIndex === index }"
+          draggable="true"
           @click="handleWebsiteClick(website)"
+          @dragstart="handleDragStart(website, index)"
+          @dragend="handleDragEnd"
+          @dragover.prevent
+          @drop="handleDrop(index)"
         >
           <WebsiteIcon
             :website="website"
