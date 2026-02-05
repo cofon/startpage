@@ -299,7 +299,9 @@ class IndexedDB {
               if (count === total) {
                 // 所有网站添加完成后，添加设置
                 if (data.settings) {
-                  const putSettingsReq = settingsStore.put(data.settings)
+                  // 确保settings对象有id字段
+                  const settingsToImport = { ...data.settings, id: 'settings' }
+                  const putSettingsReq = settingsStore.put(settingsToImport)
                   
                   putSettingsReq.onsuccess = () => resolve()
                   putSettingsReq.onerror = () => reject(putSettingsReq.error)

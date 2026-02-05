@@ -373,7 +373,7 @@ onMounted(async () => {
       // 迁移网站数据，添加缺失的字段
       const migratedCount = await db.migrateWebsites()
       if (migratedCount > 0) {
-        console.log(`已迁移 ${migratedCount} 个网站数据`)
+        // console.log(`已迁移 ${migratedCount} 个网站数据`)
         // 重新加载网站数据
         const updatedWebsites = await db.getAllWebsites()
         websiteStore.setWebsites(updatedWebsites)
