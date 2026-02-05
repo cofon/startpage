@@ -500,7 +500,8 @@ onMounted(async () => {
 .search-module {
   width: 100%;
   max-width: 800px;
-  margin-bottom: 40px;
+  margin-bottom: 60px; /* 增加下方间距 */
+  margin-top: 40px; /* 添加上方间距 */
 }
 
 .search-container {
