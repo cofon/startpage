@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useWebsiteStore } from './stores/website'
 import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
@@ -14,6 +14,11 @@ import { defaultWebsites } from './data/defaultWebsites'
 const websiteStore = useWebsiteStore()
 const settingStore = useSettingStore()
 const searchStore = useSearchStore()
+
+// 计算属性：判断当前搜索引擎是否为本地搜索
+const isLocalSearchEngine = computed(() => {
+  return settingStore.selectedSearchEngine === 'local';
+});
 
 // 网站对话框
 const showWebsiteDialog = ref(false)
@@ -202,11 +207,53 @@ function handleWebsiteClick(website) {
   window.open(website.url, '_blank')
 }
 
+// 处理输入框获得焦点
+function handleInputFocus() {
+  // 如果当前搜索引擎是本地搜索且输入框为空，则显示标签列表
+  if (isLocalSearchEngine.value && !searchStore.query) {
+    searchStore.setShowTagsList(true);
+  }
+}
+
+// 处理输入框失去焦点
+function handleInputBlur() {
+  // 失去焦点时总是隐藏标签列表
+  searchStore.setShowTagsList(false);
+}
+
+// 处理输入框内容变化
+function handleInput() {
+  // 如果当前搜索引擎是本地搜索
+  if (isLocalSearchEngine.value) {
+    // 如果输入框为空，则显示标签列表
+    if (!searchStore.query) {
+      searchStore.setShowTagsList(true);
+    } else {
+      // 如果输入框不为空，则隐藏标签列表
+      searchStore.setShowTagsList(false);
+    }
+  }
+}
+
+// 处理ESC按键，隐藏tags列表
+function handleEscKey() {
+  if (searchStore.showTagsList) {
+    searchStore.setShowTagsList(false);
+  }
+}
+
 // 初始化应用
 onMounted(async () => {
   try {
     // 初始化数据库
     await db.init()
+
+    // 监听键盘ESC按键
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        handleEscKey();
+      }
+    });
 
     // 加载设置
     const settings = await db.getSettings()
@@ -296,9 +343,11 @@ onMounted(async () => {
             type="text"
             class="search-input"
             placeholder="搜索..."
-            @focus="searchStore.setShowTagsList(true)"
-            @blur="searchStore.setShowTagsList(false)"
+            @focus="handleInputFocus"
+            @blur="handleInputBlur"
             @keyup.enter="searchStore.executeSearch"
+            @keyup.esc="handleEscKey"
+            @input="handleInput"
           >
         </div>
 
@@ -586,10 +635,10 @@ onMounted(async () => {
 .website-item.grid {
   flex-direction: column;
   text-align: center;
-  min-height: 120px; /* 减少最小高度 */
-  height: 140px; /* 固定高度，使网格更规整 */
-  justify-content: space-between; /* 让内容在容器中分布得更合理 */
-  padding: 10px; /* 调整内边距 */
+  min-height: 120px;
+  height: 140px;
+  justify-content: flex-start; /* 改为从顶部开始排列，为内容留出向下移动的空间 */
+  padding: 15px 10px; /* 调整内边距，增加顶部空间 */
 }
 
 .website-item.list {
@@ -602,11 +651,13 @@ onMounted(async () => {
   width: 48px;
   height: 48px;
   margin-bottom: 8px; /* 调整图标下方间距 */
+  margin-top: 10px; /* 添加上边距，使图标稍微向下移动 */
 }
 
 .website-item.list .website-icon {
   margin-bottom: 0;
   margin-right: 15px;
+  margin-top: 0; /* list模式下不需要上边距 */
 }
 
 .website-info {
@@ -620,7 +671,7 @@ onMounted(async () => {
 }
 
 .website-item.grid .website-info {
-  padding: 0 8px; /* 减少网格模式下的内边距 */
+  padding: 0 8px;
   align-items: center;
   display: flex;
   flex-direction: column;
@@ -628,7 +679,7 @@ onMounted(async () => {
   box-sizing: border-box;
   min-width: 0;
   flex-grow: 1;
-  justify-content: center; /* 让内容垂直居中 */
+  margin-top: 5px; /* 添加上边距使整个信息块稍微向下移动 */
 }
 
 .website-name {
@@ -641,6 +692,8 @@ onMounted(async () => {
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
+  pointer-events: none; /* 阻止显示title提示 */
+  cursor: default; /* 设置默认光标 */
 }
 
 .website-item.grid .website-name {
@@ -655,10 +708,12 @@ onMounted(async () => {
   min-width: 0;
   padding: 0 5px;
   flex-shrink: 1;
+  pointer-events: none; /* 阻止显示title提示 */
+  cursor: default; /* 设置默认光标 */
 }
 
 .website-description {
-  font-size: 13px; /* 减小字体 */
+  font-size: 14px;
   color: #666;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -666,14 +721,20 @@ onMounted(async () => {
   word-break: break-all;
   overflow-wrap: break-word;
   width: 100%;
+}
+
+.website-item.grid .website-description {
   display: none; /* 在grid模式下隐藏描述 */
 }
 
 .website-tags {
-  margin-top: 6px; /* 调整标签间距 */
+  margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.website-item.grid .website-tags {
   display: none; /* 在grid模式下隐藏标签 */
 }
 
@@ -688,12 +749,30 @@ onMounted(async () => {
 
 .website-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px; /* 调整按钮间距 */
   opacity: 0;
   transition: opacity 0.2s ease;
+  position: absolute;
+  top: 8px; /* 调整位置 */
+  right: 8px; /* 调整位置 */
+  z-index: 1; /* 确保操作按钮在最上层 */
+}
+
+.website-item.grid .website-actions {
+  position: static; /* 在grid模式下使用正常文档流 */
+  opacity: 0; /* 默认隐藏，悬停时显示 */
+  margin-top: 10px; /* 添加上方间距 */
+  align-self: center; /* 垂直居中对齐 */
 }
 
 .website-item.list .website-actions {
+  opacity: 1; /* 在list模式下始终显示 */
+  position: static; /* 在list模式下使用正常定位 */
+  margin-left: auto; /* 将动作按钮推到右侧 */
+  align-self: center; /* 垂直居中对齐 */
+}
+
+.website-item:hover .website-actions {
   opacity: 1;
 }
 
