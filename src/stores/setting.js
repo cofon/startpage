@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import db from '../utils/indexedDB'
 
 export const useSettingStore = defineStore('setting', () => {
   // 默认主题列表
@@ -102,6 +103,38 @@ export const useSettingStore = defineStore('setting', () => {
     lastBackupTime.value = new Date()
   }
 
+  async function saveSettings() {
+    const settings = {
+      selectedTheme: selectedTheme.value,
+      selectedSearchEngine: selectedSearchEngine.value,
+      searchEngineList: JSON.parse(JSON.stringify(searchEngineList.value)),
+      searchResultLayout: searchResultLayout.value,
+      lastBackupTime: lastBackupTime.value ? lastBackupTime.value.toISOString() : null
+    }
+    await db.saveSettings(settings)
+  }
+
+  async function loadSettings() {
+    const savedSettings = await db.getSettings()
+    if (savedSettings) {
+      if (savedSettings.selectedTheme) {
+        selectedTheme.value = savedSettings.selectedTheme
+      }
+      if (savedSettings.selectedSearchEngine) {
+        selectedSearchEngine.value = savedSettings.selectedSearchEngine
+      }
+      if (savedSettings.searchEngineList) {
+        searchEngineList.value = savedSettings.searchEngineList
+      }
+      if (savedSettings.searchResultLayout) {
+        searchResultLayout.value = savedSettings.searchResultLayout
+      }
+      if (savedSettings.lastBackupTime) {
+        lastBackupTime.value = new Date(savedSettings.lastBackupTime)
+      }
+    }
+  }
+
   function getSearchUrl(query) {
     const engine = searchEngineList.value[selectedSearchEngine.value]
     if (engine && engine.url) {
@@ -136,6 +169,8 @@ export const useSettingStore = defineStore('setting', () => {
     setSearchResultLayout,
     toggleLayout,
     updateLastBackupTime,
+    saveSettings,
+    loadSettings,
     getSearchUrl,
     getCurrentSearchEngine,
     init

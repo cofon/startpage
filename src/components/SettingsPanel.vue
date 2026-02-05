@@ -1,18 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSettingStore } from '../stores/setting'
 import { useWebsiteStore } from '../stores/website'
 import db from '../utils/indexedDB'
 import iconManager from '../utils/iconManager'
 
-defineProps({
+const props = defineProps({
   modelValue: {
     type: Boolean,
     required: true
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'openAddWebsite'])
+const emit = defineEmits(['update:modelValue', 'openAddWebsite', 'blur-settings-button'])
 
 const settingStore = useSettingStore()
 const websiteStore = useWebsiteStore()
@@ -124,7 +124,8 @@ async function handleImport(event) {
         const data = JSON.parse(e.target.result)
         await db.importData(data)
         // 重新加载网站和设置
-        await websiteStore.loadWebsites()
+        const websites = await db.getAllWebsites()
+        websiteStore.setWebsites(websites)
         settingStore.loadSettings()
         
         alert('导入成功！页面即将刷新...')
@@ -159,7 +160,27 @@ async function saveSettings() {
 // 关闭面板
 function closePanel() {
   emit('update:modelValue', false)
+  emit('blur-settings-button')
 }
+
+// 键盘事件处理
+function handleKeyDown(event) {
+  if (event.key === 'Escape' && props.modelValue) {
+    closePanel()
+    event.preventDefault()
+    event.stopPropagation()
+  }
+}
+
+// 组件挂载时添加键盘事件监听
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+// 组件卸载时移除键盘事件监听
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 
 // 打开添加网站对话框
 function openAddWebsite() {

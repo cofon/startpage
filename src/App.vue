@@ -26,6 +26,14 @@ const editingWebsite = ref(null)
 
 // 设置面板
 const showSettingsPanel = ref(false)
+const settingsButtonRef = ref(null)
+
+// 移除 settings-button 的焦点
+function blurSettingsButton() {
+  if (settingsButtonRef.value) {
+    settingsButtonRef.value.blur()
+  }
+}
 
 // 是否首次使用
 const isFirstTime = ref(false)
@@ -360,7 +368,7 @@ onMounted(async () => {
         settingStore.searchEngineList = { ...defaultEngines, ...settings.searchEngineList }
       }
       if (settings.lastBackupTime) {
-        settingStore.lastBackupTime = settings.lastBackupTime
+        settingStore.lastBackupTime = new Date(settings.lastBackupTime)
       }
     }
 
@@ -538,13 +546,14 @@ onMounted(async () => {
 
     <!-- 设置模块 -->
     <div class="settings-module">
-      <button class="settings-button" @click="showSettingsPanel = true">⚙️</button>
+      <button ref="settingsButtonRef" class="settings-button" @click="showSettingsPanel = true">⚙️</button>
     </div>
 
     <!-- 设置面板 -->
     <SettingsPanel
       v-model="showSettingsPanel"
       @open-add-website="openAddWebsite"
+      @blur-settings-button="blurSettingsButton"
     />
   </div>
 </template>

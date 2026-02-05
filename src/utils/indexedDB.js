@@ -276,6 +276,15 @@ class IndexedDB {
       throw new Error('数据库未初始化')
     }
 
+    // 验证数据格式
+    if (!data || typeof data !== 'object') {
+      throw new Error('导入数据格式错误：数据必须是一个对象')
+    }
+
+    if (!data.websites && !data.settings) {
+      throw new Error('导入数据格式错误：必须包含 websites 或 settings 字段')
+    }
+
     // 开启事务处理导入过程
     const transaction = this.db.transaction([STORE_WEBSITES, STORE_SETTINGS], 'readwrite')
     const websitesStore = transaction.objectStore(STORE_WEBSITES)
@@ -287,7 +296,7 @@ class IndexedDB {
       
       clearWebsitesReq.onsuccess = () => {
         // 添加网站数据
-        if (data.websites && data.websites.length > 0) {
+        if (data.websites && Array.isArray(data.websites) && data.websites.length > 0) {
           let count = 0
           const total = data.websites.length
           
@@ -298,7 +307,7 @@ class IndexedDB {
               count++
               if (count === total) {
                 // 所有网站添加完成后，添加设置
-                if (data.settings) {
+                if (data.settings && typeof data.settings === 'object') {
                   // 确保settings对象有id字段
                   const settingsToImport = { ...data.settings, id: 'settings' }
                   const putSettingsReq = settingsStore.put(settingsToImport)
@@ -316,14 +325,16 @@ class IndexedDB {
           
           if (total === 0 && data.settings) {
             // 如果没有网站数据但有设置数据
-            const putSettingsReq = settingsStore.put(data.settings)
+            const settingsToImport = { ...data.settings, id: 'settings' }
+            const putSettingsReq = settingsStore.put(settingsToImport)
             
             putSettingsReq.onsuccess = () => resolve()
             putSettingsReq.onerror = () => reject(putSettingsReq.error)
           }
-        } else if (data.settings) {
+        } else if (data.settings && typeof data.settings === 'object') {
           // 如果没有网站数据但有设置数据
-          const putSettingsReq = settingsStore.put(data.settings)
+          const settingsToImport = { ...data.settings, id: 'settings' }
+          const putSettingsReq = settingsStore.put(settingsToImport)
           
           putSettingsReq.onsuccess = () => resolve()
           putSettingsReq.onerror = () => reject(putSettingsReq.error)
