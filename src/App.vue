@@ -73,8 +73,8 @@ async function handleDrop(targetIndex) {
   websiteStore.reorderMarkedWebsites(newOrder)
 
   // 更新searchStore.results
-  // 使用.value来更新ref的值，而不是替换整个ref对象
-  searchStore.results.value = [...websiteStore.markedWebsites]
+  // 直接替换整个ref对象，确保UI立即更新
+  searchStore.results = websiteStore.markedWebsites
 
   // 更新数据库中的顺序
   for (let i = 0; i < newOrder.length; i++) {
@@ -196,7 +196,7 @@ async function deleteWebsite(website) {
       searchStore.results = websiteStore.markedWebsites
     } else if (searchStore.displayMode === 'search') {
       // 如果当前显示的是搜索结果，更新为搜索结果
-      searchStore.results = websiteStore.searchWebsites(searchStore.query)
+      searchStore.results = websiteStore.searchWebsites(searchStore.query.value)
     }
   }
 }
@@ -247,8 +247,10 @@ async function toggleWebsiteMark(website) {
     // 重新计算标记网站列表
     searchStore.results = websiteStore.markedWebsites
   } else if (searchStore.displayMode === 'search') {
-    // 重新计算搜索结果
-    searchStore.results = websiteStore.searchWebsites(searchStore.query)
+    // 重新计算搜索结果，只有在有搜索关键词时才更新
+    if (searchStore.query.value && searchStore.query.value.trim()) {
+      searchStore.results = websiteStore.searchWebsites(searchStore.query.value)
+    }
   }
 }
 
@@ -280,7 +282,7 @@ function handleWebsiteClick(website) {
 // 处理输入框获得焦点
 function handleInputFocus() {
   // 如果当前搜索引擎是本地搜索且输入框为空，则显示标签列表
-  if (isLocalSearchEngine.value && !searchStore.query) {
+  if (isLocalSearchEngine.value && !searchStore.query.value) {
     searchStore.setShowTagsList(true);
   }
 }
@@ -296,7 +298,7 @@ function handleInput() {
   // 如果当前搜索引擎是本地搜索
   if (isLocalSearchEngine.value) {
     // 如果输入框为空，则显示标签列表
-    if (!searchStore.query) {
+    if (!searchStore.query.value) {
       searchStore.setShowTagsList(true);
     } else {
       // 如果输入框不为空，则隐藏标签列表
