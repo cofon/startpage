@@ -5,7 +5,7 @@ import { useWebsiteStore } from '../stores/website'
 import db from '../utils/indexedDB'
 import iconManager from '../utils/iconManager'
 
-const props = defineProps({
+defineProps({
   modelValue: {
     type: Boolean,
     required: true
@@ -27,7 +27,6 @@ const newEngine = ref({
 })
 
 // 导入/导出
-const exportData = ref(null)
 const importFile = ref(null)
 
 // 当前选中的主题
@@ -89,7 +88,19 @@ async function handleExport() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `startpage-backup-${new Date().toISOString().split('T')[0]}.json`
+    
+    // 生成日期时间字符串，格式为：YYYYMMDDHHmmss
+    const now = new Date()
+    const year = now.getFullYear().toString()
+    const month = String(now.getMonth() + 1).padStart(2, '0')  // 月份从0开始，需要加1
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    const seconds = String(now.getSeconds()).padStart(2, '0')
+    
+    const dateTimeStr = `${year}${month}${day}${hours}${minutes}${seconds}`
+    a.download = `startpage-backup-${dateTimeStr}.json`
+    
     a.click()
     URL.revokeObjectURL(url)
     settingStore.updateLastBackupTime()
@@ -113,45 +124,13 @@ async function handleImport(event) {
         const data = JSON.parse(e.target.result)
         await db.importData(data)
         // 重新加载网站和设置
-        const websites = await db.getAllWebsites()
-        websiteStore.setWebsites(websites)
-
-        const settings = await db.getSettings()
-        if (settings) {
-          settingStore.selectedTheme = settings.selectedTheme || 'light'
-          settingStore.selectedSearchEngine = settings.selectedSearchEngine || 'baidu'
-          settingStore.searchResultLayout = settings.searchResultLayout || 'grid'
-          if (settings.searchEngineList) {
-            const defaultEngines = {
-              baidu: {
-                name: '百度',
-                url: 'https://www.baidu.com/s?wd={query}',
-                icon: '/icons/search-engines/baidu.svg'
-              },
-              bing: {
-                name: '必应',
-                url: 'https://www.bing.com/search?q={query}',
-                icon: '/icons/search-engines/bing.svg'
-              },
-              yandex: {
-                name: 'Yandex',
-                url: 'https://yandex.com/search/?text={query}',
-                icon: '/icons/search-engines/yandex.svg'
-              },
-              local: {
-                name: '本地',
-                url: '',
-                icon: '/icons/search-engines/local.svg'
-              }
-            }
-            settingStore.searchEngineList = { ...defaultEngines, ...settings.searchEngineList }
-          }
-          if (settings.lastBackupTime) {
-            settingStore.lastBackupTime = settings.lastBackupTime
-          }
-        }
-
-        alert('导入成功！')
+        await websiteStore.loadWebsites()
+        settingStore.loadSettings()
+        
+        alert('导入成功！页面即将刷新...')
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } catch (error) {
         console.error('解析导入文件失败:', error)
         alert('导入文件格式错误')
@@ -170,15 +149,10 @@ async function handleImport(event) {
 // 保存设置
 async function saveSettings() {
   try {
-    await db.saveSettings({
-      selectedTheme: settingStore.selectedTheme,
-      selectedSearchEngine: settingStore.selectedSearchEngine,
-      searchResultLayout: settingStore.searchResultLayout,
-      searchEngineList: JSON.parse(JSON.stringify(settingStore.searchEngineList)),
-      lastBackupTime: settingStore.lastBackupTime
-    })
+    await settingStore.saveSettings()
   } catch (error) {
     console.error('保存设置失败:', error)
+    alert('保存设置失败')
   }
 }
 
