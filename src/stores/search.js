@@ -42,9 +42,10 @@ export const useSearchStore = defineStore('search', () => {
     for (const engine of settingStore.searchEngines) {
       try {
         const response = await fetch(engine.icon)
-        engineIcons.value[engine.id] = await response.text()
+        const iconContent = await response.text()
+        engineIcons.value[engine.id] = iconContent
       } catch (error) {
-        console.error(`加载搜索引擎图标失败: ${engine.id}`, error)
+        console.error(`[Icon List] 加载搜索引擎图标失败: ${engine.id}`, error)
         engineIcons.value[engine.id] = ''
       }
     }

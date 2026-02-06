@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useSettingStore } from '../stores/setting'
 import { useSearchStore } from '../stores/search'
 
@@ -12,6 +12,16 @@ const isOpen = ref(false)
 const searchEngines = computed(() => {
   return settingStore.searchEngines
 })
+
+// 监听搜索引擎列表变化
+watch(() => searchEngines.value, (newVal) => {
+  searchStore.loadEngineIcons()
+}, { deep: true })
+
+// 监听搜索引擎图标变化
+watch(() => searchStore.engineIcons, (newVal) => {
+  // 图标变化时自动更新，因为 currentEngineIcon 是 computed 属性
+}, { deep: true })
 
 // 切换搜索引擎
 function selectEngine(engine) {
@@ -45,7 +55,9 @@ onUnmounted(() => {
 <template>
   <div class="engine-selector">
     <div class="engine-icon-container" @click="toggleDropdown">
-      <div class="engine-icon" v-html="searchStore.currentEngineIcon"></div>
+      <div class="engine-icon" :style="{ color: settingStore.getCurrentSearchEngine()?.iconColor }">
+        <div class="icon-svg" v-html="searchStore.currentEngineIcon"></div>
+      </div>
       <transition-group name="slide" tag="div" class="engine-list-container">
         <div
           v-for="(engine, index) in isOpen ? searchEngines : []"
@@ -55,7 +67,15 @@ onUnmounted(() => {
           :style="{ transitionDelay: `${index * 0.05}s` }"
           @click.stop="selectEngine(engine)"
         >
-          <div class="engine-icon" v-html="searchStore.engineIcons[engine.id]"></div>
+          <div class="engine-icon" :style="{ color: engine.iconColor }">
+            <template v-if="searchStore.engineIcons[engine.id]">
+              <div class="icon-svg" v-html="searchStore.engineIcons[engine.id]"></div>
+            </template>
+            <template v-else>
+              <img v-if="engine.icon" :src="engine.icon" :alt="engine.name">
+              <span v-else class="icon-placeholder">{{ engine.name[0] }}</span>
+            </template>
+          </div>
         </div>
       </transition-group>
     </div>
@@ -85,13 +105,37 @@ onUnmounted(() => {
   font-size: 24px;
   cursor: pointer;
   flex-shrink: 0;
-  color: var(--color-primary);
   transition: color 0.3s ease;
   padding-left: 8px;
 }
 
+.engine-icon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.engine-icon .icon-placeholder {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--color-text-secondary);
+}
+
+.engine-icon .icon-svg {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.engine-icon .icon-svg :deep(svg) {
+  width: 100%;
+  height: 100%;
+}
+
 .engine-icon:hover {
-  color: var(--color-primary-hover);
+  opacity: 0.8;
 }
 
 .engine-item {

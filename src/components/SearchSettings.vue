@@ -99,19 +99,79 @@ async function deleteEngine(engineId) {
 function cancelEdit() {
   startAddEngine()
 }
+
+// 拖拽排序相关
+const draggingIndex = ref(-1)
+
+function handleDragStart(index) {
+  draggingIndex.value = index
+}
+
+function handleDragOver(index) {
+  if (draggingIndex.value === -1 || draggingIndex.value === index) return
+
+  const engines = [...settingStore.searchEngines]
+  const draggedEngine = engines[draggingIndex.value]
+  engines.splice(draggingIndex.value, 1)
+  engines.splice(index, 0, draggedEngine)
+
+  // 更新搜索引擎列表
+  settingStore.searchEngines.splice(0, settingStore.searchEngines.length, ...engines)
+  draggingIndex.value = index
+}
+
+async function handleDropOnList(event) {
+  event.preventDefault()
+
+  if (draggingIndex.value === -1) {
+    return
+  }
+
+  // 保存新的排序
+  const engines = settingStore.searchEngines.map((engine, i) => ({
+    ...engine,
+    order: i + 1,
+    updatedAt: new Date().toISOString()
+  }))
+
+  // 更新数据库中的顺序
+  try {
+    for (const engine of engines) {
+      await settingStore.updateSearchEngine(engine)
+    }
+  } catch (error) {
+    console.error('保存搜索引擎排序失败:', error)
+    alert('保存排序失败，请查看控制台获取详细信息')
+  }
+
+  draggingIndex.value = -1
+}
+
+function handleDragEnd() {
+  draggingIndex.value = -1
+}
 </script>
 
 <template>
   <div class="search-settings">
     <!-- 搜索引擎列表 -->
-    <div class="engine-list">
+    <div 
+      class="engine-list"
+      @dragover.prevent
+      @drop="handleDropOnList"
+    >
       <div
-        v-for="engine in settingStore.searchEngines"
+        v-for="(engine, index) in settingStore.searchEngines"
         :key="engine.id"
         class="engine-item"
-        :class="{ editing: editingEngineId === engine.id }"
+        :class="{ editing: editingEngineId === engine.id, dragging: draggingIndex === index }"
+        draggable="true"
+        @dragstart="handleDragStart(index)"
+        @dragover.prevent="handleDragOver(index)"
+        @dragend="handleDragEnd"
       >
         <div class="engine-info">
+          <div class="drag-handle">⋮⋮</div>
           <div class="engine-icon" :style="{ color: engine.iconColor }">
             <img v-if="engine.icon" :src="engine.icon" :alt="engine.name" class="icon-image">
             <span v-else class="icon-placeholder">{{ engine.name[0] }}</span>
@@ -163,11 +223,19 @@ function cancelEdit() {
 
       <div class="form-group">
         <label>图标颜色</label>
-        <input
-          v-model="editingEngine.iconColor"
-          type="color"
-          class="color-picker"
-        >
+        <div class="color-input-group">
+          <input
+            v-model="editingEngine.iconColor"
+            type="color"
+            class="color-picker"
+          >
+          <input
+            v-model="editingEngine.iconColor"
+            type="text"
+            class="color-text"
+            placeholder="#6b7280"
+          >
+        </div>
       </div>
 
       <div class="form-group">
@@ -224,6 +292,7 @@ function cancelEdit() {
   border: 2px solid transparent;
   background-color: var(--color-bg-card);
   transition: all 0.3s ease;
+  cursor: move;
 }
 
 .engine-item:hover {
@@ -235,11 +304,33 @@ function cancelEdit() {
   background-color: var(--color-bg-hover);
 }
 
+.engine-item.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+}
+
 .engine-info {
   display: flex;
   align-items: center;
   gap: 12px;
   flex: 1;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 48px;
+  color: var(--color-text-disabled);
+  font-size: 16px;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .engine-icon {
@@ -380,28 +471,61 @@ function cancelEdit() {
   flex-shrink: 0;
 }
 
+.color-input-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .color-picker {
-  width: 100%;
+  width: 48px;
   height: 40px;
-  padding: 4px;
+  padding: 2px;
   border: 1px solid var(--color-border-base);
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   background-color: var(--color-bg-page);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.color-picker:hover {
+  border-color: var(--color-border-focus);
+}
+
+.color-text {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-base);
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: var(--color-bg-page);
+  color: var(--color-text-main);
+  font-family: monospace;
+  transition: all 0.2s ease;
+}
+
+.color-text:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-actions {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
   margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border-base);
 }
 
 .button {
-  padding: 8px 16px;
+  flex: 1;
+  padding: 12px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }

@@ -50,13 +50,9 @@ export const useSettingStore = defineStore('setting', () => {
       return
     }
 
-    console.log('应用主题:', themeId, theme)
-
     // 设置 CSS 变量
     const root = document.documentElement
     const colors = theme.colors
-
-    console.log('主题颜色:', colors)
 
     // 基础颜色
     root.style.setProperty('--color-primary', colors.primary)
@@ -164,7 +160,8 @@ export const useSettingStore = defineStore('setting', () => {
         }
         searchEngines.value = [...defaultSearchEngines]
       } else {
-        searchEngines.value = existingEngines
+        // 按照 order 字段排序
+        searchEngines.value = existingEngines.sort((a, b) => (a.order || 0) - (b.order || 0))
       }
 
       // 确保 selectedSearchEngineId 有效
@@ -198,6 +195,14 @@ export const useSettingStore = defineStore('setting', () => {
     }
     await db.addSearchEngine(newEngine)
     searchEngines.value.push(newEngine)
+
+    // 重新加载搜索引擎图标
+    const { useSearchStore } = await import('./search')
+    const searchStore = useSearchStore()
+    // 等待 DOM 更新后再加载图标
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await searchStore.loadEngineIcons()
+
     return newEngine
   }
 

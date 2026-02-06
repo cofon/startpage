@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useWebsiteStore } from '../stores/website'
 
 const props = defineProps({
   modelValue: {
@@ -14,8 +15,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'save'])
 
-// 由于websiteStore目前未被使用，暂时注释掉相关代码
-// const websiteStore = useWebsiteStore()
+// 使用 website store
+const websiteStore = useWebsiteStore()
 
 // 表单数据
 const form = ref({
@@ -24,6 +25,9 @@ const form = ref({
   description: '',
   iconUrl: '',
   tags: [],
+  isMarked: false,
+  isActive: true,
+  isHidden: false,
   // 图标相关字段
   iconData: null,
   iconGenerateData: null,
@@ -35,6 +39,24 @@ const form = ref({
 
 // 标签输入
 const tagInput = ref('')
+
+// 使用 store 中的所有标签
+const allTags = computed(() => websiteStore.allTags)
+
+// 判断标签是否已添加
+function isTagAdded(tag) {
+  return form.value.tags.includes(tag)
+}
+
+// 切换标签（添加或删除）
+function toggleTag(tag) {
+  const index = form.value.tags.indexOf(tag)
+  if (index > -1) {
+    form.value.tags.splice(index, 1)
+  } else {
+    form.value.tags.push(tag)
+  }
+}
 
 // 对话框标题
 const dialogTitle = computed(() => {
@@ -50,6 +72,9 @@ function openDialog() {
       description: props.website.description || '',
       iconUrl: props.website.iconUrl || '',
       tags: props.website.tags ? [...props.website.tags] : [],
+      isMarked: props.website.isMarked || false,
+      isActive: props.website.isActive !== undefined ? props.website.isActive : true,
+      isHidden: props.website.isHidden || false,
       // 保留现有的图标相关字段
       iconData: props.website.iconData || null,
       iconGenerateData: props.website.iconGenerateData || null,
@@ -66,6 +91,9 @@ function openDialog() {
       description: '',
       iconUrl: '',
       tags: [],
+      isMarked: false,
+      isActive: true,
+      isHidden: false,
       iconData: null,
       iconGenerateData: null,
       iconCanFetch: true,
@@ -137,14 +165,30 @@ function saveWebsite() {
 // 关闭对话框
 function closeDialog() {
   emit('update:modelValue', false)
+  // 移除焦点，避免焦点回到编辑按钮上
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
 }
 
 // 监听对话框打开
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
     openDialog()
+    // 添加键盘事件监听
+    document.addEventListener('keydown', handleKeydown)
+  } else {
+    // 移除键盘事件监听
+    document.removeEventListener('keydown', handleKeydown)
   }
 })
+
+// 处理键盘事件
+function handleKeydown(event) {
+  if (event.key === 'Escape') {
+    closeDialog()
+  }
+}
 </script>
 
 <template>
@@ -203,23 +247,42 @@ watch(() => props.modelValue, (newValue) => {
         <div class="form-group">
           <label>标签</label>
           <div class="tags-input-container">
-            <div class="tags-list">
-              <span
-                v-for="tag in form.tags"
-                :key="tag"
-                class="tag-item"
-              >
-                {{ tag }}
-                <button class="tag-remove" @click="removeTag(tag)">×</button>
-              </span>
-            </div>
             <input
               v-model="tagInput"
               type="text"
-              placeholder="输入标签后按回车添加"
-              class="tag-input"
-              @keydown="handleTagInputKeydown"
+              class="form-input"
+              placeholder="输入标签，用逗号分隔"
             >
+            <div v-if="allTags.length > 0" class="tags-dropdown">
+              <div
+                v-for="tag in allTags"
+                :key="tag"
+                class="tag-item"
+                :class="{ 'tag-added': isTagAdded(tag) }"
+                @click="toggleTag(tag)"
+              >
+                {{ tag }}
+              </div>
+            </div>
+          </div>
+          <div class="form-hint">点击标签可添加或移除</div>
+        </div>
+
+        <div class="form-group">
+          <label>网站设置</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.isMarked">
+              <span>标记</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.isActive">
+              <span>启用</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.isHidden">
+              <span>隐藏</span>
+            </label>
           </div>
         </div>
       </div>
@@ -250,9 +313,10 @@ watch(() => props.modelValue, (newValue) => {
   background-color: white;
   border-radius: 16px;
   width: 90%;
-  max-width: 500px;
+  max-width: 700px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
@@ -262,6 +326,7 @@ watch(() => props.modelValue, (newValue) => {
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid #eee;
+  flex-shrink: 0;
 }
 
 .dialog-header h2 {
@@ -291,10 +356,15 @@ watch(() => props.modelValue, (newValue) => {
 
 .dialog-body {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  overflow-x: hidden;
 }
 
 .form-group {
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group label {
@@ -311,6 +381,7 @@ watch(() => props.modelValue, (newValue) => {
   border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .form-input:focus {
@@ -319,85 +390,130 @@ watch(() => props.modelValue, (newValue) => {
 }
 
 .tags-input-container {
+  /* 标签输入容器 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tags-dropdown {
+  background-color: white;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 8px;
-  min-height: 40px;
-}
-
-.tags-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tag-item {
-  display: inline-flex;
-  align-items: center;
-  background-color: #e6f7ff;
-  color: #1890ff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #333;
+  background-color: #f0f0f0;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
-.tag-remove {
-  margin-left: 6px;
+.tag-item:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-1px);
+}
+
+.tag-item.tag-added {
+  background-color: #409eff;
+  color: white;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
   cursor: pointer;
-  background: none;
-  border: none;
-  font-size: 16px;
-  line-height: 1;
-  color: #1890ff;
-  padding: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.checkbox-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
+  cursor: pointer;
+  margin: 0;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.button {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.tag-input {
-  width: 100%;
-  border: none;
-  outline: none;
-  font-size: 14px;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid #eee;
-}
-
-.button {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
 .button-secondary {
   background-color: #f0f0f0;
   color: #333;
+  border: 1px solid #ddd;
 }
 
 .button-secondary:hover {
   background-color: #e0e0e0;
+  border-color: #ccc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.button-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .button-primary {
   background-color: #409eff;
   color: white;
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
 }
 
 .button-primary:hover {
   background-color: #66b1ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
+}
+
+.button-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
 }
 </style>

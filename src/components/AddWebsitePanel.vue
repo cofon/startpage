@@ -11,11 +11,11 @@ const formData = ref({
   name: '',
   url: '',
   description: '',
-  tags: ''
+  tags: '',
+  isMarked: false,
+  isActive: true,
+  isHidden: false
 })
-
-// 标签输入框是否聚焦
-const tagsInputFocused = ref(false)
 
 // 获取所有标签
 const allTags = computed(() => {
@@ -28,16 +28,33 @@ const allTags = computed(() => {
   return Array.from(tags).sort()
 })
 
-// 添加标签
-function addTag(tag) {
-  const currentTags = formData.value.tags
+// 获取当前输入的标签列表
+const currentTags = computed(() => {
+  return formData.value.tags
     .split(',')
     .map(t => t.trim())
     .filter(t => t)
+})
 
-  if (!currentTags.includes(tag)) {
-    formData.value.tags = [...currentTags, tag].join(', ')
+// 检查标签是否已添加
+function isTagAdded(tag) {
+  return currentTags.value.includes(tag)
+}
+
+// 添加或移除标签
+function toggleTag(tag) {
+  const tags = [...currentTags.value]
+  const index = tags.indexOf(tag)
+
+  if (index > -1) {
+    // 如果标签已存在，则移除
+    tags.splice(index, 1)
+  } else {
+    // 如果标签不存在，则添加
+    tags.push(tag)
   }
+
+  formData.value.tags = tags.join(', ')
 }
 
 // 提交表单
@@ -69,11 +86,11 @@ async function handleSubmit() {
       url: formData.value.url,
       description: formData.value.description,
       tags: tags,
-      isMarked: false,
+      isMarked: formData.value.isMarked,
       markOrder: 0,
       visitCount: 0,
-      isActive: true,
-      isHidden: false
+      isActive: formData.value.isActive,
+      isHidden: formData.value.isHidden
     })
 
     alert('网站添加成功！')
@@ -90,14 +107,16 @@ function resetForm() {
     name: '',
     url: '',
     description: '',
-    tags: ''
+    tags: '',
+    isMarked: false,
+    isActive: true,
+    isHidden: false
   }
 }
 </script>
 
 <template>
   <div class="add-website-panel">
-    <h3>添加网站</h3>
 
     <div class="form-group">
       <label>网站名称 <span class="required">*</span></label>
@@ -133,6 +152,24 @@ function resetForm() {
     </div>
 
     <div class="form-group">
+      <label>网站设置</label>
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="formData.isMarked">
+          <span>标记</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="formData.isActive">
+          <span>启用</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" v-model="formData.isHidden">
+          <span>隐藏</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
       <label>标签</label>
       <div class="tags-input-container">
         <input
@@ -140,21 +177,20 @@ function resetForm() {
           type="text"
           class="form-input"
           placeholder="输入标签，用逗号分隔"
-          @focus="tagsInputFocused = true"
-          @blur="tagsInputFocused = false"
         >
-        <div v-if="tagsInputFocused && allTags.length > 0" class="tags-dropdown">
+        <div v-if="allTags.length > 0" class="tags-dropdown">
           <div
             v-for="tag in allTags"
             :key="tag"
             class="tag-item"
-            @click="addTag(tag)"
+            :class="{ 'tag-added': isTagAdded(tag) }"
+            @click="toggleTag(tag)"
           >
             {{ tag }}
           </div>
         </div>
       </div>
-      <div class="form-hint">点击标签可快速添加</div>
+      <div class="form-hint">点击标签可添加或移除</div>
     </div>
 
     <div class="form-actions">
@@ -229,33 +265,45 @@ function resetForm() {
 }
 
 .tags-input-container {
-  position: relative;
+  /* 标签输入容器 */
 }
 
 .tags-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 4px;
   background-color: var(--color-bg-card);
   border: 1px solid var(--color-border-base);
   border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
   max-height: 200px;
   overflow-y: auto;
-  box-shadow: var(--shadow-medium);
-  z-index: 10;
 }
 
 .tag-item {
-  padding: 8px 12px;
+  padding: 6px 12px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   color: var(--color-text-main);
+  background-color: var(--color-bg-active);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .tag-item:hover {
   background-color: var(--color-bg-hover);
+  transform: translateY(-1px);
+}
+
+.tag-item.tag-added {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.tag-item.tag-added:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .form-hint {
@@ -264,37 +312,82 @@ function resetForm() {
   color: var(--color-text-disabled);
 }
 
+.checkbox-group {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--color-text-main);
+  font-size: 14px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  margin: 0;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
   margin-top: 24px;
 }
 
 .button {
-  padding: 8px 16px;
+  flex: 1;
+  padding: 12px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .button-primary {
   background-color: var(--color-primary);
   color: var(--color-text-on-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .button-primary:hover {
   background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.button-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .button-secondary {
   background-color: var(--color-bg-active);
   color: var(--color-text-main);
+  border: 1px solid var(--color-border-base);
 }
 
 .button-secondary:hover {
   background-color: var(--color-bg-hover);
+  border-color: var(--color-border-focus);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.button-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
