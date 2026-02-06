@@ -22,7 +22,7 @@ export const useSearchStore = defineStore('search', () => {
 
   // 计算属性
   const isLocalSearch = computed(() => {
-    return settingStore.selectedSearchEngine === 'local'
+    return settingStore.selectedSearchEngineId === 'local'
   })
 
   const currentEngine = computed(() => {
@@ -34,18 +34,18 @@ export const useSearchStore = defineStore('search', () => {
 
   // 获取当前搜索引擎图标
   const currentEngineIcon = computed(() => {
-    return engineIcons.value[settingStore.selectedSearchEngine] || ''
+    return engineIcons.value[settingStore.selectedSearchEngineId] || ''
   })
 
   // 加载搜索引擎图标
   async function loadEngineIcons() {
-    for (const [id, engine] of Object.entries(settingStore.searchEngineList)) {
+    for (const engine of settingStore.searchEngines) {
       try {
         const response = await fetch(engine.icon)
-        engineIcons.value[id] = await response.text()
+        engineIcons.value[engine.id] = await response.text()
       } catch (error) {
-        console.error(`加载搜索引擎图标失败: ${id}`, error)
-        engineIcons.value[id] = ''
+        console.error(`加载搜索引擎图标失败: ${engine.id}`, error)
+        engineIcons.value[engine.id] = ''
       }
     }
   }
@@ -58,7 +58,7 @@ export const useSearchStore = defineStore('search', () => {
   })
 
   // 监听搜索引擎切换
-  watch(() => settingStore.selectedSearchEngine, (newEngine, oldEngine) => {
+  watch(() => settingStore.selectedSearchEngineId, (newEngine, oldEngine) => {
     if (newEngine === 'local') {
       // 切换到本地搜索，清空输入框
       query.value = ''

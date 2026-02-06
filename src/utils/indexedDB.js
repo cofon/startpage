@@ -4,12 +4,14 @@
  */
 
 const DB_NAME = 'StartPageDB'
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 // 表名
 const STORE_WEBSITES = 'websites'
 const STORE_SETTINGS = 'settings'
 const STORE_ICONS = 'icons'
+const STORE_THEMES = 'themes'
+const STORE_SEARCH_ENGINES = 'searchEngines'
 
 class IndexedDB {
   constructor() {
@@ -67,6 +69,22 @@ class IndexedDB {
         // 版本 4：删除 icons 表
         if (oldVersion < 4 && db.objectStoreNames.contains(STORE_ICONS)) {
           db.deleteObjectStore(STORE_ICONS)
+        }
+
+        // 版本 5：创建 themes 和 searchEngines 表
+        if (oldVersion < 5) {
+          // 创建 themes 表
+          if (!db.objectStoreNames.contains(STORE_THEMES)) {
+            const themeStore = db.createObjectStore(STORE_THEMES, { keyPath: 'id' })
+            themeStore.createIndex('name', 'name', { unique: false })
+          }
+
+          // 创建 searchEngines 表
+          if (!db.objectStoreNames.contains(STORE_SEARCH_ENGINES)) {
+            const engineStore = db.createObjectStore(STORE_SEARCH_ENGINES, { keyPath: 'id' })
+            engineStore.createIndex('name', 'name', { unique: false })
+            engineStore.createIndex('order', 'order', { unique: false })
+          }
         }
       }
     })
@@ -345,6 +363,238 @@ class IndexedDB {
       }
       
       clearWebsitesReq.onerror = () => reject(clearWebsitesReq.error)
+    })
+  }
+
+  // ==================== 主题管理 ====================
+
+  // 获取所有主题
+  async getAllThemes() {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_THEMES], 'readonly')
+    const store = transaction.objectStore(STORE_THEMES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 获取单个主题
+  async getTheme(themeId) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_THEMES], 'readonly')
+    const store = transaction.objectStore(STORE_THEMES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(themeId)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 添加主题
+  async addTheme(theme) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_THEMES], 'readwrite')
+    const store = transaction.objectStore(STORE_THEMES)
+
+    const plainTheme = { ...theme }
+
+    return new Promise((resolve, reject) => {
+      const request = store.add(plainTheme)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 更新主题
+  async updateTheme(theme) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_THEMES], 'readwrite')
+    const store = transaction.objectStore(STORE_THEMES)
+
+    const plainTheme = { ...theme }
+
+    return new Promise((resolve, reject) => {
+      const request = store.put(plainTheme)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 删除主题
+  async deleteTheme(themeId) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_THEMES], 'readwrite')
+    const store = transaction.objectStore(STORE_THEMES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.delete(themeId)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // ==================== 搜索引擎管理 ====================
+
+  // 获取所有搜索引擎
+  async getAllSearchEngines() {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SEARCH_ENGINES], 'readonly')
+    const store = transaction.objectStore(STORE_SEARCH_ENGINES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 获取单个搜索引擎
+  async getSearchEngine(engineId) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SEARCH_ENGINES], 'readonly')
+    const store = transaction.objectStore(STORE_SEARCH_ENGINES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(engineId)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 添加搜索引擎
+  async addSearchEngine(engine) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SEARCH_ENGINES], 'readwrite')
+    const store = transaction.objectStore(STORE_SEARCH_ENGINES)
+
+    const plainEngine = { ...engine }
+
+    return new Promise((resolve, reject) => {
+      const request = store.add(plainEngine)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 更新搜索引擎
+  async updateSearchEngine(engine) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SEARCH_ENGINES], 'readwrite')
+    const store = transaction.objectStore(STORE_SEARCH_ENGINES)
+
+    const plainEngine = { ...engine }
+
+    return new Promise((resolve, reject) => {
+      const request = store.put(plainEngine)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 删除搜索引擎
+  async deleteSearchEngine(engineId) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_SEARCH_ENGINES], 'readwrite')
+    const store = transaction.objectStore(STORE_SEARCH_ENGINES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.delete(engineId)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
     })
   }
 }

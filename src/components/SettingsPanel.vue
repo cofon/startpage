@@ -1,9 +1,28 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useSettingStore } from '../stores/setting'
 import { useWebsiteStore } from '../stores/website'
 import db from '../utils/indexedDB'
-import iconManager from '../utils/iconManager'
+// import iconManager from '../utils/iconManager'
+import ThemeSettings from './ThemeSettings.vue'
+import SearchSettings from './SearchSettings.vue'
+import AddWebsitePanel from './AddWebsitePanel.vue'
+import LayoutSwitch from './LayoutSwitch.vue'
+
+// 点击外部关闭指令
+const vClickOutside = {
+  mounted(el, binding) {
+    el._clickOutside = (event) => {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value(event)
+      }
+    }
+    document.addEventListener('click', el._clickOutside)
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el._clickOutside)
+  }
+}
 
 const props = defineProps({
   modelValue: {
@@ -12,72 +31,41 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'openAddWebsite', 'blur-settings-button'])
+const emit = defineEmits(['update:modelValue', 'blur-settings-button'])
 
 const settingStore = useSettingStore()
 const websiteStore = useWebsiteStore()
 
-// 添加搜索引擎表单
-const showAddEngine = ref(false)
-const newEngine = ref({
-  id: '',
-  name: '',
-  url: '',
-  icon: ''
-})
+// 当前显示的面板
+const activePanel = ref('theme') // 'theme' | 'search' | 'add-website' | ''
 
 // 导入/导出
 const importFile = ref(null)
 
-// 当前选中的主题
-const currentTheme = computed(() => settingStore.selectedTheme)
+// 更多菜单
+const showMoreMenu = ref(false)
 
-// 切换主题
-function setTheme(themeId) {
-  settingStore.setTheme(themeId)
-  saveSettings()
-  closePanel()
+// 关闭更多菜单
+function closeMoreMenu() {
+  showMoreMenu.value = false
 }
 
-// 切换显示模式
-function setLayout(layout) {
-  settingStore.setSearchResultLayout(layout)
-  saveSettings()
-  closePanel()
+// 延迟关闭更多菜单
+function closeMoreMenuDelayed() {
+  setTimeout(() => {
+    showMoreMenu.value = false
+  }, 100)
 }
 
-// 添加搜索引擎
-async function addSearchEngine() {
-  if (!newEngine.value.id || !newEngine.value.name || !newEngine.value.url) {
-    alert('请填写完整的搜索引擎信息')
-    return
-  }
-
-  settingStore.addSearchEngine(newEngine.value.id, {
-    name: newEngine.value.name,
-    url: newEngine.value.url,
-    icon: newEngine.value.icon || '/icons/search-engines/default.svg'
-  })
-
-  // 重置表单
-  newEngine.value = {
-    id: '',
-    name: '',
-    url: '',
-    icon: ''
-  }
-  showAddEngine.value = false
-
-  // 保存设置
-  await saveSettings()
+// 触发导入
+function triggerImport() {
+  importFile.value?.click()
+  closeMoreMenuDelayed()
 }
 
-// 删除搜索引擎
-async function deleteSearchEngine(engineId) {
-  if (confirm(`确定要删除 "${settingStore.searchEngineList[engineId]?.name}" 搜索引擎吗？`)) {
-    settingStore.deleteSearchEngine(engineId)
-    await saveSettings()
-  }
+// 切换面板
+function setActivePanel(panel) {
+  activePanel.value = activePanel.value === panel ? '' : panel
 }
 
 // 导出数据
@@ -88,7 +76,7 @@ async function handleExport() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    
+
     // 生成日期时间字符串，格式为：YYYYMMDDHHmmss
     const now = new Date()
     const year = now.getFullYear().toString()
@@ -97,10 +85,10 @@ async function handleExport() {
     const hours = String(now.getHours()).padStart(2, '0')
     const minutes = String(now.getMinutes()).padStart(2, '0')
     const seconds = String(now.getSeconds()).padStart(2, '0')
-    
+
     const dateTimeStr = `${year}${month}${day}${hours}${minutes}${seconds}`
     a.download = `startpage-backup-${dateTimeStr}.json`
-    
+
     a.click()
     URL.revokeObjectURL(url)
     settingStore.updateLastBackupTime()
@@ -127,7 +115,7 @@ async function handleImport(event) {
         const websites = await db.getAllWebsites()
         websiteStore.setWebsites(websites)
         settingStore.loadSettings()
-        
+
         alert('导入成功！页面即将刷新...')
         setTimeout(() => {
           window.location.reload()
@@ -182,188 +170,82 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
 })
 
-// 打开添加网站对话框
-function openAddWebsite() {
-  closePanel()
-  emit('openAddWebsite')
-}
-
-// 清除图标缓存
-async function clearIconCache() {
-  if (confirm('确定要清除所有图标缓存吗？这将重新从网络获取图标。')) {
-    try {
-      // 清除内存缓存
-      iconManager.clearCache()
-
-      // 清除数据库中的图标数据
-      const websites = await websiteStore.websites
-      for (const website of websites) {
-        if (website.iconData || website.iconGenerateData) {
-          websiteStore.updateWebsite(website.id, {
-            iconData: null,
-            iconGenerateData: null,
-            iconCanFetch: true,
-            iconFetchAttempts: 0
-          })
-          // 同步更新到 IndexedDB
-          await db.updateWebsite({
-            id: website.id,
-            iconData: null,
-            iconGenerateData: null,
-            iconCanFetch: true,
-            iconFetchAttempts: 0
-          })
-        }
-      }
-
-      alert('图标缓存已清除')
-    } catch (error) {
-      console.error('清除图标缓存失败:', error)
-      alert('清除图标缓存失败，请查看控制台获取详细信息')
-    }
-  }
-}
 </script>
 
 <template>
   <div v-if="modelValue" class="settings-overlay" @click.self="closePanel">
     <div class="settings-panel">
       <div class="panel-header">
-        <h2>设置</h2>
-        <button class="close-button" @click="closePanel">×</button>
+        <div class="header-left">
+          <button
+            class="header-button"
+            :class="{ active: activePanel === 'theme' }"
+            @click="setActivePanel('theme')"
+            title="主题"
+          >
+            <span class="icon">🎨</span>
+          </button>
+          <button
+            class="header-button"
+            :class="{ active: activePanel === 'search' }"
+            @click="setActivePanel('search')"
+            title="搜索"
+          >
+            <span class="icon">🔍</span>
+          </button>
+          <button
+            class="header-button"
+            :class="{ active: activePanel === 'add-website' }"
+            @click="setActivePanel('add-website')"
+            title="添加网站"
+          >
+            <span class="icon">➕</span>
+          </button>
+        </div>
+        <div class="header-right">
+          <LayoutSwitch />
+          <div class="more-menu-container" v-click-outside="closeMoreMenu">
+            <button
+              class="header-button more-button"
+              :class="{ active: showMoreMenu }"
+              @click="showMoreMenu = !showMoreMenu"
+              title="更多"
+            >
+              <span class="icon">⋮</span>
+            </button>
+            <transition name="dropdown">
+              <div v-if="showMoreMenu" class="more-menu">
+                <button class="menu-item" @click="handleExport(); closeMoreMenu()">
+                  <span class="menu-icon">⬇️</span>
+                  <span>导出数据</span>
+                </button>
+                <button class="menu-item" @click="triggerImport">
+                  <span class="menu-icon">⬆️</span>
+                  <span>导入数据</span>
+                  <input ref="importFile" type="file" accept=".json" @change="handleImport" style="display: none;">
+                </button>
+              </div>
+            </transition>
+          </div>
+        </div>
       </div>
 
       <div class="panel-content">
-        <!-- 主题设置 -->
-        <section class="settings-section">
-          <h3>主题</h3>
-          <div class="theme-options">
-            <div
-              v-for="theme in settingStore.themes"
-              :key="theme.id"
-              class="theme-option"
-              :class="{ active: currentTheme === theme.id }"
-              @click="setTheme(theme.id)"
-            >
-              {{ theme.name }}
-            </div>
+        <transition name="panel" mode="out-in">
+          <div v-show="activePanel === 'theme'" key="theme">
+            <ThemeSettings />
           </div>
-        </section>
-
-        <!-- 显示设置 -->
-        <section class="settings-section">
-          <h3>显示模式</h3>
-          <div class="layout-options">
-            <div
-              class="layout-option"
-              :class="{ active: settingStore.searchResultLayout === 'grid' }"
-              @click="setLayout('grid')"
-            >
-              <span class="layout-icon">⊞</span>
-              <span>网格</span>
-            </div>
-            <div
-              class="layout-option"
-              :class="{ active: settingStore.searchResultLayout === 'list' }"
-              @click="setLayout('list')"
-            >
-              <span class="layout-icon">☰</span>
-              <span>列表</span>
-            </div>
+        </transition>
+        <transition name="panel" mode="out-in">
+          <div v-show="activePanel === 'search'" key="search">
+            <SearchSettings />
           </div>
-        </section>
-
-        <!-- 搜索引擎管理 -->
-        <section class="settings-section">
-          <h3>搜索引擎</h3>
-          <div class="engine-list">
-            <div
-              v-for="(engine, id) in settingStore.searchEngineList"
-              :key="id"
-              class="engine-item"
-            >
-              <div class="engine-info">
-                <span class="engine-name">{{ engine.name }}</span>
-                <span class="engine-id">{{ id }}</span>
-              </div>
-              <button
-                v-if="id !== 'local'"
-                class="delete-button"
-                @click="deleteSearchEngine(id)"
-              >
-                删除
-              </button>
-            </div>
+        </transition>
+        <transition name="panel" mode="out-in">
+          <div v-show="activePanel === 'add-website'" key="add-website">
+            <AddWebsitePanel @close="closePanel" />
           </div>
-          <button v-if="!showAddEngine" class="add-button" @click="showAddEngine = true">
-            + 添加搜索引擎
-          </button>
-          <div v-else class="add-engine-form">
-            <div class="form-group">
-              <label>ID</label>
-              <input v-model="newEngine.id" type="text" placeholder="唯一标识符" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>名称</label>
-              <input v-model="newEngine.name" type="text" placeholder="搜索引擎名称" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>URL</label>
-              <input v-model="newEngine.url" type="text" placeholder="搜索URL（使用 {query} 作为查询参数）" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>图标</label>
-              <input v-model="newEngine.icon" type="text" placeholder="图标URL" class="form-input">
-            </div>
-            <div class="form-actions">
-              <button class="button button-secondary" @click="showAddEngine = false">取消</button>
-              <button class="button button-primary" @click="addSearchEngine">添加</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- 数据管理 -->
-        <section class="settings-section">
-          <h3>数据管理</h3>
-          <div class="data-actions">
-            <button class="action-button" @click="openAddWebsite">
-              <span class="action-icon">+</span>
-              <span>添加网站</span>
-            </button>
-            <button class="action-button" @click="handleExport">
-              <span class="action-icon">⬇</span>
-              <span>导出数据</span>
-            </button>
-            <label class="action-button">
-              <span class="action-icon">⬆</span>
-              <span>导入数据</span>
-              <input
-                ref="importFile"
-                type="file"
-                accept=".json"
-                style="display: none"
-                @change="handleImport"
-              >
-            </label>
-          </div>
-          <div v-if="settingStore.lastBackupTime" class="backup-info">
-            上次备份时间：{{ new Date(settingStore.lastBackupTime).toLocaleString() }}
-          </div>
-        </section>
-
-        <!-- 图标缓存管理 -->
-        <section class="settings-section">
-          <h3>图标缓存</h3>
-          <div class="data-actions">
-            <button class="action-button" @click="clearIconCache">
-              <span class="action-icon">🗑</span>
-              <span>清除图标缓存</span>
-            </button>
-          </div>
-          <p class="info-text">
-            图标会被缓存到本地，以加快加载速度。如果图标显示异常，可以清除缓存重新获取。
-          </p>
-        </section>
+        </transition>
       </div>
     </div>
   </div>
@@ -384,318 +266,158 @@ async function clearIconCache() {
 }
 
 .settings-panel {
-  background-color: white;
+  background-color: var(--color-bg-card);
   border-radius: 16px;
   width: 90%;
-  max-width: 600px;
+  max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-dark);
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #eee;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--color-border-base);
   position: sticky;
   top: 0;
-  background-color: white;
+  background-color: var(--color-bg-card);
   z-index: 10;
 }
 
-.panel-header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.close-button {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
+.header-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--color-bg-page);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
-.close-button:hover {
-  background-color: #f5f5f5;
+.header-button:hover {
+  background-color: var(--color-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-light);
+}
+
+.header-button.active {
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  box-shadow: var(--shadow-medium);
+}
+
+.header-button .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: inherit;
 }
 
 .panel-content {
-  padding: 24px;
+  padding: 32px;
+  height: 70vh;
+  overflow-y: auto;
 }
 
-.settings-section {
-  margin-bottom: 32px;
+/* 更多菜单 */
+.more-menu-container {
+  position: relative;
 }
 
-.settings-section:last-child {
-  margin-bottom: 0;
+.more-button {
+  font-size: 28px;
+  line-height: 1;
 }
 
-.settings-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
+.more-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border-base);
+  border-radius: 12px;
+  box-shadow: var(--shadow-dark);
+  padding: 8px 0;
+  z-index: 100;
 }
 
-/* 主题选项 */
-.theme-options {
-  display: flex;
-  gap: 12px;
-}
-
-.theme-option {
-  flex: 1;
-  padding: 12px;
-  text-align: center;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.theme-option:hover {
-  background-color: #e8e8e8;
-}
-
-.theme-option.active {
-  background-color: #1890ff;
-  color: white;
-}
-
-/* 显示模式选项 */
-.layout-options {
-  display: flex;
-  gap: 12px;
-}
-
-.layout-option {
-  flex: 1;
+.menu-item {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.layout-option:hover {
-  background-color: #e8e8e8;
-}
-
-.layout-option.active {
-  background-color: #1890ff;
-  color: white;
-}
-
-.layout-icon {
-  font-size: 18px;
-}
-
-/* 搜索引擎列表 */
-.engine-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.engine-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 12px;
   padding: 12px 16px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-}
-
-.engine-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.engine-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.engine-id {
-  font-size: 12px;
-  color: #999;
-}
-
-.delete-button {
-  padding: 6px 12px;
   border: none;
-  background-color: #fff1f0;
-  color: #ff4d4f;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.delete-button:hover {
-  background-color: #ffccc7;
-}
-
-.add-button {
-  width: 100%;
-  padding: 12px;
-  border: 2px dashed #d9d9d9;
-  background-color: transparent;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #666;
+  background: none;
+  color: var(--color-text-main);
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.add-button:hover {
-  border-color: #1890ff;
-  color: #1890ff;
-}
-
-/* 添加搜索引擎表单 */
-.add-engine-form {
-  margin-top: 16px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #666;
-}
-
-.form-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
+  text-align: left;
   font-size: 14px;
-  transition: border-color 0.2s ease;
 }
 
-.form-input:focus {
-  outline: none;
-  border-color: #1890ff;
+.menu-item:hover {
+  background-color: var(--color-bg-hover);
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-}
-
-.button-secondary {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.button-secondary:hover {
-  background-color: #e8e8e8;
-}
-
-.button-primary {
-  background-color: #1890ff;
-  color: white;
-}
-
-.button-primary:hover {
-  background-color: #40a9ff;
-}
-
-/* 数据管理操作 */
-.data-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-button {
-  flex: 1;
+.menu-icon {
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  background-color: #f5f5f5;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  cursor: pointer;
+}
+
+/* 下拉菜单动画 */
+.dropdown-enter-active,
+.dropdown-leave-active {
   transition: all 0.2s ease;
 }
 
-.action-button:hover {
-  background-color: #e8e8e8;
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
-.action-icon {
-  font-size: 18px;
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
-.backup-info {
-  margin-top: 12px;
-  padding: 12px;
-  background-color: #f0f9ff;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #096dd9;
+/* 面板切换动画 */
+.panel-enter-active,
+.panel-leave-active {
+  transition: all 0.3s ease;
 }
 
-.info-text {
-  margin-top: 12px;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #666;
-  line-height: 1.5;
+.panel-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
 }
+
+.panel-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+
+
+
 </style>

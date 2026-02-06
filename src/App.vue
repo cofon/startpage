@@ -17,7 +17,7 @@ const searchStore = useSearchStore()
 
 // 计算属性：判断当前搜索引擎是否为本地搜索
 const isLocalSearchEngine = computed(() => {
-  return settingStore.selectedSearchEngine === 'local';
+  return settingStore.selectedSearchEngineId === 'local';
 });
 
 // 网站对话框
@@ -373,45 +373,8 @@ onMounted(async () => {
       }
     });
 
-    // 加载设置
-    const settings = await db.getSettings()
-    if (settings) {
-      settingStore.selectedTheme = settings.selectedTheme || 'light'
-      settingStore.selectedSearchEngine = settings.selectedSearchEngine || 'baidu'
-      settingStore.searchResultLayout = settings.searchResultLayout || 'grid'
-      // 合并搜索引擎列表，确保包含默认搜索引擎
-      if (settings.searchEngineList) {
-        const defaultEngines = {
-          baidu: {
-            name: '百度',
-            url: 'https://www.baidu.com/s?wd={query}',
-            icon: '/icons/search-engines/baidu.svg'
-          },
-          bing: {
-            name: '必应',
-            url: 'https://www.bing.com/search?q={query}',
-            icon: '/icons/search-engines/bing.svg'
-          },
-          yandex: {
-            name: 'Yandex',
-            url: 'https://yandex.com/search/?text={query}',
-            icon: '/icons/search-engines/yandex.svg'
-          },
-          local: {
-            name: '本地',
-            url: '',
-            icon: '/icons/search-engines/local.svg'
-          }
-        }
-        settingStore.searchEngineList = { ...defaultEngines, ...settings.searchEngineList }
-      }
-      if (settings.lastBackupTime) {
-        settingStore.lastBackupTime = new Date(settings.lastBackupTime)
-      }
-    }
-
-    // 应用主题
-    settingStore.init()
+    // 初始化设置（包括主题和搜索引擎）
+    await settingStore.init()
 
     // 加载网站数据
     const websites = await db.getAllWebsites()
@@ -449,7 +412,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div id="app" :class="settingStore.selectedTheme + '-theme'">
+  <div id="app" :class="settingStore.selectedThemeId + '-theme'">
     <!-- 搜索模块 -->
     <div class="search-module">
       <div class="search-container">

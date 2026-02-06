@@ -10,10 +10,7 @@ const isOpen = ref(false)
 
 // 获取搜索引擎列表
 const searchEngines = computed(() => {
-  return Object.entries(settingStore.searchEngineList).map(([id, engine]) => ({
-    id,
-    ...engine
-  }))
+  return settingStore.searchEngines
 })
 
 // 切换搜索引擎
@@ -54,7 +51,7 @@ onUnmounted(() => {
           v-for="(engine, index) in isOpen ? searchEngines : []"
           :key="engine.id"
           class="engine-item"
-          :class="{ 'selected': engine.id === settingStore.selectedSearchEngine }"
+          :class="{ 'selected': engine.id === settingStore.selectedSearchEngineId }"
           :style="{ transitionDelay: `${index * 0.05}s` }"
           @click.stop="selectEngine(engine)"
         >
