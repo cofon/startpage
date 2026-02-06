@@ -136,6 +136,16 @@ function saveWebsite() {
     return
   }
 
+  // 处理标签输入：使用英文逗号、英文分号或空格分隔
+  if (tagInput.value.trim()) {
+    const newTags = tagInput.value
+      .split(/[,;\s]+/)
+      .map(tag => tag.trim())
+      .filter(tag => tag && !form.value.tags.includes(tag))
+
+    form.value.tags.push(...newTags)
+  }
+
   // 如果URL没有协议，添加 https://
   let url = form.value.url
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -245,13 +255,15 @@ function handleKeydown(event) {
         </div>
 
         <div class="form-group">
-          <label>标签</label>
+          <label for="tag-input">标签</label>
           <div class="tags-input-container">
             <input
               v-model="tagInput"
               type="text"
+              id="tag-input"
+              name="tags"
               class="form-input"
-              placeholder="输入标签，用逗号分隔"
+              placeholder="输入标签，用逗号、分号或空格分隔"
             >
             <div v-if="allTags.length > 0" class="tags-dropdown">
               <div
@@ -265,22 +277,22 @@ function handleKeydown(event) {
               </div>
             </div>
           </div>
-          <div class="form-hint">点击标签可添加或移除</div>
+          <div class="form-hint">点击保存按钮时添加标签，使用英文逗号、英文分号或空格分隔多个标签</div>
         </div>
 
         <div class="form-group">
-          <label>网站设置</label>
+          <div class="form-group-title">网站设置</div>
           <div class="checkbox-group">
             <label class="checkbox-label">
-              <input type="checkbox" v-model="form.isMarked">
+              <input type="checkbox" id="is-marked" name="isMarked" v-model="form.isMarked">
               <span>标记</span>
             </label>
             <label class="checkbox-label">
-              <input type="checkbox" v-model="form.isActive">
+              <input type="checkbox" id="is-active" name="isActive" v-model="form.isActive">
               <span>启用</span>
             </label>
             <label class="checkbox-label">
-              <input type="checkbox" v-model="form.isHidden">
+              <input type="checkbox" id="is-hidden" name="isHidden" v-model="form.isHidden">
               <span>隐藏</span>
             </label>
           </div>

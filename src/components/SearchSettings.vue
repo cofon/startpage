@@ -206,9 +206,10 @@ function handleDragEnd() {
       <h3>{{ isEditing ? '编辑搜索引擎' : '添加搜索引擎' }}</h3>
 
       <div class="form-group">
-        <label>图标</label>
+        <label for="engine-icon">图标</label>
         <div class="icon-input-group">
           <input
+            id="engine-icon"
             v-model="editingEngine.icon"
             type="text"
             class="form-input"
@@ -222,14 +223,16 @@ function handleDragEnd() {
       </div>
 
       <div class="form-group">
-        <label>图标颜色</label>
+        <label for="engine-icon-color-text">图标颜色</label>
         <div class="color-input-group">
           <input
+            id="engine-icon-color"
             v-model="editingEngine.iconColor"
             type="color"
             class="color-picker"
           >
           <input
+            id="engine-icon-color-text"
             v-model="editingEngine.iconColor"
             type="text"
             class="color-text"
@@ -239,8 +242,9 @@ function handleDragEnd() {
       </div>
 
       <div class="form-group">
-        <label>名称</label>
+        <label for="engine-name">名称</label>
         <input
+          id="engine-name"
           v-model="editingEngine.name"
           type="text"
           class="form-input"
@@ -249,8 +253,9 @@ function handleDragEnd() {
       </div>
 
       <div class="form-group">
-        <label>搜索模板</label>
+        <label for="engine-template">搜索模板</label>
         <input
+          id="engine-template"
           v-model="editingEngine.template"
           type="text"
           class="form-input"

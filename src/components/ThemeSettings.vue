@@ -185,21 +185,23 @@ if (currentTheme.value) {
       <h3>{{ isEditing ? '编辑主题' : '添加主题' }}</h3>
 
       <div class="form-group">
-        <label>主题名称</label>
-        <input v-model="editingTheme.name" type="text" class="form-input" placeholder="输入主题名称">
+        <label for="theme-name">主题名称</label>
+        <input id="theme-name" v-model="editingTheme.name" type="text" class="form-input" placeholder="输入主题名称">
       </div>
 
       <div class="color-list">
         <div v-for="color in colorKeys" :key="color.key" class="color-item">
-          <label>{{ color.label }}</label>
+          <label :for="color.key.startsWith('shadow') ? ('text-' + color.key) : ('color-' + color.key)">{{ color.label }}</label>
           <div class="color-input-group">
             <input
               v-if="!color.key.startsWith('shadow')"
+              :id="'color-' + color.key"
               v-model="editingTheme.colors[color.key]"
               type="color"
               class="color-picker"
             >
             <input
+              :id="'text-' + color.key"
               v-model="editingTheme.colors[color.key]"
               type="text"
               class="color-text"

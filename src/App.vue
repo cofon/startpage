@@ -422,6 +422,8 @@ onMounted(async () => {
           <input
             v-model="searchStore.query"
             type="text"
+            id="search-input"
+            name="search"
             class="search-input"
             placeholder="搜索..."
             @focus="handleInputFocus"

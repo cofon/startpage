@@ -119,8 +119,9 @@ function resetForm() {
   <div class="add-website-panel">
 
     <div class="form-group">
-      <label>网站名称 <span class="required">*</span></label>
+      <label for="website-name">网站名称 <span class="required">*</span></label>
       <input
+        id="website-name"
         v-model="formData.name"
         type="text"
         class="form-input"
@@ -130,8 +131,9 @@ function resetForm() {
     </div>
 
     <div class="form-group">
-      <label>网站链接 <span class="required">*</span></label>
+      <label for="website-url">网站链接 <span class="required">*</span></label>
       <input
+        id="website-url"
         v-model="formData.url"
         type="url"
         class="form-input"
@@ -141,8 +143,9 @@ function resetForm() {
     </div>
 
     <div class="form-group">
-      <label>网站描述</label>
+      <label for="website-description">网站描述</label>
       <textarea
+        id="website-description"
         v-model="formData.description"
         class="form-textarea"
         placeholder="输入网站描述（可选）"
@@ -152,27 +155,28 @@ function resetForm() {
     </div>
 
     <div class="form-group">
-      <label>网站设置</label>
+      <div class="form-group-title">网站设置</div>
       <div class="checkbox-group">
         <label class="checkbox-label">
-          <input type="checkbox" v-model="formData.isMarked">
+          <input type="checkbox" id="is-marked" name="isMarked" v-model="formData.isMarked">
           <span>标记</span>
         </label>
         <label class="checkbox-label">
-          <input type="checkbox" v-model="formData.isActive">
+          <input type="checkbox" id="is-active" name="isActive" v-model="formData.isActive">
           <span>启用</span>
         </label>
         <label class="checkbox-label">
-          <input type="checkbox" v-model="formData.isHidden">
+          <input type="checkbox" id="is-hidden" name="isHidden" v-model="formData.isHidden">
           <span>隐藏</span>
         </label>
       </div>
     </div>
 
     <div class="form-group">
-      <label>标签</label>
+      <label for="website-tags">标签</label>
       <div class="tags-input-container">
         <input
+          id="website-tags"
           v-model="formData.tags"
           type="text"
           class="form-input"

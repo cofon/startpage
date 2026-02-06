@@ -222,7 +222,7 @@ onUnmounted(() => {
                 <button class="menu-item" @click="triggerImport">
                   <span class="menu-icon">⬆️</span>
                   <span>导入数据</span>
-                  <input ref="importFile" type="file" accept=".json" @change="handleImport" style="display: none;">
+                  <input ref="importFile" id="import-file" name="importFile" type="file" accept=".json" @change="handleImport" style="display: none;">
                 </button>
               </div>
             </transition>
