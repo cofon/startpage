@@ -43,7 +43,7 @@ export const useSettingStore = defineStore('setting', () => {
   const themes = ref(defaultThemes)
   const selectedSearchEngine = ref('baidu')
   const searchEngineList = ref(defaultSearchEngines)
-  const searchResultLayout = ref('grid') // 'grid' 或 'list'
+  const searchResultLayout = ref('list') // 'grid' 或 'list'
   const lastBackupTime = ref(null)
 
   // Actions
