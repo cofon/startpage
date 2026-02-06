@@ -45,11 +45,18 @@ export const useSettingStore = defineStore('setting', () => {
   // 应用主题
   function applyTheme(themeId) {
     const theme = themes.value.find(t => t.id === themeId)
-    if (!theme) return
+    if (!theme) {
+      console.error('主题未找到:', themeId)
+      return
+    }
+
+    console.log('应用主题:', themeId, theme)
 
     // 设置 CSS 变量
     const root = document.documentElement
     const colors = theme.colors
+
+    console.log('主题颜色:', colors)
 
     // 基础颜色
     root.style.setProperty('--color-primary', colors.primary)

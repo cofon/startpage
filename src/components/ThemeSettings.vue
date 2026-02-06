@@ -79,14 +79,33 @@ async function saveTheme() {
       alert('主题更新成功！')
     } else {
       // 添加新主题
-      await settingStore.addTheme(themeData)
+      const newTheme = await settingStore.addTheme(themeData)
       alert('主题添加成功！')
       // 选择新添加的主题
-      selectTheme(themeData)
+      selectTheme(newTheme)
+      // 加载新主题的数据到编辑表单
+      loadThemeData(newTheme)
     }
   } catch (error) {
     console.error('保存主题失败:', error)
     alert('保存主题失败，请查看控制台获取详细信息')
+  }
+}
+
+// 删除主题
+async function deleteTheme(themeId) {
+  try {
+    if (confirm('确定要删除这个主题吗？')) {
+      await settingStore.deleteTheme(themeId)
+      alert('主题删除成功！')
+      // 如果删除的是当前编辑的主题，重置表单
+      if (editingTheme.value.id === themeId) {
+        resetForm()
+      }
+    }
+  } catch (error) {
+    console.error('删除主题失败:', error)
+    alert(error.message || '删除主题失败，请查看控制台获取详细信息')
   }
 }
 
@@ -116,6 +135,11 @@ function startAddTheme() {
   }
 }
 
+// 检查是否可以删除主题
+function canDeleteTheme(themeId) {
+  return !['light', 'dark', 'auto'].includes(themeId)
+}
+
 // 初始化
 if (currentTheme.value) {
   loadThemeData(currentTheme.value)
@@ -137,6 +161,22 @@ if (currentTheme.value) {
           <span v-if="theme.id === settingStore.selectedThemeId" class="check-icon">✓</span>
         </div>
         <span class="theme-name">{{ theme.name }}</span>
+        <button
+          v-if="canDeleteTheme(theme.id)"
+          class="delete-button"
+          @click.stop="deleteTheme(theme.id)"
+          title="删除主题"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- 添加新主题按钮 -->
+      <div class="theme-item add-theme-item" @click="startAddTheme" title="添加新主题">
+        <div class="theme-color add-theme-color">
+          <span class="add-icon">+</span>
+        </div>
+        <span class="theme-name">添加主题</span>
       </div>
     </div>
 
@@ -187,13 +227,16 @@ if (currentTheme.value) {
 <style scoped>
 .theme-settings {
   padding: 20px;
+  max-width: 100%;
+  overflow-x: visible;
 }
 
 .theme-list {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+  padding: 4px;
 }
 
 .theme-item {
@@ -203,9 +246,13 @@ if (currentTheme.value) {
   gap: 8px;
   cursor: pointer;
   padding: 12px;
+  padding-top: 16px;
   border-radius: 8px;
   border: 2px solid transparent;
   transition: all 0.3s ease;
+  position: relative;
+  min-width: 80px;
+  overflow: visible;
 }
 
 .theme-item:hover {
@@ -240,16 +287,74 @@ if (currentTheme.value) {
   color: var(--color-text-main);
 }
 
+.delete-button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.theme-item:hover .delete-button {
+  opacity: 1;
+}
+
+.delete-button:hover {
+  background-color: rgba(255, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.add-theme-item {
+  cursor: pointer;
+  border: 2px dashed var(--color-border-base);
+  background-color: transparent;
+}
+
+.add-theme-item:hover {
+  border-color: var(--color-border-focus);
+  background-color: var(--color-bg-hover);
+}
+
+.add-theme-color {
+  background-color: var(--color-bg-hover) !important;
+  border: 2px solid var(--color-border-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-icon {
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  font-weight: 300;
+}
+
 .theme-editor {
   background-color: var(--color-bg-card);
   border-radius: 8px;
-  padding: 20px;
+  padding: 24px;
   box-shadow: var(--shadow-light);
+  border: 1px solid var(--color-border-base);
 }
 
 .theme-editor h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   color: var(--color-text-main);
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .form-group {
@@ -265,18 +370,23 @@ if (currentTheme.value) {
 
 .form-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--color-border-base);
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   background-color: var(--color-bg-page);
   color: var(--color-text-main);
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .form-input:focus {
   outline: none;
   border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-disabled);
 }
 
 .color-list {
@@ -304,41 +414,52 @@ if (currentTheme.value) {
 
 .color-picker {
   width: 48px;
-  height: 36px;
+  height: 40px;
   padding: 2px;
   border: 1px solid var(--color-border-base);
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   background-color: var(--color-bg-page);
+  transition: all 0.2s ease;
+}
+
+.color-picker:hover {
+  border-color: var(--color-border-focus);
 }
 
 .color-text {
   flex: 1;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--color-border-base);
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
   background-color: var(--color-bg-page);
   color: var(--color-text-main);
   font-family: monospace;
+  transition: all 0.2s ease;
 }
 
 .color-text:focus {
   outline: none;
   border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-actions {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border-base);
 }
 
 .button {
-  padding: 8px 16px;
+  flex: 1;
+  padding: 12px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -350,14 +471,23 @@ if (currentTheme.value) {
 
 .button-primary:hover {
   background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.button-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .button-secondary {
   background-color: var(--color-bg-active);
   color: var(--color-text-main);
+  border: 1px solid var(--color-border-base);
 }
 
 .button-secondary:hover {
   background-color: var(--color-bg-hover);
+  border-color: var(--color-border-focus);
 }
 </style>

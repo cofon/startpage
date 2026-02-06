@@ -85,13 +85,13 @@ onUnmounted(() => {
   font-size: 24px;
   cursor: pointer;
   flex-shrink: 0;
-  color: #667eea;
+  color: var(--color-primary);
   transition: color 0.3s ease;
   padding-left: 8px;
 }
 
 .engine-icon:hover {
-  color: #764ba2;
+  color: var(--color-primary-hover);
 }
 
 .engine-item {
@@ -104,17 +104,17 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   flex-shrink: 0;
-  color: #667eea;
+  color: var(--color-primary);
 }
 
 .engine-item:hover {
-  background-color: #f8f9ff;
-  color: #764ba2;
+  background-color: var(--color-bg-hover);
+  color: var(--color-primary-hover);
 }
 
 .engine-item.selected {
-  background-color: #f0f4ff;
-  color: #764ba2;
+  background-color: var(--color-bg-active);
+  color: var(--color-primary-hover);
 }
 
 /* transition-group 动画效果 */

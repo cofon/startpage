@@ -593,19 +593,12 @@ onMounted(async () => {
 }
 
 /* 主题样式 */
-.light-theme {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.dark-theme {
-  background: #1a1a1a;
-  color: #eee;
-}
-
-.auto-theme {
-  background: var(--system-bg, #f5f5f5);
-  color: var(--system-text, #333);
+.light-theme,
+.dark-theme,
+.auto-theme,
+[class$="-theme"] {
+  background: var(--color-bg-page);
+  color: var(--color-text-main);
 }
 
 /* 搜索模块 */
@@ -625,15 +618,15 @@ onMounted(async () => {
   align-items: center;
   width: 100%;
   height: 60px;
-  background-color: white;
+  background-color: var(--color-bg-card);
   border-radius: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-medium);
   transition: box-shadow 0.3s ease;
   position: relative;
 }
 
 .search-box:hover {
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-dark);
 }
 
 .engine-icon-container {
@@ -663,13 +656,13 @@ onMounted(async () => {
   outline: none;
   padding: 0 24px;
   font-size: 18px;
-  color: #333;
+  color: var(--color-text-main);
   background-color: transparent;
   transition: flex 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input::placeholder {
-  color: #aaa;
+  color: var(--color-text-disabled);
 }
 
 /* 标签列表 */
@@ -682,22 +675,22 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 10px;
   padding: 15px;
-  background-color: white;
+  background-color: var(--color-bg-card);
   border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-medium);
   z-index: 100;
 }
 
 .tag-item {
   padding: 8px 16px;
-  background-color: #f0f0f0;
+  background-color: var(--color-bg-hover);
   border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .tag-item:hover {
-  background-color: #e0e0e0;
+  background-color: var(--color-bg-active);
 }
 
 /* 显示模块 */
@@ -727,9 +720,9 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   padding: 20px;
-  background-color: white;
+  background-color: var(--color-bg-card);
   border-radius: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-light);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
@@ -738,7 +731,7 @@ onMounted(async () => {
 
 .website-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-medium);
 }
 
 .website-item:hover .website-actions {
@@ -827,7 +820,7 @@ onMounted(async () => {
 
 .website-description {
   font-size: 14px;
-  color: #666;
+  color: var(--color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -854,10 +847,10 @@ onMounted(async () => {
 .website-tags .tag {
   display: inline-block;
   padding: 2px 8px;
-  background-color: #f0f0f0;
+  background-color: var(--color-bg-hover);
   border-radius: 12px;
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .website-actions {
@@ -893,21 +886,21 @@ onMounted(async () => {
   width: 32px;
   height: 32px;
   border: none;
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-hover);
   border-radius: 50%;
   cursor: pointer;
   font-size: 16px;
-  color: #666;
+  color: var(--color-text-secondary);
   transition: all 0.2s ease;
 }
 
 .action-icon-button:hover {
-  background-color: #e8e8e8;
-  color: #333;
+  background-color: var(--color-bg-active);
+  color: var(--color-text-main);
 }
 
 .action-icon-button.delete:hover {
-  background-color: #fff1f0;
+  background-color: rgba(255, 77, 79, 0.1);
   color: #ff4d4f;
 }
 
@@ -915,14 +908,14 @@ onMounted(async () => {
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #999;
+  color: var(--color-text-disabled);
 }
 
 .button-primary {
   margin-top: 20px;
   padding: 10px 24px;
-  background-color: #1890ff;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -932,7 +925,7 @@ onMounted(async () => {
 }
 
 .button-primary:hover {
-  background-color: #40a9ff;
+  background-color: var(--color-primary-hover);
 }
 
 /* 设置模块 */
@@ -947,8 +940,8 @@ onMounted(async () => {
   height: 50px;
   border: none;
   border-radius: 50%;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-bg-card);
+  box-shadow: var(--shadow-light);
   cursor: pointer;
   font-size: 24px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -956,7 +949,7 @@ onMounted(async () => {
 
 .settings-button:hover {
   transform: rotate(90deg);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-medium);
 }
 
 </style>

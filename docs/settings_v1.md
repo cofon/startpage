@@ -52,6 +52,26 @@
 - `shadowMedium`：中等阴影
 - `shadowDark`：深阴影
 
+**主题颜色与页面元素对应关系**
+  主题颜色	           CSS 变量名	                 页面元素
+- 主色调                --color-primary	             主按钮、激活状态的按钮
+- 主色调悬停	     --color-primary-hover	 主按钮悬停状态
+- 主色调激活	     --color-primary-active	  主按钮激活状态
+- 主要文本	           --color-text-main	       搜索框文本、网站名称、菜单文本
+- 次要文本	           --color-text-secondary  网站描述、标签文本
+- 禁用文本	           --color-text-disabled	 占位符文本、空状态文本
+- 主色调上的文本  --color-text-on-primary 主按钮上的文字
+- 页面背景	           --color-bg-page	           页面背景、主题背景
+- 卡片背景	           --color-bg-card	            搜索框、标签列表、网站卡片、设置面板
+- 悬停背景	           --color-bg-hover	           标签项、操作按钮、按钮悬停
+- 激活背景	           --color-bg-active	        标签项悬停、操作按钮悬停
+- 基础边框	           --color-border-base       面板头部边框、菜单边框
+- 聚焦边框	           --color-border-focus      输入框聚焦边框
+- 浅阴影	             --shadow-light	              网站卡片、设置按钮
+- 中等阴影	           --shadow-medium	       搜索框、标签列表、按钮激活
+- 深阴影	             --shadow-dark	             设置面板、更多菜单
+
+
 ### 2. 主题选择列表设计
 
 **视觉设计**：
