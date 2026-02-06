@@ -1,0 +1,371 @@
+<!--
+primary 	16 进制	主题主色，所有交互高亮 / 选中 / 按钮可用色
+textMain	16 进制	页面正文 / 标题核心文字色，保证和背景色对比度≥4.5:1
+textSecondary	16 进制	提示 / 占位符 / 次要文字色，亮度低于 textMain
+textDisabled	16 进制	禁用按钮 / 输入框文字色，亮度低于 textSecondary
+bgPage  	16 进制	起始页整体背景色，所有页面最外层容器使用
+bgCard  	16 进制	面板 / 卡片 / 输入框 / 搜索框背景色，和 bgPage 有明显区分
+borderBase	16 进制	所有边框 / 分割线 / 分隔符颜色，介于 bgPage 和 bgCard 之间
+shadowLight	RGBA	轻量阴影 /hover 背景色，必须用透明值（适配不同背景）
+-->
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主题设置面板-8色维度（仅16进制）</title>
+  <style>
+    /* 全局重置 + CSS变量（统一管理，方便后续修改） */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    :root {
+      /* 面板交互高亮主色（非主题的primary，仅面板自身样式） */
+      --panel-highlight: #409eff;
+      /* 面板基础样式 */
+      --panel-width: 720px;
+      --panel-max-h: 80vh;
+      --panel-bg: #ffffff;
+      --panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      /* 文字色 */
+      --text-main: #333333;
+      --text-secondary: #909399;
+      --text-disabled: #c0c4cc;
+      /* 边框/分割线 */
+      --border-light: #e4e7ed;
+      --border-base: #dcdfe6;
+      /* 输入框/色块样式 */
+      --input-height: 32px;
+      --color-block-size: 32px;
+      --theme-circle-size: 28px;
+      /* 圆角/间距/动画 */
+      --radius-sm: 4px;
+      --radius-full: 50%;
+      --gap-sm: 8px;
+      --gap-md: 12px;
+      --gap-lg: 20px;
+      --transition: all 0.2s ease;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* 遮罩层 */
+    .settings-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 998;
+    }
+
+    /* 居中设置面板核心 */
+    .settings-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--panel-width);
+      max-width: 90vw;
+      max-height: var(--panel-max-h);
+      background: var(--panel-bg);
+      border-radius: 8px;
+      box-shadow: var(--panel-shadow);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 面板头部 */
+    .settings-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .settings-header h3 {
+      font-size: 18px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .settings-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: #f5f7fa;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .settings-close:hover {
+      background: var(--border-light);
+      color: var(--text-main);
+    }
+
+    /* 面板主体（滚动区） */
+    .settings-content {
+      flex: 1;
+      padding: var(--gap-lg) 24px;
+      overflow-y: auto;
+    }
+    /* 美化滚动条 */
+    .settings-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .settings-content::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: var(--radius-sm);
+    }
+    .settings-content::-webkit-scrollbar-thumb:hover {
+      background: var(--border-base);
+    }
+    .settings-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    /* 主题设置模块标题 */
+    .theme-title {
+      font-size: 16px;
+      color: var(--text-main);
+      font-weight: 600;
+      margin-bottom: var(--gap-lg);
+    }
+
+    /* 主题选择圆形色块列表 */
+    .theme-circle-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: var(--gap-lg);
+    }
+    /* 主题色圆Item */
+    .theme-circle-item {
+      width: var(--theme-circle-size);
+      height: var(--theme-circle-size);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px solid transparent;
+      position: relative;
+    }
+    /* 选中的主题圆：高亮边框+轻微放大+外影 */
+    .theme-circle-item.active {
+      border-color: var(--panel-highlight);
+      transform: scale(1.1);
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+    }
+    .theme-circle-item:hover:not(.active) {
+      transform: scale(1.05);
+    }
+
+    /* 当前选中主题的颜色编辑区容器 */
+    .theme-color-edit {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-md);
+      margin-bottom: var(--gap-lg);
+    }
+    /* 单个颜色编辑行（8个维度通用布局） */
+    .color-edit-row {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    /* 颜色名称（固定宽度，左对齐） */
+    .color-name {
+      font-size: 14px;
+      color: var(--text-main);
+      width: 100px;
+      flex-shrink: 0;
+      text-align: left;
+    }
+    /* 颜色选择方块 */
+    .color-block {
+      width: var(--color-block-size);
+      height: var(--color-block-size);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    /* 阴影色特殊方块：展示透明遮罩效果 */
+    .color-block.shadow-block {
+      background: #f5f7fa;
+      position: relative;
+    }
+    .color-block.shadow-block::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: inherit;
+    }
+    .color-block:hover {
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    }
+    /* 16进制输入框通用样式（唯一输入框） */
+    .color-input {
+      height: var(--input-height);
+      padding: 0 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      outline: none;
+      font-size: 14px;
+      color: var(--text-main);
+      transition: var(--transition);
+      flex: 1;
+      min-width: 180px;
+    }
+    .color-input:focus {
+      border-color: var(--panel-highlight);
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+    }
+    /* 阴影色输入框：区分RGBA值 */
+    .color-input.rgba-input {
+      color: #67c23a;
+    }
+
+    /* 添加主题按钮：禁用/可用双样式 */
+    .add-theme-btn {
+      width: 100%;
+      height: 40px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 10px;
+    }
+    /* 禁用状态：灰色、不可点、无hover */
+    .add-theme-btn:disabled {
+      background-color: #f5f7fa;
+      color: var(--text-disabled);
+      cursor: not-allowed;
+    }
+    /* 可用状态：面板高亮色、hover加深 */
+    .add-theme-btn:not(:disabled) {
+      background-color: var(--panel-highlight);
+      color: #ffffff;
+    }
+    .add-theme-btn:not(:disabled):hover {
+      background-color: #337ecc;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- 遮罩层 -->
+  <div class="settings-mask"></div>
+
+  <!-- 居中设置面板 -->
+  <div class="settings-panel">
+    <!-- 面板头部 -->
+    <div class="settings-header">
+      <h3>设置</h3>
+      <button class="settings-close">×</button>
+    </div>
+
+    <!-- 面板主体（滚动区） -->
+    <div class="settings-content">
+      <!-- 主题设置模块 -->
+      <div class="theme-setting">
+        <!-- 模块标题 -->
+        <div class="theme-title">主题设置</div>
+
+        <!-- 主题选择：圆形色块列表（对接IndexedDB主题数据，active为当前选中） -->
+        <div class="theme-circle-list">
+          <div class="theme-circle-item active" style="background-color: #409eff;"></div>
+          <div class="theme-circle-item" style="background-color: #67c23a;"></div>
+          <div class="theme-circle-item" style="background-color: #e6a23c;"></div>
+          <div class="theme-circle-item" style="background-color: #f56c6c;"></div>
+          <div class="theme-circle-item" style="background-color: #909399;"></div>
+          <div class="theme-circle-item" style="background-color: #7265e6;"></div>
+          <div class="theme-circle-item" style="background-color: #009688;"></div>
+          <div class="theme-circle-item" style="background-color: #393e46;"></div>
+        </div>
+
+        <!-- 8个颜色维度编辑区（仅16进制，对接选中主题的数据库数据） -->
+        <div class="theme-color-edit">
+          <!-- 1. 主色 primary -->
+          <div class="color-edit-row">
+            <div class="color-name">primary</div>
+            <div class="color-block" style="background-color: #409eff;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#409eff">
+          </div>
+          <!-- 2. 基础文字色 textMain -->
+          <div class="color-edit-row">
+            <div class="color-name">textMain</div>
+            <div class="color-block" style="background-color: #333333;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#333333">
+          </div>
+          <!-- 3. 次要文字色 textSecondary -->
+          <div class="color-edit-row">
+            <div class="color-name">textSecondary</div>
+            <div class="color-block" style="background-color: #909399;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#909399">
+          </div>
+          <!-- 4. 禁用文字色 textDisabled -->
+          <div class="color-edit-row">
+            <div class="color-name">textDisabled</div>
+            <div class="color-block" style="background-color: #c0c4cc;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#c0c4cc">
+          </div>
+          <!-- 5. 页面背景色 bgPage -->
+          <div class="color-edit-row">
+            <div class="color-name">bgPage</div>
+            <div class="color-block" style="background-color: #f5f7fa;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#f5f7fa">
+          </div>
+          <!-- 6. 卡片背景色 bgCard -->
+          <div class="color-edit-row">
+            <div class="color-name">bgCard</div>
+            <div class="color-block" style="background-color: #ffffff;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#ffffff">
+          </div>
+          <!-- 7. 边框基础色 borderBase -->
+          <div class="color-edit-row">
+            <div class="color-name">borderBase</div>
+            <div class="color-block" style="background-color: #e4e7ed;"></div>
+            <input type="text" class="color-input" placeholder="请输入16进制颜色值" value="#e4e7ed">
+          </div>
+          <!-- 8. 轻量阴影色 shadowLight（特殊：RGBA值） -->
+          <div class="color-edit-row">
+            <div class="color-name">shadowLight</div>
+            <div class="color-block shadow-block"></div>
+            <input type="text" class="color-input rgba-input" placeholder="请输入RGBA颜色值" value="rgba(0, 0, 0, 0.1)">
+          </div>
+        </div>
+
+        <!-- 添加主题按钮：JS控制disabled属性（修改颜色后启用） -->
+        <button class="add-theme-btn" disabled>添加主题</button>
+        <!-- 可用状态示例：<button class="add-theme-btn">添加主题</button> -->
+      </div>
+    </div>
+  </div>
+</body>
+</html>

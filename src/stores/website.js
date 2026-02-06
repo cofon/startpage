@@ -45,6 +45,8 @@ export const useWebsiteStore = defineStore('website', () => {
       iconError: website.iconError || null,
       isActive: website.isActive !== undefined ? website.isActive : true,  // 添加isActive字段的处理
       isHidden: website.isHidden !== undefined ? website.isHidden : false,  // 添加isHidden字段的处理
+      // 如果isMarked为false，则将markOrder设置为null
+      markOrder: website.isMarked ? website.markOrder : null,
       ...website
     }))
   }

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置面板-显示模式切换（最终版）</title>
+  <style>
+    /* 全局重置 + CSS变量（按你的参数调整） */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    :root {
+      /* 面板基础规格 */
+      --panel-width: 720px;
+      --panel-bg: #ffffff;
+      --panel-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+      /* 功能色 */
+      --primary-color: #409eff;    /* 主色：滑块/文本高亮 */
+      --gray-bg: #e4e7ed;          /* 外框A背景色 */
+      --text-main: #333333;        /* 主文字色 */
+      --text-secondary: #909399;   /* 次文字/置灰色 */
+      --hover-bg: #f8f9fa;         /* hover背景色 */
+      --border-light: #e4e7ed;     /* 细分割线 */
+      --border-lg: #dee2e6;        /* 粗分割线 */
+      /* 滑动按钮尺寸（按你的要求修改） */
+      --outer-width: 100px;        /* 外框A宽度 */
+      --outer-height: 36px;        /* 外框A高度 */
+      --inner-width: 60px;         /* 滑块B宽度 */
+      --inner-height: 32px;        /* 滑块B高度 */
+      /* 圆角/间距/动画 */
+      --full-radius: 18px;         /* 全圆角（外框高度一半） */
+      --gap-xs: 8px;
+      --gap-sm: 12px;
+      --gap-md: 16px;
+      --gap-lg: 24px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 顺滑过渡 */
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #f5f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    /* 遮罩层 */
+    .settings-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 998;
+      cursor: pointer;
+    }
+
+    /* 设置面板 */
+    .settings-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: var(--panel-width);
+      background: var(--panel-bg);
+      border-radius: 8px;
+      box-shadow: var(--panel-shadow);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      cursor: default;
+    }
+
+    /* 面板头部 */
+    .settings-header {
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .settings-header h3 {
+      font-size: 18px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .settings-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: var(--hover-bg);
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .settings-close:hover {
+      background: var(--border-light);
+      color: var(--text-main);
+    }
+
+    /* 面板主体 */
+    .settings-content {
+      flex: 1;
+      padding: 32px 40px;
+      overflow-y: auto;
+    }
+    .settings-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .settings-content::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 4px;
+    }
+
+    /* 通用模块样式 */
+    .module-title {
+      font-size: 16px;
+      color: var(--text-main);
+      font-weight: 600;
+      margin-bottom: var(--gap-sm);
+    }
+    .line-sm {
+      width: 100%;
+      height: 1px;
+      background-color: var(--border-light);
+      margin: var(--gap-sm) 0 var(--gap-lg) 0;
+    }
+    .line-lg {
+      width: 100%;
+      height: 1.5px;
+      background-color: var(--border-lg);
+      margin: var(--gap-lg) 0;
+    }
+
+    /* ---------------------- 核心：自定义滑动切换按钮 ---------------------- */
+    .display-mode-setting {
+      width: 100%;
+    }
+    /* 切换行容器 */
+    .mode-switch-row {
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 var(--gap-sm);
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+    .mode-switch-row:hover {
+      background-color: var(--hover-bg);
+    }
+    /* 说明文字 */
+    .mode-desc {
+      font-size: 14px;
+      color: var(--text-main);
+      width: 120px;
+      flex-shrink: 0;
+    }
+    /* 替换图标：用文本标识Grid/List（无第三方依赖） */
+    .mode-text {
+      font-size: 13px;
+      font-weight: 500;
+      width: 40px;
+      text-align: center;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+    .grid-text {
+      color: var(--primary-color); /* 默认Grid高亮 */
+      margin-right: var(--gap-xs);
+    }
+    .list-text {
+      color: var(--text-secondary); /* 默认List置灰 */
+      margin-left: var(--gap-xs);
+    }
+
+    /* 外框A：灰色圆角长方形（按你的尺寸） */
+    .mode-slider-outer {
+      width: var(--outer-width);
+      height: var(--outer-height);
+      background-color: var(--gray-bg);
+      border-radius: var(--full-radius); /* 全圆角 */
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* 内阴影美化 */
+    }
+    /* 滑块B：蓝色圆角长方形（按你的尺寸） */
+    .mode-slider-inner {
+      width: var(--inner-width);
+      height: var(--inner-height);
+      background-color: var(--primary-color);
+      border-radius: var(--full-radius); /* 和外框同圆角 */
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: var(--transition);
+      box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3); /* 外阴影美化 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* 激活状态（右对齐=List） */
+    .mode-slider-outer.active .mode-slider-inner {
+      left: calc(100% - var(--inner-width) - 2px); /* 右对齐 */
+    }
+    /* 激活状态下文本颜色反转 */
+    .mode-slider-outer.active ~ .list-text {
+      color: var(--primary-color);
+    }
+    .mode-slider-outer.active ~ .grid-text {
+      color: var(--text-secondary);
+    }
+    /* hover美化：外框轻微变色 */
+    .mode-slider-outer:hover {
+      background-color: #dcdfe6;
+    }
+  </style>
+</head>
+<body>
+  <!-- 遮罩层 -->
+  <div class="settings-mask"></div>
+
+  <!-- 设置面板 -->
+  <div class="settings-panel">
+    <!-- 面板头部 -->
+    <div class="settings-header">
+      <h3>设置</h3>
+      <button class="settings-close">×</button>
+    </div>
+
+    <!-- 面板主体 -->
+    <div class="settings-content">
+      <!-- 粗分割线：分隔上方模块 -->
+      <div class="line-lg"></div>
+
+      <!-- 显示模式切换模块 -->
+      <div class="display-mode-setting">
+        <div class="module-title">搜索结果显示模式</div>
+        <div class="line-sm"></div>
+
+        <!-- 核心切换行（替换图标为文本） -->
+        <div class="mode-switch-row">
+          <div class="mode-desc">切换显示模式：</div>
+          <!-- 替换图标：Grid文本标识 -->
+          <div class="mode-text grid-text">网格</div>
+          <!-- 自定义滑动按钮：外框A + 滑块B（按你的尺寸） -->
+          <div class="mode-slider-outer" id="displayModeSlider">
+            <div class="mode-slider-inner">网格</div>
+          </div>
+          <!-- 替换图标：List文本标识 -->
+          <div class="mode-text list-text">列表</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS切换逻辑（对接数据库） -->
+  <script>
+    // 获取滑动按钮元素
+    const modeSlider = document.getElementById('displayModeSlider');
+    // 模拟从数据库读取状态：0=Grid(左对齐)，1=List(右对齐)
+    const dbMode = 0; // 可改为1测试List状态
+
+    // 初始化状态
+    if (dbMode === 1) {
+      modeSlider.classList.add('active');
+      modeSlider.querySelector('.mode-slider-inner').textContent = '列表';
+    }
+
+    // 点击切换逻辑
+    modeSlider.addEventListener('click', () => {
+      // 切换激活类
+      modeSlider.classList.toggle('active');
+      // 获取当前模式
+      const isListMode = modeSlider.classList.contains('active');
+      // 更新滑块文本
+      const innerSlider = modeSlider.querySelector('.mode-slider-inner');
+      innerSlider.textContent = isListMode ? '列表' : '网格';
+      // 开发时：将状态写入数据库（0=Grid，1=List）
+      console.log('当前模式：', isListMode ? 'List（列表）- 右对齐' : 'Grid（网格）- 左对齐');
+    });
+  </script>
+</body>
+</html>
