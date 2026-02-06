@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { parseSearchQuery, applyFilters } from '../utils/searchParser'
 
 export const useWebsiteStore = defineStore('website', () => {
   // 状态
@@ -69,7 +70,7 @@ export const useWebsiteStore = defineStore('website', () => {
       iconLastFetchTime: null,
       iconError: null
     }
-    
+
     websites.value.push(websiteWithDefaults)
   }
 
@@ -120,26 +121,35 @@ export const useWebsiteStore = defineStore('website', () => {
   }
 
   function searchWebsites(query) {
-    const keyword = query.toLowerCase().trim()
-    if (!keyword) {
-      // 返回所有非隐藏的网站，无论是否标记
+    const parsed = parseSearchQuery(query)
+
+    // 如果没有搜索词，返回所有非隐藏的网站
+    if (!parsed.isAdvanced && parsed.keywords.length === 0) {
       return websites.value.filter(w => w.isActive && !w.isHidden)
     }
 
-    const filtered = websites.value.filter(w => {
-      const matchesQuery = 
-        (w.name && w.name.toLowerCase().includes(keyword)) ||
-        (w.url && w.url.toLowerCase().includes(keyword)) ||
-        (w.description && w.description.toLowerCase().includes(keyword)) ||
-        (w.tags && w.tags.some(tag => tag.toLowerCase().includes(keyword)))
+    // 如果是高级搜索（特殊命令）
+    if (parsed.isAdvanced) {
+      return applyFilters(websites.value, parsed.filters)
+    }
 
-      return matchesQuery && w.isActive && !w.isHidden
+    // 普通搜索：支持多个关键词（空格分隔，AND关系）
+    const filtered = websites.value.filter(w => {
+      // 检查是否匹配所有关键词
+      const matchesAllKeywords = parsed.keywords.every(kw => {
+        return (w.name && w.name.toLowerCase().includes(kw)) ||
+               (w.url && w.url.toLowerCase().includes(kw)) ||
+               (w.description && w.description.toLowerCase().includes(kw)) ||
+               (w.tags && w.tags.some(tag => tag.toLowerCase().includes(kw)))
+      })
+
+      return matchesAllKeywords && w.isActive && !w.isHidden
     })
     return filtered
   }
 
   function searchByTag(tag) {
-    return websites.value.filter(w => 
+    return websites.value.filter(w =>
       w.isActive && !w.isHidden && w.tags?.includes(tag)
     )
   }

@@ -116,15 +116,7 @@ export const useSearchStore = defineStore('search', () => {
       return
     }
 
-    // 检查是否是特殊命令（以 -- 开头）
-    if (query.value.startsWith('--')) {
-      // 特殊命令处理，后续实现
-      results.value = []
-      setDisplayMode('empty')
-      return
-    }
-
-    // 执行本地搜索
+    // 执行本地搜索（包括特殊命令处理）
     results.value = websiteStore.searchWebsites(query.value)
     setDisplayMode('search')
   }

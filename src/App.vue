@@ -203,8 +203,46 @@ async function deleteWebsite(website) {
       // 如果当前显示的是标记网站列表，更新为标记网站列表
       searchStore.results = websiteStore.markedWebsites
     } else if (searchStore.displayMode === 'search') {
-      // 如果当前显示的是搜索结果，更新为搜索结果
-      searchStore.results = websiteStore.searchWebsites(searchStore.query.value)
+      // 如果当前显示的是搜索结果，从当前结果中移除该网站
+      searchStore.results = searchStore.results.filter(w => w.id !== website.id)
+    }
+  }
+}
+
+// 恢复网站（将 isActive 设置为 true）
+async function restoreWebsite(website) {
+  if (confirm(`确定要恢复 "${website.name}" 吗？`)) {
+    // 更新store中的状态
+    websiteStore.updateWebsite(website.id, { isActive: true })
+
+    // 创建一个普通对象副本传递给数据库，避免传递响应式对象
+    const websiteToUpdate = {
+      id: website.id,
+      name: website.name,
+      url: website.url,
+      description: website.description || '',
+      tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
+      visitCount: website.visitCount || 0,
+      isMarked: website.isMarked,
+      markOrder: website.markOrder,
+      isActive: true, // 设置为true，表示已恢复
+      isHidden: website.isHidden !== undefined ? website.isHidden : false,
+      iconData: website.iconData,
+      iconGenerateData: website.iconGenerateData,
+      iconCanFetch: website.iconCanFetch,
+      iconFetchAttempts: website.iconFetchAttempts,
+      iconUrl: website.iconUrl,
+      updatedAt: new Date()
+    };
+    await db.updateWebsite(websiteToUpdate)
+
+    // 根据当前显示模式刷新UI
+    if (searchStore.displayMode === 'marked') {
+      // 如果当前显示的是标记网站列表，更新为标记网站列表
+      searchStore.results = websiteStore.markedWebsites
+    } else if (searchStore.displayMode === 'search') {
+      // 如果当前显示的是搜索结果，从当前结果中移除该网站
+      searchStore.results = searchStore.results.filter(w => w.id !== website.id)
     }
   }
 }
@@ -475,8 +513,20 @@ onMounted(async () => {
             <button class="action-icon-button" @click.stop="openEditWebsite(website)">
               ✎
             </button>
-            <button class="action-icon-button delete" @click.stop="deleteWebsite(website)">
+            <button 
+              v-if="website.isActive" 
+              class="action-icon-button delete" 
+              @click.stop="deleteWebsite(website)"
+            >
               ✕
+            </button>
+            <button 
+              v-else 
+              class="action-icon-button restore" 
+              @click.stop="restoreWebsite(website)"
+              title="恢复网站"
+            >
+              ↺
             </button>
           </div>
         </div>
@@ -509,8 +559,20 @@ onMounted(async () => {
             <button class="action-icon-button" @click.stop="openEditWebsite(website)">
               ✎
             </button>
-            <button class="action-icon-button delete" @click.stop="deleteWebsite(website)">
+            <button 
+              v-if="website.isActive" 
+              class="action-icon-button delete" 
+              @click.stop="deleteWebsite(website)"
+            >
               ✕
+            </button>
+            <button 
+              v-else 
+              class="action-icon-button restore" 
+              @click.stop="restoreWebsite(website)"
+              title="恢复网站"
+            >
+              ↺
             </button>
           </div>
         </div>
