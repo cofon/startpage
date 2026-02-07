@@ -173,7 +173,8 @@ function handleDragEnd() {
         <div class="engine-info">
           <div class="drag-handle">⋮⋮</div>
           <div class="engine-icon" :style="{ color: engine.iconColor }">
-            <img v-if="engine.icon" :src="engine.icon" :alt="engine.name" class="icon-image">
+            <div v-if="engine.icon && engine.icon.startsWith('<svg')" v-html="engine.icon" class="icon-image"></div>
+            <img v-else-if="engine.icon" :src="engine.icon" :alt="engine.name" class="icon-image">
             <span v-else class="icon-placeholder">{{ engine.name[0] }}</span>
           </div>
           <div class="engine-details">
@@ -216,7 +217,8 @@ function handleDragEnd() {
             placeholder="图标URL"
           >
           <div class="icon-preview" :style="{ color: editingEngine.iconColor }">
-            <img v-if="editingEngine.icon" :src="editingEngine.icon" :alt="editingEngine.name || '预览'" class="icon-image">
+            <div v-if="editingEngine.icon && editingEngine.icon.startsWith('<svg')" v-html="editingEngine.icon" class="icon-image"></div>
+            <img v-else-if="editingEngine.icon" :src="editingEngine.icon" :alt="editingEngine.name || '预览'" class="icon-image">
             <span v-else class="icon-placeholder">{{ editingEngine.name[0] || '?' }}</span>
           </div>
         </div>

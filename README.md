@@ -2,6 +2,12 @@
 
 一个现代化的浏览器起始页项目，用于替代浏览器默认的收藏夹，提供便捷的网址收藏、展示和检索功能。
 
+## 📝 使用说明
+不开启本地服务，不放在云服务器，在浏览器打开index.html运行项目
+
+## 🛠️ 构建方案
+安装插件 vite-plugin-singlefile，修改 vite.config.js，路由使用hash模式，svg图标直接内联到JavaScript代码中而不是通过fetch请求外部文件
+
 ## ✨ 特性
 
 - 🎯 **快速搜索**：支持本地搜索和网络搜索，可自定义搜索引擎
@@ -328,3 +334,4 @@ lastBackupTime: Date,
     - setting面板 点击theme list item 切换theme后关闭设置面板 OK
     - setting面板 点击模式切换后关闭设置面板 OK
     - selected-search-engine 是 local-search 时，标记网站列表不受设置模板显示模式按钮控制，但是切换到net-search时，标记网站列表会受设置模板显示模式按钮控制，需要修改，任何时候 标记网站列表 都不应该受设置模板显示模式按钮控制 OK
+

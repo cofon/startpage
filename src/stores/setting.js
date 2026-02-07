@@ -160,6 +160,14 @@ export const useSettingStore = defineStore('setting', () => {
         }
         searchEngines.value = [...defaultSearchEngines]
       } else {
+        // 更新现有搜索引擎的图标为内联 SVG
+        for (const existingEngine of existingEngines) {
+          const defaultEngine = defaultSearchEngines.find(e => e.id === existingEngine.id)
+          if (defaultEngine) {
+            existingEngine.icon = defaultEngine.icon
+            await db.updateSearchEngine(existingEngine)
+          }
+        }
         // 按照 order 字段排序
         searchEngines.value = existingEngines.sort((a, b) => (a.order || 0) - (b.order || 0))
       }

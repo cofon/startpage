@@ -40,14 +40,8 @@ export const useSearchStore = defineStore('search', () => {
   // 加载搜索引擎图标
   async function loadEngineIcons() {
     for (const engine of settingStore.searchEngines) {
-      try {
-        const response = await fetch(engine.icon)
-        const iconContent = await response.text()
-        engineIcons.value[engine.id] = iconContent
-      } catch (error) {
-        console.error(`[Icon List] 加载搜索引擎图标失败: ${engine.id}`, error)
-        engineIcons.value[engine.id] = ''
-      }
+      // 图标已经是内联的 SVG 字符串，直接使用
+      engineIcons.value[engine.id] = engine.icon
     }
   }
 
