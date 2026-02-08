@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useWebsiteStore } from './stores/website'
 import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
 import db from './utils/indexedDB'
+import iconManager from './utils/iconManager'
 import SearchEngineSelector from './components/SearchEngineSelector.vue'
 import WebsiteDialog from './components/WebsiteDialog.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
@@ -14,6 +15,11 @@ import { defaultWebsites } from './data/defaultWebsites'
 const websiteStore = useWebsiteStore()
 const settingStore = useSettingStore()
 const searchStore = useSearchStore()
+
+// 页面卸载时清除页面级别的缓存
+onUnmounted(() => {
+  iconManager.clearPageCache()
+})
 
 // 计算属性：判断当前搜索引擎是否为本地搜索
 const isLocalSearchEngine = computed(() => {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import iconManager from '../utils/iconManager'
 import { useWebsiteStore } from '../stores/website'
 import db from '../utils/indexedDB'
@@ -77,13 +77,13 @@ async function updateWebsiteIcon(id, iconData) {
     description: String(website.description || ''),
     iconUrl: String(website.iconUrl || ''),
     tags: Array.isArray(website.tags) ? [...website.tags] : [],
-    // 图标相关字段
-    iconData: website.iconData || null,
-    iconGenerateData: website.iconGenerateData || null,
-    iconCanFetch: Boolean(website.iconCanFetch !== undefined ? website.iconCanFetch : true),
-    iconFetchAttempts: Number(website.iconFetchAttempts || 0),
-    iconLastFetchTime: website.iconLastFetchTime || null,
-    iconError: website.iconError || null,
+    // 图标相关字段 - 使用updatedFields中的值
+    iconData: updatedFields.iconData !== undefined ? updatedFields.iconData : (website.iconData || null),
+    iconGenerateData: updatedFields.iconGenerateData !== undefined ? updatedFields.iconGenerateData : (website.iconGenerateData || null),
+    iconCanFetch: updatedFields.iconCanFetch !== undefined ? Boolean(updatedFields.iconCanFetch) : Boolean(website.iconCanFetch !== undefined ? website.iconCanFetch : true),
+    iconFetchAttempts: updatedFields.iconFetchAttempts !== undefined ? Number(updatedFields.iconFetchAttempts) : Number(website.iconFetchAttempts || 0),
+    iconLastFetchTime: updatedFields.iconLastFetchTime !== undefined ? updatedFields.iconLastFetchTime : (website.iconLastFetchTime || null),
+    iconError: updatedFields.iconError !== undefined ? updatedFields.iconError : (website.iconError || null),
     // 时间戳
     createdAt: String(website.createdAt || new Date().toISOString()),
     updatedAt: String(updatedFields.updatedAt),
@@ -156,8 +156,23 @@ function onImageError() {
   currentIcon.value = fallbackIcon;
 }
 
+// 监听图标更新事件
+function handleIconUpdate(event) {
+  const { websiteId, iconData } = event.detail
+  if (websiteId === props.website.id && iconData) {
+    currentIcon.value = iconData
+  }
+}
+
 onMounted(() => {
   loadIcon()
+  // 添加事件监听
+  window.addEventListener('icon-updated', handleIconUpdate)
+})
+
+// 组件卸载时移除事件监听
+onUnmounted(() => {
+  window.removeEventListener('icon-updated', handleIconUpdate)
 })
 </script>
 

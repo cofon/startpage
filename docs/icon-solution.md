@@ -10,8 +10,8 @@
 
   // Icon 相关字段
   iconUrl: 'https://github.githubassets.com/favicons/favicon.svg', // 原始 URL
-  iconData: 'data:image/svg+xml;base64,...', // 从网络获取的 icon 转换的 string
-  iconGenerateData: 'data:image/svg+xml;base64,...', // 函数生成的 icon string
+  iconData: 'data:image/[format];base64,...', // 从网络获取的 favicon 转换的 base64 数据（PNG/ICO/JPG等格式）
+  iconGenerateData: 'data:image/svg+xml;base64,...', // 本地生成的 SVG 图标
   iconCanFetch: true, // 是否可以从网络获取 icon（布尔值）
   iconFetchAttempts: 0, // 尝试从网络获取的次数（数字）
   iconLastFetchTime: null, // 最后一次尝试从网络获取的时间戳
@@ -31,8 +31,8 @@
    ├─ 如果存在且有效 → 显示 → 继续
    └─ 如果不存在或无效 → 继续
    ↓
-3. 生成 SVG 图标
-   ├─ 保存到数据库 website表的iconGenerateData(任何一个网站第一次显示的时候都会走到这一步,除非是导入数据的时候iconData或者iconGenerateData已经有值)
+3. 生成 SVG 图标(如果iconGenerateData有 有效值 跳过这一步)
+   ├─ 保存到数据库 website表的iconGenerateData
    ├─ 显示在网页上
    └─ 继续
    ↓
@@ -55,6 +55,29 @@
        └─ 如果 iconFetchAttempts >= 5
            └─ iconCanFetch = false
 ```
+https://faviconsnap.com/api/favicon?url=www.google.com
+## 3. 获取icon的API
+- FaviconSnap
+    - https://faviconsnap.com/api/favicon?url=${domain}
+    - 测试网站25个, 成功24个
+    - https://faviconsnap.com/zh
+    - **优先级最高**
+- IconHorse服务
+    - https://icon.horse/icon/${domain} 
+    - 测试网站25个, 成功24个
+    - 限制每月1000 
+    - https://icon.horse/
+    - 优先级第二(虽然获取成功率高，但是有次数限制)
+- faviconPub
+    - https://favicon.pub/api/${domain}
+    - 测试网站25个, 成功18个
+    - https://favicon.pub/cn/favicon-fetcher
+- AFMAX图标API
+    - https://api.afmax.cn/so/ico/index.php?r=${domain}
+    - 测试网站25个, 成功15个
+    - https://files.api.afmax.cn/archives/wei-ming-ming-wen-zhang-JVMh2FEN
+
+- **每个API都添加到代码中，第一个获取失败就使用下一个尝试**
 
 ## 4. 关键规则
 
@@ -84,7 +107,7 @@
 **重要原则**
 iconFetchAttempts 只记录**失败次数**，不记录成功次数
 
-**场景 1：国内网站（可以获取到 icon）**
+**场景 1：可以获取到 icon**
 ```
 第 1 次访问：获取成功 → iconFetchAttempts = 0（不变）
 第 2 次访问：直接使用 iconData → iconFetchAttempts = 0（不变）
@@ -92,7 +115,7 @@ iconFetchAttempts 只记录**失败次数**，不记录成功次数
 ...
 ```
 
-**场景 2：国外网站（无法获取 icon）**
+**场景 2：无法获取 icon**
 ```
 第 1 次访问：获取失败 → iconFetchAttempts = 1
 第 2 次访问：获取失败 → iconFetchAttempts = 2
@@ -198,6 +221,7 @@ YouTube icon获取失败，使用自动生成的icon
 |------|---------|-----------|
 | console.error | ❌ 不使用 | 红色错误 + 堆栈信息 |
 | console.log | ✅ 使用 | 普通文本信息 |
+PS: 有些错误是浏览器内核错误，无法使用js拦截
 
 ## 5. 需要实现的功能模块
 
@@ -297,4 +321,4 @@ IconManager.doFetchFromNetwork()
 
 ## 10. 版本历史
 
-- **方案 A 最终完善版**：当前版本，包含完整的字段设计、错误处理和性能优化
+
