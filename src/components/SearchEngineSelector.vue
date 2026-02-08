@@ -58,27 +58,27 @@ onUnmounted(() => {
       <div class="engine-icon" :style="{ color: settingStore.getCurrentSearchEngine()?.iconColor }">
         <div class="icon-svg" v-html="searchStore.currentEngineIcon"></div>
       </div>
-      <transition-group name="slide" tag="div" class="engine-list-container">
-        <div
-          v-for="(engine, index) in isOpen ? searchEngines : []"
-          :key="engine.id"
-          class="engine-item"
-          :class="{ 'selected': engine.id === settingStore.selectedSearchEngineId }"
-          :style="{ transitionDelay: `${index * 0.05}s` }"
-          @click.stop="selectEngine(engine)"
-        >
-          <div class="engine-icon" :style="{ color: engine.iconColor }">
-            <template v-if="searchStore.engineIcons[engine.id]">
-              <div class="icon-svg" v-html="searchStore.engineIcons[engine.id]"></div>
-            </template>
-            <template v-else>
-              <img v-if="engine.icon" :src="engine.icon" :alt="engine.name">
-              <span v-else class="icon-placeholder">{{ engine.name[0] }}</span>
-            </template>
-          </div>
-        </div>
-      </transition-group>
     </div>
+    <transition-group name="slide" tag="div" class="engine-list-container">
+      <div
+        v-for="(engine, index) in isOpen ? searchEngines : []"
+        :key="engine.id"
+        class="engine-item"
+        :class="{ 'selected': engine.id === settingStore.selectedSearchEngineId }"
+        :style="{ transitionDelay: `${index * 0.05}s` }"
+        @click.stop="selectEngine(engine)"
+      >
+        <div class="engine-icon" :style="{ color: engine.iconColor }">
+          <template v-if="searchStore.engineIcons[engine.id]">
+            <div class="icon-svg" v-html="searchStore.engineIcons[engine.id]"></div>
+          </template>
+          <template v-else>
+            <img v-if="engine.icon" :src="engine.icon" :alt="engine.name">
+            <span v-else class="icon-placeholder">{{ engine.name[0] }}</span>
+          </template>
+        </div>
+      </div>
+    </transition-group>
   </div>
 </template>
 
@@ -191,5 +191,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   height: 100%;
+  overflow: hidden; /* 防止内容溢出影响搜索框圆角 */
+  border-radius: 0 30px 30px 0; /* 添加圆角，与搜索框保持一致 */
+  background-color: transparent; /* 确保背景透明 */
 }
 </style>

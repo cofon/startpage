@@ -475,7 +475,14 @@ onMounted(async () => {
 
           />
           <div class="website-info">
-            <div class="website-name" :title="website.name">{{ website.name }}</div>
+            <a
+              class="website-name"
+              :title="website.name"
+              :href="website.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click.stop
+            >{{ website.name }}</a>
           </div>
           <div class="website-actions">
             <button class="action-icon-button" @click.stop="toggleWebsiteMark(website)">
@@ -517,7 +524,14 @@ onMounted(async () => {
 
           />
           <div class="website-info">
-            <div class="website-name" :title="website.name">{{ website.name }}</div>
+            <a
+              class="website-name"
+              :title="website.name"
+              :href="website.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click.stop
+            >{{ website.name }}</a>
             <div class="website-description">{{ website.description }}</div>
             <div v-if="website.tags && website.tags.length > 0" class="website-tags">
               <span v-for="tag in website.tags" :key="tag" class="tag">{{ tag }}</span>
@@ -665,12 +679,33 @@ onMounted(async () => {
   padding: 0 24px;
   font-size: 18px;
   color: var(--color-text-main);
-  background-color: transparent;
+  background-color: transparent !important; /* 强制背景透明 */
   transition: flex 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0 30px 30px 0; /* 添加圆角 */
 }
 
 .search-input::placeholder {
   color: var(--color-text-disabled);
+}
+
+/* 确保search-input在任何状态下都保持透明和圆角 */
+.search-input:focus,
+.search-input:hover,
+.search-input:active {
+  background-color: transparent !important;
+  border-radius: 0 30px 30px 0;
+}
+
+/* 覆盖Edge浏览器的自动填充样式 */
+.search-input:-webkit-autofill,
+.search-input:-webkit-autofill:hover,
+.search-input:-webkit-autofill:focus,
+.search-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: var(--color-text-main) !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--color-text-main);
 }
 
 /* 标签列表 */
@@ -687,6 +722,7 @@ onMounted(async () => {
   border-radius: 15px;
   box-shadow: var(--shadow-medium);
   z-index: 100;
+  margin-top: 10px; /* 添加上边距，与搜索框分开 */
 }
 
 .tag-item {
@@ -806,8 +842,9 @@ onMounted(async () => {
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
-  pointer-events: none; /* 阻止显示title提示 */
-  cursor: default; /* 设置默认光标 */
+  color: inherit; /* 继承父元素的颜色 */
+  text-decoration: none; /* 移除下划线 */
+  display: block; /* 确保是块级元素 */
 }
 
 .website-item.grid .website-name {
@@ -822,8 +859,6 @@ onMounted(async () => {
   min-width: 0;
   padding: 0 5px;
   flex-shrink: 1;
-  pointer-events: none; /* 阻止显示title提示 */
-  cursor: default; /* 设置默认光标 */
 }
 
 .website-description {
