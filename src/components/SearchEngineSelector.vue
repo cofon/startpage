@@ -14,12 +14,12 @@ const searchEngines = computed(() => {
 })
 
 // 监听搜索引擎列表变化
-watch(() => searchEngines.value, (newVal) => {
+watch(() => searchEngines.value, () => {
   searchStore.loadEngineIcons()
 }, { deep: true })
 
 // 监听搜索引擎图标变化
-watch(() => searchStore.engineIcons, (newVal) => {
+watch(() => searchStore.engineIcons, () => {
   // 图标变化时自动更新，因为 currentEngineIcon 是 computed 属性
 }, { deep: true })
 
@@ -109,21 +109,9 @@ onUnmounted(() => {
   padding-left: 8px;
 }
 
-.engine-icon img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
-
-.engine-icon .icon-placeholder {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--color-text-secondary);
-}
-
 .engine-icon .icon-svg {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,6 +120,18 @@ onUnmounted(() => {
 .engine-icon .icon-svg :deep(svg) {
   width: 100%;
   height: 100%;
+}
+
+.engine-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.engine-icon .icon-placeholder {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--color-text-secondary);
 }
 
 .engine-icon:hover {
@@ -149,17 +149,18 @@ onUnmounted(() => {
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   flex-shrink: 0;
   color: var(--color-primary);
+  position: relative;
 }
 
 .engine-item:hover {
-  background-color: var(--color-bg-hover);
+  /* 移除背景色，只保留颜色变化 */
   color: var(--color-primary-hover);
 }
 
 .engine-item.selected {
-  background-color: var(--color-bg-active);
   color: var(--color-primary-hover);
 }
+
 
 /* transition-group 动画效果 */
 .slide-enter-active,
