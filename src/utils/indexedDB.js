@@ -386,7 +386,8 @@ class IndexedDB {
       }
       // 处理websites表
       function processWebsites() {
-        return new Promise((resolve, reject) => {
+        // return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           if (!data.websites || !Array.isArray(data.websites)) {
             resolve()
             return
@@ -523,7 +524,8 @@ class IndexedDB {
 
       // 处理themes表
       function processThemes() {
-        return new Promise((resolve, reject) => {
+        // return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           if (!data.themes || !Array.isArray(data.themes)) {
             resolve()
             return
@@ -575,7 +577,8 @@ class IndexedDB {
 
       // 处理searchEngines表
       function processSearchEngines() {
-        return new Promise((resolve, reject) => {
+        // return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           if (!data.searchEngines || !Array.isArray(data.searchEngines)) {
             resolve()
             return
@@ -642,7 +645,8 @@ class IndexedDB {
 
       // 处理settings表
       function processSettings() {
-        return new Promise((resolve, reject) => {
+        // return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           if (!data.settings || typeof data.settings !== 'object') {
             resolve()
             return

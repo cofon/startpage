@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
+import { useNotificationStore } from '../stores/notification'
 
 const props = defineProps({
   modelValue: {
@@ -17,6 +18,7 @@ const emit = defineEmits(['update:modelValue', 'save'])
 
 // 使用 website store
 const websiteStore = useWebsiteStore()
+const notificationStore = useNotificationStore()
 
 // 表单数据
 const form = ref({
@@ -104,101 +106,83 @@ function openDialog() {
   }
 }
 
-// 添加标签
-function addTag() {
-  const tag = tagInput.value.trim()
-  if (tag && !form.value.tags.includes(tag)) {
-    form.value.tags.push(tag)
-    tagInput.value = ''
-  }
-}
-
-// 删除标签
-function removeTag(tag) {
-  const index = form.value.tags.indexOf(tag)
-  if (index > -1) {
-    form.value.tags.splice(index, 1)
-  }
-}
-
-// 处理标签输入回车
-function handleTagInputKeydown(event) {
-  if (event.key === 'Enter') {
-    event.preventDefault()
-    addTag()
-  }
-}
-
-// 保存网站
-function saveWebsite() {
-  if (!form.value.name || !form.value.url) {
-    alert('请填写网站名称和URL')
-    return
-  }
-
-  // 处理标签输入：使用英文逗号、英文分号或空格分隔
-  if (tagInput.value.trim()) {
-    const newTags = tagInput.value
-      .split(/[,;\s]+/)
-      .map(tag => tag.trim())
-      .filter(tag => tag && !form.value.tags.includes(tag))
-
-    form.value.tags.push(...newTags)
-  }
-
-  // 如果URL没有协议，添加 https://
-  let url = form.value.url
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url
-  }
-
-  // 如果没有提供图标URL，使用默认图标URL
-  const iconUrl = form.value.iconUrl || url
-
-  const websiteData = {
-    ...form.value,
-    url,
-    iconUrl,
-    // 确保包含所有图标相关字段
-    iconData: form.value.iconData,
-    iconGenerateData: form.value.iconGenerateData,
-    iconCanFetch: form.value.iconCanFetch,
-    iconFetchAttempts: form.value.iconFetchAttempts,
-    iconLastFetchTime: form.value.iconLastFetchTime,
-    iconError: form.value.iconError
-  }
-
-  emit('save', websiteData)
-  closeDialog()
-}
-
 // 关闭对话框
 function closeDialog() {
   emit('update:modelValue', false)
-  // 移除焦点，避免焦点回到编辑按钮上
-  if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur()
-  }
 }
 
-// 监听对话框打开
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    openDialog()
-    // 添加键盘事件监听
-    document.addEventListener('keydown', handleKeydown)
-  } else {
-    // 移除键盘事件监听
-    document.removeEventListener('keydown', handleKeydown)
+// 验证表单
+function validateForm() {
+  if (!form.value.name || !form.value.url) {
+    notificationStore.warning('请填写网站名称和链接')
+    return false
   }
-})
 
-// 处理键盘事件
-function handleKeydown(event) {
-  if (event.key === 'Escape') {
+  try {
+    new URL(form.value.url)
+  } catch {
+    notificationStore.warning('请输入有效的URL')
+    return false
+  }
+
+  return true
+}
+
+// 保存网站
+async function saveWebsite() {
+  if (!validateForm()) {
+    return
+  }
+
+  try {
+    const websiteData = {
+      ...form.value,
+      tags: [...form.value.tags],
+      // 确保布尔值正确
+      isMarked: !!form.value.isMarked,
+      isActive: !!form.value.isActive,
+      isHidden: !!form.value.isHidden
+    }
+
+    if (props.website) {
+      // 更新现有网站
+      websiteData.id = props.website.id
+      await websiteStore.updateWebsite(websiteData)
+      notificationStore.success('网站更新成功！')
+    } else {
+      // 添加新网站
+      await websiteStore.addWebsite(websiteData)
+      notificationStore.success('网站添加成功！')
+    }
+
+    emit('save', websiteData)
     closeDialog()
+  } catch (error) {
+    console.error('保存网站失败:', error)
+    notificationStore.error('保存网站失败，请查看控制台获取详细信息')
   }
 }
+
+// // 添加标签
+// function addTag() {
+//   const tag = tagInput.value.trim()
+//   if (tag && !form.value.tags.includes(tag)) {
+//     form.value.tags.push(tag)
+//     tagInput.value = ''
+//   }
+// }
+
+// // 移除标签
+// function removeTag(index) {
+//   form.value.tags.splice(index, 1)
+// }
+
+// 监听对话框打开状态
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    openDialog()
+  }
+}, { immediate: true })
 </script>
 
 <template>

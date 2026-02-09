@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useSettingStore } from '../stores/setting'
 import { useWebsiteStore } from '../stores/website'
+import { useNotificationStore } from '../stores/notification'
 import db from '../utils/indexedDB'
 // import iconManager from '../utils/iconManager'
 import ThemeSettings from './ThemeSettings.vue'
@@ -35,6 +36,7 @@ const emit = defineEmits(['update:modelValue', 'blur-settings-button'])
 
 const settingStore = useSettingStore()
 const websiteStore = useWebsiteStore()
+const notificationStore = useNotificationStore()
 
 // 当前显示的面板
 const activePanel = ref('theme') // 'theme' | 'search' | 'add-website' | ''
@@ -93,10 +95,10 @@ async function handleExport() {
     URL.revokeObjectURL(url)
     settingStore.updateLastBackupTime()
     await saveSettings()
-    alert('导出成功！')
+    notificationStore.success('导出成功！')
   } catch (error) {
     console.error('导出失败:', error)
-    alert('导出失败，请查看控制台获取详细信息')
+    notificationStore.error('导出失败，请查看控制台获取详细信息')
   }
 }
 
@@ -116,19 +118,19 @@ async function handleImport(event) {
         websiteStore.setWebsites(websites)
         settingStore.loadSettings()
 
-        alert('导入成功！页面即将刷新...')
+        notificationStore.success('导入成功！页面即将刷新...')
         setTimeout(() => {
           window.location.reload()
         }, 1000)
       } catch (error) {
         console.error('解析导入文件失败:', error)
-        alert('导入文件格式错误')
+        notificationStore.error('导入文件格式错误')
       }
     }
     reader.readAsText(file)
   } catch (error) {
     console.error('导入失败:', error)
-    alert('导入失败，请查看控制台获取详细信息')
+    notificationStore.error('导入失败，请查看控制台获取详细信息')
   }
 
   // 清空文件输入
@@ -141,7 +143,7 @@ async function saveSettings() {
     await settingStore.saveSettings()
   } catch (error) {
     console.error('保存设置失败:', error)
-    alert('保存设置失败')
+    notificationStore.error('保存设置失败')
   }
 }
 
@@ -169,7 +171,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
 })
-
 </script>
 
 <template>

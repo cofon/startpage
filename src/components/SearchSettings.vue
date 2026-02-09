@@ -1,11 +1,16 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useSettingStore } from '../stores/setting'
+import { useNotificationStore } from '../stores/notification'
 
 const settingStore = useSettingStore()
+const notificationStore = useNotificationStore()
 
 // 编辑模式
 const editingEngineId = ref(null)
+
+// 正在拖拽的索引
+const draggingIndex = ref(-1)
 
 // 编辑的搜索引擎数据
 const editingEngine = ref({
@@ -48,20 +53,20 @@ async function saveEngine() {
   try {
     // 验证必填字段
     if (!editingEngine.value.name) {
-      alert('请填写搜索引擎名称')
+      notificationStore.warning('请填写搜索引擎名称')
       return
     }
 
     // 本地搜索不需要模板验证
     if (editingEngine.value.id !== 'local') {
       if (!editingEngine.value.template) {
-        alert('请填写搜索模板')
+        notificationStore.warning('请填写搜索模板')
         return
       }
 
       // 验证模板是否包含 {query} 占位符
       if (!editingEngine.value.template.includes('{query}')) {
-        alert('搜索模板必须包含 {query} 占位符')
+        notificationStore.warning('搜索模板必须包含 {query} 占位符')
         return
       }
     }
@@ -69,18 +74,18 @@ async function saveEngine() {
     if (isEditing.value) {
       // 更新现有搜索引擎
       await settingStore.updateSearchEngine(editingEngine.value)
-      alert('搜索引擎更新成功！')
+      notificationStore.success('搜索引擎更新成功！')
     } else {
       // 添加新搜索引擎
       await settingStore.addSearchEngine(editingEngine.value)
-      alert('搜索引擎添加成功！')
+      notificationStore.success('搜索引擎添加成功！')
     }
 
     // 重置表单
     startAddEngine()
   } catch (error) {
     console.error('保存搜索引擎失败:', error)
-    alert('保存搜索引擎失败，请查看控制台获取详细信息')
+    notificationStore.error('保存搜索引擎失败，请查看控制台获取详细信息')
   }
 }
 
@@ -90,7 +95,7 @@ async function deleteEngine(engineId) {
   if (confirm(`确定要删除 "${engine?.name}" 搜索引擎吗？`)) {
     try {
       await settingStore.deleteSearchEngine(engineId)
-      alert('搜索引擎删除成功！')
+      notificationStore.success('搜索引擎删除成功！')
 
       // 如果删除的是当前编辑的搜索引擎，重置表单
       if (editingEngineId.value === engineId) {
@@ -98,7 +103,7 @@ async function deleteEngine(engineId) {
       }
     } catch (error) {
       console.error('删除搜索引擎失败:', error)
-      alert('删除搜索引擎失败，请查看控制台获取详细信息')
+      notificationStore.error('删除搜索引擎失败，请查看控制台获取详细信息')
     }
   }
 }
@@ -109,8 +114,6 @@ function cancelEdit() {
 }
 
 // 拖拽排序相关
-const draggingIndex = ref(-1)
-
 function handleDragStart(index) {
   draggingIndex.value = index
 }
@@ -147,9 +150,10 @@ async function handleDropOnList(event) {
     for (const engine of engines) {
       await settingStore.updateSearchEngine(engine)
     }
+    notificationStore.success('保存搜索引擎排序成功！')
   } catch (error) {
     console.error('保存搜索引擎排序失败:', error)
-    alert('保存排序失败，请查看控制台获取详细信息')
+    notificationStore.error('保存排序失败，请查看控制台获取详细信息')
   }
 
   draggingIndex.value = -1

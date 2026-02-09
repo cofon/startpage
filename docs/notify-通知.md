@@ -72,3 +72,60 @@
 交互：可点击关闭，鼠标悬停时暂停自动关闭
 动画：滑入滑出动画，淡入淡出效果
 堆叠：多个通知时，垂直堆叠显示
+
+************************************************************************
+已完成的工作
+创建了通知Store (src/stores/notification.js)
+
+实现了通知列表管理
+提供了成功、错误、警告、信息四种类型的通知方法
+支持自动移除通知
+创建了通知组件 (src/components/NotificationContainer.vue)
+
+实现了顶部居中显示的通知容器
+支持不同类型的通知（成功、错误、警告、信息）
+实现了滑入滑出动画效果
+支持点击关闭通知
+在App.vue中集成了通知系统
+
+引入了NotificationContainer组件
+在模板中添加了通知容器
+引入了notification store
+替换了以下函数中的alert为通知：
+删除网站
+恢复网站
+切换网站标记状态
+拖拽排序
+
+************************************************************************
+
+剩余需要完成的工作
+
+在SettingsPanel.vue中添加通知
+
+导入notification store
+替换导出数据成功/失败的alert
+替换导入数据成功/失败的alert
+替换保存设置成功/失败的alert
+在ThemeSettings.vue中添加通知
+注意：点击 导入数据按钮 打开文件选择框 这个切记不要改成通知！
+
+导入notification store
+替换主题添加/更新/删除成功/失败的alert
+在SearchSettings.vue中添加通知
+
+导入notification store
+替换搜索引擎添加/更新/删除成功/失败的alert
+替换保存排序成功/失败的alert
+替换表单验证的alert
+在AddWebsitePanel.vue中添加通知
+
+导入notification store
+替换网站添加成功/失败的alert
+替换表单验证的alert
+在WebsiteDialog.vue中添加通知
+
+导入notification store
+替换表单验证的alert
+
+************************************************************************

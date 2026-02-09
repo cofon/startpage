@@ -1,8 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useSettingStore } from '../stores/setting'
+import { useNotificationStore } from '../stores/notification'
 
 const settingStore = useSettingStore()
+const notificationStore = useNotificationStore()
 
 // 当前布局模式
 const currentLayout = computed(() => settingStore.searchResultLayout)
@@ -11,6 +13,7 @@ const currentLayout = computed(() => settingStore.searchResultLayout)
 function toggleLayout() {
   const newLayout = currentLayout.value === 'grid' ? 'list' : 'grid'
   settingStore.setSearchResultLayout(newLayout)
+  notificationStore.success(`已切换为${newLayout === 'grid' ? '网格' : '列表'}布局`)
 }
 </script>
 

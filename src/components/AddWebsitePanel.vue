@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useWebsiteStore } from '../stores/website'
+import { useNotificationStore } from '../stores/notification'
 
 const emit = defineEmits(['close'])
 
 const websiteStore = useWebsiteStore()
+const notificationStore = useNotificationStore()
 
 // 表单数据
 const formData = ref({
@@ -62,7 +64,7 @@ async function handleSubmit() {
   try {
     // 验证必填字段
     if (!formData.value.name || !formData.value.url) {
-      alert('请填写网站名称和链接')
+      notificationStore.warning('请填写网站名称和链接')
       return
     }
 
@@ -70,7 +72,7 @@ async function handleSubmit() {
     try {
       new URL(formData.value.url)
     } catch {
-      alert('请输入有效的URL')
+      notificationStore.warning('请输入有效的URL')
       return
     }
 
@@ -96,25 +98,17 @@ async function handleSubmit() {
     // 等待一小段时间，确保数据库保存完成
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    alert('网站添加成功！')
+    notificationStore.success('网站添加成功！')
     emit('close')
   } catch (error) {
     console.error('添加网站失败:', error)
-    alert('添加网站失败，请查看控制台获取详细信息')
+    notificationStore.error('添加网站失败，请查看控制台获取详细信息')
   }
 }
 
-// 重置表单
-function resetForm() {
-  formData.value = {
-    name: '',
-    url: '',
-    description: '',
-    tags: '',
-    isMarked: false,
-    isActive: true,
-    isHidden: false
-  }
+// 取消
+function handleCancel() {
+  emit('close')
 }
 </script>
 
@@ -201,8 +195,8 @@ function resetForm() {
     </div>
 
     <div class="form-actions">
-      <button class="button button-secondary" @click="resetForm">
-        重置
+      <button class="button button-secondary" @click="handleCancel">
+        取消
       </button>
       <button class="button button-primary" @click="handleSubmit">
         添加网站
@@ -271,9 +265,8 @@ function resetForm() {
   border-color: var(--color-border-focus);
 }
 
-.tags-input-container {
-  /* 标签输入容器 */
-}
+/* 标签输入容器 */
+/* .tags-input-container {} */
 
 .tags-dropdown {
   background-color: var(--color-bg-card);

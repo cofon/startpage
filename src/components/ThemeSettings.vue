@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useSettingStore } from '../stores/setting'
+import { useNotificationStore } from '../stores/notification'
 
 const settingStore = useSettingStore()
+const notificationStore = useNotificationStore()
 
 // 当前选中的主题
 const currentTheme = computed(() => settingStore.themes.find(t => t.id === settingStore.selectedThemeId))
@@ -45,6 +47,7 @@ const colorKeys = [
 function selectTheme(theme) {
   settingStore.setTheme(theme.id)
   loadThemeData(theme)
+  notificationStore.success(`已切换主题：${theme.name}`)
 }
 
 // 加载主题数据到编辑表单
@@ -63,6 +66,32 @@ function resetForm() {
   }
 }
 
+// 开始添加新主题
+function startAddTheme() {
+  // 初始化默认颜色值
+  const defaultTheme = settingStore.themes.find(t => t.id === 'light')
+  const defaultColors = defaultTheme?.defaultColors || {}
+
+  // 为所有颜色键设置默认值
+  const colors = {}
+  colorKeys.forEach(key => {
+    colors[key.key] = defaultColors[key.key] || '#000000'
+  })
+
+  editingTheme.value = {
+    id: '',
+    name: '',
+    colors: colors
+  }
+}
+
+// 判断是否可以删除主题
+function canDeleteTheme(themeId) {
+  // 不允许删除内置主题
+  const builtInThemes = ['light', 'dark', 'auto']
+  return !builtInThemes.includes(themeId)
+}
+
 // 保存主题
 async function saveTheme() {
   try {
@@ -76,11 +105,11 @@ async function saveTheme() {
     if (isEditing.value) {
       // 更新现有主题
       await settingStore.updateTheme(themeData)
-      alert('主题更新成功！')
+      notificationStore.success('主题更新成功！')
     } else {
       // 添加新主题
       const newTheme = await settingStore.addTheme(themeData)
-      alert('主题添加成功！')
+      notificationStore.success('主题添加成功！')
       // 选择新添加的主题
       selectTheme(newTheme)
       // 加载新主题的数据到编辑表单
@@ -88,7 +117,7 @@ async function saveTheme() {
     }
   } catch (error) {
     console.error('保存主题失败:', error)
-    alert('保存主题失败，请查看控制台获取详细信息')
+    notificationStore.error('保存主题失败，请查看控制台获取详细信息')
   }
 }
 
@@ -97,7 +126,7 @@ async function deleteTheme(themeId) {
   try {
     if (confirm('确定要删除这个主题吗？')) {
       await settingStore.deleteTheme(themeId)
-      alert('主题删除成功！')
+      notificationStore.success('主题删除成功！')
       // 如果删除的是当前编辑的主题，重置表单
       if (editingTheme.value.id === themeId) {
         resetForm()
@@ -105,45 +134,31 @@ async function deleteTheme(themeId) {
     }
   } catch (error) {
     console.error('删除主题失败:', error)
-    alert(error.message || '删除主题失败，请查看控制台获取详细信息')
+    notificationStore.error('删除主题失败，请查看控制台获取详细信息')
   }
 }
 
-// 开始添加新主题
-function startAddTheme() {
-  editingTheme.value = {
-    id: '',
-    name: '',
-    colors: {
-      primary: '#3b82f6',
-      primaryHover: '#2563eb',
-      primaryActive: '#1d4ed8',
-      textMain: '#1f2937',
-      textSecondary: '#6b7280',
-      textDisabled: '#9ca3af',
-      textOnPrimary: '#ffffff',
-      bgPage: '#f9fafb',
-      bgCard: '#ffffff',
-      bgHover: '#f3f4f6',
-      bgActive: '#e5e7eb',
-      borderBase: '#e5e7eb',
-      borderFocus: '#3b82f6',
-      shadowLight: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-      shadowMedium: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-      shadowDark: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-    }
-  }
-}
+// // 重置为主题默认值
+// function resetToDefault(themeId) {
+//   const theme = settingStore.themes.find(t => t.id === themeId)
+//   if (theme) {
+//     // 重置颜色为默认值
+//     Object.keys(theme.defaultColors).forEach(key => {
+//       editingTheme.value.colors[key] = theme.defaultColors[key]
+//     })
+//   }
+// }
 
-// 检查是否可以删除主题
-function canDeleteTheme(themeId) {
-  return !['light', 'dark', 'auto'].includes(themeId)
-}
+// // 颜色输入变化处理
+// function handleColorChange(key, value) {
+//   editingTheme.value.colors[key] = value
+// }
 
-// 初始化
-if (currentTheme.value) {
-  loadThemeData(currentTheme.value)
-}
+// // 获取当前主题的默认颜色
+// function getDefaultColor(key) {
+//   const theme = settingStore.themes.find(t => t.id === settingStore.selectedThemeId)
+//   return theme?.defaultColors?.[key] || '#000000'
+// }
 </script>
 
 <template>
@@ -281,8 +296,7 @@ if (currentTheme.value) {
   opacity: 0.9;
 }
 
-.theme-item.active {
-}
+/* .theme-item.active {} */
 
 .theme-color {
   width: 48px;
@@ -359,9 +373,8 @@ if (currentTheme.value) {
   background-color: transparent;
 }
 
-.add-theme-item:hover {
-  /* theme-item本身不显示背景色 */
-}
+/* theme-item本身不显示背景色 */
+/* .add-theme-item:hover {} */
 
 .add-theme-circle {
   width: 48px;

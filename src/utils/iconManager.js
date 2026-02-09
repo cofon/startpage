@@ -7,7 +7,7 @@
 function stringToColor(str) {
   // 确保 str 是字符串
   const strToProcess = str && typeof str === 'string' ? str : String(str || '');
-  
+
   let hash = 0
   for (let i = 0; i < strToProcess.length; i++) {
     hash = strToProcess.charCodeAt(i) + ((hash << 5) - hash)
@@ -104,8 +104,8 @@ class IconManager {
       id,
       iconData,
       iconGenerateData,
-      iconCanFetch,
-      iconFetchAttempts
+      // iconCanFetch,
+      // iconFetchAttempts
     } = website
 
     // 1. 优先使用缓存的 iconData（如果存在则使用）
@@ -150,7 +150,8 @@ class IconManager {
   /**
    * 判断是否应该从网络获取图标
    */
-  shouldFetchFromNetwork(website, updateWebsite) {
+  // shouldFetchFromNetwork(website, updateWebsite) {
+  shouldFetchFromNetwork(website) {
     const { id, iconCanFetch, iconFetchAttempts, url } = website
 
     // 如果没有URL，不获取
@@ -260,7 +261,7 @@ class IconManager {
         updateWebsite(id, updateData)
         console.log(`${name || domain} 所有API都无法获取有效图标，继续使用自动生成的icon`)
       }
-    } catch (error) {
+    } catch  {
       // 发生错误，增加尝试次数
       const newAttempts = (website.iconFetchAttempts || 0) + 1
       const updateData = {
@@ -279,7 +280,8 @@ class IconManager {
   /**
    * 从指定API获取图标
    */
-  async fetchIconFromAPI(url, websiteName) {
+  // async fetchIconFromAPI(url, websiteName) {
+  async fetchIconFromAPI(url) {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 3000)

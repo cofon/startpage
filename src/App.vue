@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useWebsiteStore } from './stores/website'
 import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
+import { useNotificationStore } from './stores/notification'
 import db from './utils/indexedDB'
 import iconManager from './utils/iconManager'
 import SearchEngineSelector from './components/SearchEngineSelector.vue'
@@ -10,11 +11,13 @@ import WebsiteDialog from './components/WebsiteDialog.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import WebsiteIcon from './components/WebsiteIcon.vue'
 import { defaultWebsites } from './data/defaultWebsites'
+import NotificationContainer from './components/NotificationContainer.vue'
 
 // 初始化 stores
 const websiteStore = useWebsiteStore()
 const settingStore = useSettingStore()
 const searchStore = useSearchStore()
+const notificationStore = useNotificationStore()
 
 // 页面卸载时清除页面级别的缓存
 onUnmounted(() => {
@@ -49,7 +52,7 @@ const draggedItem = ref(null)
 const draggedIndex = ref(-1)
 
 // 文字选择相关状态
-let isSelectingText = false
+// let isSelectingText = false
 let mouseDownTime = 0
 let mouseDownPosition = { x: 0, y: 0 }
 let hadSelectionOnMouseDown = false
@@ -70,7 +73,7 @@ function checkTextSelection(event) {
 
 // 记录鼠标按下事件
 function handleMouseDown(event) {
-  isSelectingText = false
+  // isSelectingText = false
   mouseDownTime = Date.now()
   mouseDownPosition = { x: event.clientX, y: event.clientY }
 
@@ -183,6 +186,9 @@ async function handleDrop(targetIndex) {
       })
     }
   }
+
+  // 显示成功通知
+  notificationStore.success('排序已更新')
 }
 
 // 打开添加网站对话框
@@ -282,6 +288,9 @@ async function deleteWebsite(website) {
       // 如果当前显示的是搜索结果，从当前结果中移除该网站
       searchStore.results = searchStore.results.filter(w => w.id !== website.id)
     }
+
+    // 显示成功通知
+    notificationStore.success(`已删除网站：${website.name}`)
   }
 }
 
@@ -320,6 +329,9 @@ async function restoreWebsite(website) {
       // 如果当前显示的是搜索结果，从当前结果中移除该网站
       searchStore.results = searchStore.results.filter(w => w.id !== website.id)
     }
+
+    // 显示成功通知
+    notificationStore.success(`已恢复网站：${website.name}`)
   }
 }
 
@@ -363,6 +375,12 @@ async function toggleWebsiteMark(website) {
   };
   await db.updateWebsite(websiteToUpdate)
 
+  // 显示成功通知
+  if (newIsMarked) {
+    notificationStore.success(`已标记网站：${website.name}`)
+  } else {
+    notificationStore.success(`已取消标记网站：${website.name}`)
+  }
 
   // 如果当前显示的是标记网站列表或搜索结果，需要更新列表显示
   if (searchStore.displayMode === 'marked') {
@@ -472,6 +490,8 @@ onMounted(async () => {
 
 <template>
   <div id="app" :class="settingStore.selectedThemeId + '-theme'">
+    <!-- 通知容器 -->
+    <NotificationContainer />
     <!-- 搜索模块 -->
     <div class="search-module">
       <div class="search-container">
@@ -545,16 +565,16 @@ onMounted(async () => {
             <button class="action-icon-button" @click.stop="openEditWebsite(website)">
               ✎
             </button>
-            <button 
-              v-if="website.isActive" 
-              class="action-icon-button delete" 
+            <button
+              v-if="website.isActive"
+              class="action-icon-button delete"
               @click.stop="deleteWebsite(website)"
             >
               ✕
             </button>
-            <button 
-              v-else 
-              class="action-icon-button restore" 
+            <button
+              v-else
+              class="action-icon-button restore"
               @click.stop="restoreWebsite(website)"
               title="恢复网站"
             >
@@ -599,16 +619,16 @@ onMounted(async () => {
             <button class="action-icon-button" @click.stop="openEditWebsite(website)">
               ✎
             </button>
-            <button 
-              v-if="website.isActive" 
-              class="action-icon-button delete" 
+            <button
+              v-if="website.isActive"
+              class="action-icon-button delete"
               @click.stop="deleteWebsite(website)"
             >
               ✕
             </button>
-            <button 
-              v-else 
-              class="action-icon-button restore" 
+            <button
+              v-else
+              class="action-icon-button restore"
               @click.stop="restoreWebsite(website)"
               title="恢复网站"
             >
