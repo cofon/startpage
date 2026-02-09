@@ -136,15 +136,26 @@ async function loadIcon() {
   }
 }
 
-// 监听 website 变化
-watch(() => props.website, (newWebsite, oldWebsite) => {
-  // 只有当 website.id 或 website.iconData 发生变化时才重新加载
-  if (!oldWebsite || newWebsite.id !== oldWebsite.id ||
-      newWebsite.iconData !== oldWebsite.iconData ||
-      newWebsite.iconGenerateData !== oldWebsite.iconGenerateData) {
+// 监听 website.id 变化
+watch(() => props.website.id, (newId, oldId) => {
+  if (newId !== oldId) {
     loadIcon()
   }
-}, { deep: true })
+})
+
+// 监听 website.iconData 变化
+watch(() => props.website.iconData, (newIconData, oldIconData) => {
+  if (newIconData !== oldIconData && newIconData) {
+    currentIcon.value = newIconData
+  }
+})
+
+// 监听 website.iconGenerateData 变化
+watch(() => props.website.iconGenerateData, (newIconData, oldIconData) => {
+  if (newIconData !== oldIconData && newIconData) {
+    currentIcon.value = newIconData
+  }
+})
 
 // 图片加载失败时的处理
 function onImageError() {
@@ -158,8 +169,13 @@ function onImageError() {
 
 // 监听图标更新事件
 function handleIconUpdate(event) {
-  const { websiteId, iconData } = event.detail
-  if (websiteId === props.website.id && iconData) {
+  const { websiteId, websiteUrl, iconData } = event.detail
+
+  // 优先使用ID匹配，如果ID不存在则使用URL匹配
+  const shouldUpdate = (websiteId && props.website.id && websiteId === props.website.id) ||
+                       (!websiteId && websiteUrl && props.website.url === websiteUrl)
+
+  if (shouldUpdate && iconData) {
     currentIcon.value = iconData
   }
 }
@@ -192,7 +208,7 @@ onUnmounted(() => {
   height: 48px;
   object-fit: contain;
   transition: opacity 0.2s ease;
-  background-color: #f0f0f0; /* 为SVG图标提供背景色 */
+  background-color: var(--color-bg-page); /* 为SVG图标提供背景色 */
   border-radius: 8px; /* 与SVG圆角保持一致 */
 }
 

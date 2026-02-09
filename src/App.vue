@@ -48,6 +48,76 @@ const isFirstTime = ref(false)
 const draggedItem = ref(null)
 const draggedIndex = ref(-1)
 
+// 文字选择相关状态
+let isSelectingText = false
+let mouseDownTime = 0
+let mouseDownPosition = { x: 0, y: 0 }
+let hadSelectionOnMouseDown = false
+
+// 检测是否在选择文字
+function checkTextSelection(event) {
+  // 检查鼠标移动距离和时间
+  const timeDiff = Date.now() - mouseDownTime
+  const distanceDiff = Math.sqrt(
+    Math.pow(event.clientX - mouseDownPosition.x, 2) +
+    Math.pow(event.clientY - mouseDownPosition.y, 2)
+  )
+
+  // 只有在鼠标按下时没有选中文字，且鼠标移动距离超过5像素或时间超过200ms时，
+  // 才认为是在选择文字
+  return !hadSelectionOnMouseDown && (distanceDiff > 5 || timeDiff > 200)
+}
+
+// 记录鼠标按下事件
+function handleMouseDown(event) {
+  isSelectingText = false
+  mouseDownTime = Date.now()
+  mouseDownPosition = { x: event.clientX, y: event.clientY }
+
+  // 记录鼠标按下时是否已经有选中的文字
+  const selection = window.getSelection()
+  hadSelectionOnMouseDown = selection.toString().trim().length > 0
+}
+
+// 处理网站点击
+function handleWebsiteClick(website, event) {
+  // 检查是否在选择文字
+  if (checkTextSelection(event)) {
+    return
+  }
+
+  // 原有的点击逻辑
+  websiteStore.incrementVisitCount(website.id)
+  // 创建一个普通对象副本传递给数据库，避免传递响应式对象
+  const websiteToUpdate = {
+    id: website.id,
+    name: website.name,
+    url: website.url,
+    description: website.description || '',
+    tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
+    visitCount: website.visitCount || 0,
+    isMarked: website.isMarked,
+    markOrder: website.markOrder,
+    isActive: website.isActive !== undefined ? website.isActive : true,
+    isHidden: website.isHidden !== undefined ? website.isHidden : false,
+    iconData: website.iconData,
+    iconGenerateData: website.iconGenerateData,
+    iconCanFetch: website.iconCanFetch,
+    iconFetchAttempts: website.iconFetchAttempts,
+    iconLastFetchTime: website.iconLastFetchTime,
+    iconError: website.iconError,
+    createdAt: website.createdAt,
+    updatedAt: website.updatedAt,
+    lastVisited: website.lastVisited
+  }
+
+  // 更新数据库
+  db.updateWebsite(websiteToUpdate)
+
+  // 跳转到网站
+  window.open(website.url, '_blank')
+}
+
 // 拖拽开始
 function handleDragStart(website, index) {
   draggedItem.value = website
@@ -306,31 +376,6 @@ async function toggleWebsiteMark(website) {
   }
 }
 
-// 点击网站
-function handleWebsiteClick(website) {
-  websiteStore.incrementVisitCount(website.id)
-  // 创建一个普通对象副本传递给数据库，避免传递响应式对象
-  const websiteToUpdate = {
-    id: website.id,
-    name: website.name,
-    url: website.url,
-    description: website.description || '',
-    tags: Array.isArray(website.tags) ? [...website.tags] : [], // 确保tags是普通数组
-    visitCount: website.visitCount || 0,
-    isMarked: website.isMarked,
-    markOrder: website.markOrder,
-    isActive: website.isActive !== undefined ? website.isActive : true,
-    isHidden: website.isHidden !== undefined ? website.isHidden : false,
-    iconData: website.iconData,
-    iconGenerateData: website.iconGenerateData,
-    iconCanFetch: website.iconCanFetch,
-    iconFetchAttempts: website.iconFetchAttempts,
-    iconUrl: website.iconUrl
-  };
-  db.updateWebsite(websiteToUpdate)
-  window.open(website.url, '_blank')
-}
-
 // 处理输入框获得焦点
 function handleInputFocus() {
   // 如果当前搜索引擎是本地搜索且输入框为空，则显示标签列表
@@ -398,11 +443,19 @@ onMounted(async () => {
     } else {
       // 首次使用，加载默认网站
       isFirstTime.value = true
-      websiteStore.setWebsites(defaultWebsites)
-      // 保存默认网站到数据库
+
+      // 先保存默认网站到数据库，获取ID
+      const websitesWithIds = []
       for (const website of defaultWebsites) {
-        await db.addWebsite(website)
+        const id = await db.addWebsite(website)
+        websitesWithIds.push({
+          ...website,
+          id: id
+        })
       }
+
+      // 将带有ID的网站设置到store
+      websiteStore.setWebsites(websitesWithIds)
     }
 
     // 加载所有搜索引擎图标
@@ -464,7 +517,8 @@ onMounted(async () => {
           class="website-item grid"
           :class="{ 'dragging': draggedIndex === index }"
           draggable="true"
-          @click="handleWebsiteClick(website)"
+          @mousedown="handleMouseDown"
+          @click="(event) => handleWebsiteClick(website, event)"
           @dragstart="handleDragStart(website, index)"
           @dragend="handleDragEnd"
           @dragover.prevent
@@ -517,7 +571,8 @@ onMounted(async () => {
           :key="website.id"
           class="website-item"
           :class="settingStore.searchResultLayout"
-          @click="handleWebsiteClick(website)"
+          @mousedown="handleMouseDown"
+          @click="(event) => handleWebsiteClick(website, event)"
         >
           <WebsiteIcon
             :website="website"

@@ -20,25 +20,25 @@ const isEditing = computed(() => !!editingTheme.value.id)
 // 颜色配置
 const colorKeys = [
   // 基础颜色
-  { key: 'primary', label: '主色调' },
-  { key: 'primaryHover', label: '主色调悬停' },
-  { key: 'primaryActive', label: '主色调激活' },
+  { key: 'primary', label: '主色调', desc: '按钮、链接等' },
+  { key: 'primaryHover', label: '主色调悬停态', desc: '按钮、链接等悬停时' },
+  { key: 'primaryActive', label: '主色调激活态', desc: '按钮、链接等激活时' },
   // 文本颜色
-  { key: 'textMain', label: '主要文本' },
-  { key: 'textSecondary', label: '次要文本' },
-  { key: 'textDisabled', label: '禁用文本' },
-  { key: 'textOnPrimary', label: '主色调上的文本' },
+  { key: 'textMain', label: '主要文本', desc: '标题、正文' },
+  { key: 'textSecondary', label: '次要文本', desc: '描述、辅助信息' },
+  { key: 'textDisabled', label: '禁用文本', desc: '禁用状态的文本' },
+  { key: 'textOnPrimary', label: '主色调上的文字', desc: '如按钮文字' },
   // 背景颜色
-  { key: 'bgPage', label: '页面背景' },
-  { key: 'bgCard', label: '卡片背景' },
-  { key: 'bgHover', label: '悬停背景' },
-  { key: 'bgActive', label: '激活背景' },
+  { key: 'bgPage', label: '页面背景', desc: '整个页面的背景色' },
+  { key: 'bgCard', label: '卡片背景', desc: '卡片、面板等背景色' },
+  { key: 'bgHover', label: '悬停背景', desc: '元素悬停时的背景色' },
+  { key: 'bgActive', label: '激活背景', desc: '元素激活时的背景色' },
   // 边框和阴影
-  { key: 'borderBase', label: '基础边框' },
-  { key: 'borderFocus', label: '聚焦边框' },
-  { key: 'shadowLight', label: '浅阴影' },
-  { key: 'shadowMedium', label: '中等阴影' },
-  { key: 'shadowDark', label: '深阴影' }
+  { key: 'borderBase', label: '基础边框', desc: '默认边框颜色' },
+  { key: 'borderFocus', label: '聚焦边框', desc: '元素聚焦时的边框颜色' },
+  { key: 'shadowLight', label: '浅阴影', desc: '轻微的阴影效果' },
+  { key: 'shadowMedium', label: '中等阴影', desc: '中等强度的阴影效果' },
+  { key: 'shadowDark', label: '深阴影', desc: '较深的阴影效果' }
 ]
 
 // 选择主题
@@ -157,8 +157,13 @@ if (currentTheme.value) {
         :class="{ active: theme.id === settingStore.selectedThemeId }"
         @click="selectTheme(theme)"
       >
-        <div class="theme-color" :style="{ backgroundColor: theme.colors.primary }">
-          <span v-if="theme.id === settingStore.selectedThemeId" class="check-icon">✓</span>
+        <div class="theme-color">
+          <svg viewBox="0 0 48 48" class="theme-circle">
+            <circle cx="24" cy="24" r="24" :fill="theme.colors.primary" />
+            <g v-if="theme.id === settingStore.selectedThemeId" class="check-icon">
+              <path d="M14 24 L20 30 L34 16" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+          </svg>
         </div>
         <span class="theme-name">{{ theme.name }}</span>
         <button
@@ -167,14 +172,22 @@ if (currentTheme.value) {
           @click.stop="deleteTheme(theme.id)"
           title="删除主题"
         >
-          ✕
+          <svg viewBox="0 0 24 24" class="delete-icon">
+            <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" />
+            <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round" />
+          </svg>
         </button>
       </div>
 
       <!-- 添加新主题按钮 -->
       <div class="theme-item add-theme-item" @click="startAddTheme" title="添加新主题">
-        <div class="theme-color add-theme-color">
-          <span class="add-icon">+</span>
+        <div class="theme-color">
+          <div class="add-theme-circle">
+            <div class="add-icon-plus">
+              <span class="plus-horizontal"></span>
+              <span class="plus-vertical"></span>
+            </div>
+          </div>
         </div>
         <span class="theme-name">添加主题</span>
       </div>
@@ -186,12 +199,15 @@ if (currentTheme.value) {
 
       <div class="form-group">
         <label for="theme-name">主题名称</label>
-        <input id="theme-name" v-model="editingTheme.name" type="text" class="form-input" placeholder="输入主题名称">
+        <input id="theme-name" v-model="editingTheme.name" type="text" class="form-input form-input-name" placeholder="输入主题名称">
       </div>
 
       <div class="color-list">
         <div v-for="color in colorKeys" :key="color.key" class="color-item">
-          <label :for="color.key.startsWith('shadow') ? ('text-' + color.key) : ('color-' + color.key)">{{ color.label }}</label>
+          <label :for="color.key.startsWith('shadow') ? ('text-' + color.key) : ('color-' + color.key)">
+            {{ color.label }}
+            <span class="color-desc">{{ color.desc }}</span>
+          </label>
           <div class="color-input-group">
             <input
               v-if="!color.key.startsWith('shadow')"
@@ -257,31 +273,42 @@ if (currentTheme.value) {
   overflow: visible;
 }
 
-.theme-item:hover {
-  background-color: var(--color-bg-hover);
+.theme-item:hover .theme-circle {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) brightness(1.1);
+}
+
+.theme-item:hover .theme-circle circle {
+  opacity: 0.9;
 }
 
 .theme-item.active {
-  border-color: var(--color-primary);
-  background-color: var(--color-bg-hover);
 }
 
 .theme-color {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.theme-circle {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .check-icon {
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 .theme-name {
@@ -291,11 +318,14 @@ if (currentTheme.value) {
 
 .delete-button {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
-  border: 2px solid white;
+  /* 将删除按钮的中心点放在大圆右上45度的边线上 */
+  /* top: calc(18% - 7.03px);
+  right: calc(25% - 7.03px); */
+  top: calc(8%);
+  right: calc(15%);
+  width: 20px;
+  height: 20px;
+  border: none;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
@@ -303,8 +333,7 @@ if (currentTheme.value) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  opacity: 0.8;
+  opacity: 0;
   transition: all 0.2s ease;
   z-index: 1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -319,29 +348,70 @@ if (currentTheme.value) {
   transform: scale(1.1);
 }
 
+.delete-icon {
+  width: 14px;
+  height: 14px;
+}
+
 .add-theme-item {
   cursor: pointer;
-  border: 2px dashed var(--color-border-base);
+  border: none;
   background-color: transparent;
 }
 
 .add-theme-item:hover {
-  border-color: var(--color-border-focus);
-  background-color: var(--color-bg-hover);
+  /* theme-item本身不显示背景色 */
 }
 
-.add-theme-color {
-  background-color: var(--color-bg-hover) !important;
+.add-theme-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   border: 2px solid var(--color-border-base);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
-.add-icon {
-  font-size: 24px;
-  color: var(--color-text-secondary);
-  font-weight: 300;
+.add-theme-circle:hover {
+  border-color: transparent;
+  background-color: var(--color-primary-hover);
+}
+
+.add-icon-plus {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.add-icon-plus .plus-horizontal,
+.add-icon-plus .plus-vertical {
+  position: absolute;
+  background-color: var(--color-text-secondary);
+  transition: background-color 0.3s ease;
+}
+
+.add-icon-plus .plus-horizontal {
+  width: 16px;
+  height: 2px;
+  top: 7px;
+  left: 0;
+}
+
+.add-icon-plus .plus-vertical {
+  width: 2px;
+  height: 16px;
+  top: 0;
+  left: 7px;
+}
+
+.add-theme-circle:hover .add-icon-plus .plus-horizontal,
+.add-theme-circle:hover .add-icon-plus .plus-vertical {
+  background-color: var(--color-text-on-primary);
 }
 
 .theme-editor {
@@ -381,6 +451,11 @@ if (currentTheme.value) {
   transition: all 0.3s ease;
 }
 
+.form-input-name {
+  width: 100%;
+  max-width: calc(100% - 29px); /* 减去颜色选择器的宽度(48px) + gap(8px) */
+}
+
 .form-input:focus {
   outline: none;
   border-color: var(--color-border-focus);
@@ -407,6 +482,15 @@ if (currentTheme.value) {
 .color-item label {
   font-size: 13px;
   color: var(--color-text-secondary);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.color-desc {
+  font-size: 12px;
+  color: var(--color-text-disabled);
+  font-weight: normal;
 }
 
 .color-input-group {

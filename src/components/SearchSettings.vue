@@ -47,15 +47,23 @@ function startAddEngine() {
 async function saveEngine() {
   try {
     // 验证必填字段
-    if (!editingEngine.value.name || !editingEngine.value.template) {
-      alert('请填写完整的搜索引擎信息')
+    if (!editingEngine.value.name) {
+      alert('请填写搜索引擎名称')
       return
     }
 
-    // 验证模板是否包含 {query} 占位符
-    if (!editingEngine.value.template.includes('{query}')) {
-      alert('搜索模板必须包含 {query} 占位符')
-      return
+    // 本地搜索不需要模板验证
+    if (editingEngine.value.id !== 'local') {
+      if (!editingEngine.value.template) {
+        alert('请填写搜索模板')
+        return
+      }
+
+      // 验证模板是否包含 {query} 占位符
+      if (!editingEngine.value.template.includes('{query}')) {
+        alert('搜索模板必须包含 {query} 占位符')
+        return
+      }
     }
 
     if (isEditing.value) {

@@ -179,14 +179,21 @@ class IconManager {
       this.pageFetchedWebsites.add(id)
     }
 
-    // 检查内存缓存
+    // 检查内存缓存 - 使用URL作为缓存键，因为相同URL的网站应该使用相同的图标
     const cacheKey = url
     if (this.iconCache.has(cacheKey)) {
       const cachedIcon = this.iconCache.get(cacheKey)
       if (cachedIcon) {
-        updateWebsite(id, { iconData: cachedIcon })
+        // 验证缓存的图标是否仍然有效
+        const isValid = await this.validateIcon(cachedIcon)
+        if (isValid) {
+          updateWebsite(id, { iconData: cachedIcon })
+          return
+        } else {
+          // 缓存的图标无效，从缓存中移除
+          this.iconCache.delete(cacheKey)
+        }
       }
-      return
     }
 
     try {
@@ -201,20 +208,31 @@ class IconManager {
 
       // 尝试从各个API获取
       let iconData = null
+      let validIconFound = false
+
       for (const api of this.iconAPIs) {
         try {
-          iconData = await this.fetchIconFromAPI(api.urlTemplate(domain), name)
-          if (iconData) {
-            console.log(`${name || domain} icon获取成功`)
-            break
+          const tempIconData = await this.fetchIconFromAPI(api.urlTemplate(domain), name)
+          if (tempIconData) {
+            // 立即验证获取到的图标
+            const isValid = await this.validateIcon(tempIconData)
+            if (isValid) {
+              iconData = tempIconData
+              validIconFound = true
+              console.log(`${name || domain} 从 ${api.name} 获取到有效图标`)
+              break
+            } else {
+              console.log(`${name || domain} 从 ${api.name} 获取的图标无效，尝试下一个API`)
+            }
           }
-        } catch {
+        } catch (error) {
+          console.log(`${name || domain} 从 ${api.name} 获取图标失败:`, error)
           // 继续尝试下一个API
         }
       }
 
-      if (iconData) {
-        // 获取成功，保存到数据库和内存缓存
+      if (validIconFound && iconData) {
+        // 获取到有效图标，保存到数据库和内存缓存
         this.iconCache.set(cacheKey, iconData)
 
         // 先更新store，触发Vue的响应式更新
@@ -225,10 +243,10 @@ class IconManager {
 
         // 触发自定义事件，通知WebsiteIcon组件立即更新
         window.dispatchEvent(new CustomEvent('icon-updated', {
-          detail: { websiteId: id, iconData: iconData }
+          detail: { websiteId: id, websiteUrl: url, iconData: iconData }
         }))
       } else {
-        // 所有API都失败，增加尝试次数
+        // 所有API都失败或获取的图标都无效
         const newAttempts = (website.iconFetchAttempts || 0) + 1
         const updateData = {
           iconFetchAttempts: newAttempts
@@ -240,7 +258,7 @@ class IconManager {
         }
 
         updateWebsite(id, updateData)
-        console.log(`${name || domain} icon获取失败，使用自动生成的icon`)
+        console.log(`${name || domain} 所有API都无法获取有效图标，继续使用自动生成的icon`)
       }
     } catch (error) {
       // 发生错误，增加尝试次数
@@ -308,6 +326,57 @@ class IconManager {
     } catch {
       return null
     }
+  }
+
+  /**
+   * 验证图标是否有效
+   * @param {string} iconData - 图标的data URL
+   * @returns {Promise<boolean>} - 是否有效
+   */
+  async validateIcon(iconData) {
+    return new Promise((resolve) => {
+      // 基本格式检查
+      if (!iconData || !iconData.startsWith('data:image/')) {
+        resolve(false)
+        return
+      }
+
+      // 提取base64数据
+      const base64Data = iconData.split(',')[1]
+      if (!base64Data) {
+        resolve(false)
+        return
+      }
+
+      // 检查base64解码后的数据长度
+      try {
+        const decodedData = atob(base64Data)
+        if (decodedData.length < 100) {
+          resolve(false)
+          return
+        }
+      } catch {
+        resolve(false)
+        return
+      }
+
+      // 尝试加载图片
+      const img = new Image()
+      const timeout = setTimeout(() => resolve(false), 5000)
+
+      img.onload = function() {
+        clearTimeout(timeout)
+        // 检查图片尺寸是否合理（至少16x16）
+        resolve(img.width >= 16 && img.height >= 16)
+      }
+
+      img.onerror = function() {
+        clearTimeout(timeout)
+        resolve(false)
+      }
+
+      img.src = iconData
+    })
   }
 
   /**

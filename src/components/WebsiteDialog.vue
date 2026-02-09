@@ -509,23 +509,23 @@ function handleKeydown(event) {
 
 .button-secondary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-light);
 }
 
 .button-primary {
-  background-color: #409eff;
-  color: white;
-  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  box-shadow: var(--shadow-medium);
 }
 
 .button-primary:hover {
-  background-color: #66b1ff;
+  background-color: var(--color-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
+  box-shadow: var(--shadow-dark);
 }
 
 .button-primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
+  box-shadow: var(--shadow-medium);
 }
 </style>

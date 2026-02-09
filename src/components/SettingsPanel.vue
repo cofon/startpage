@@ -86,7 +86,7 @@ async function handleExport() {
     const minutes = String(now.getMinutes()).padStart(2, '0')
     const seconds = String(now.getSeconds()).padStart(2, '0')
 
-    const dateTimeStr = `${year}${month}${day}${hours}${minutes}${seconds}`
+    const dateTimeStr = `${year}${month}${day}-${hours}${minutes}${seconds}`
     a.download = `startpage-backup-${dateTimeStr}.json`
 
     a.click()

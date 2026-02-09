@@ -93,6 +93,9 @@ async function handleSubmit() {
       isHidden: formData.value.isHidden
     })
 
+    // 等待一小段时间，确保数据库保存完成
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     alert('网站添加成功！')
     emit('close')
   } catch (error) {

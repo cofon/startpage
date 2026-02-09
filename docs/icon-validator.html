@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon 数据验证工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.valid {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            color: #3c763d;
+        }
+        .result.invalid {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+        }
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 4px;
+        }
+        .icon-preview {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .icon-preview img {
+            max-width: 64px;
+            max-height: 64px;
+            border: 1px solid #ddd;
+        }
+        .icon-preview.show {
+            display: block;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Icon 数据验证工具</h1>
+
+        <label for="iconData">输入 Icon Data (Base64 格式):</label>
+        <textarea id="iconData" placeholder="输入 iconData 数据...">data:image/x-icon;base64,AAABAAEAEBACAAAAAACwAAAAFgAAACgAAAAQAAAAIAAAAAEAAQAAAAAAQAAAAAAAAAAAAAAAAgAAAAAAAAAkv/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA</textarea>
+
+        <button onclick="validateIcon()">验证 Icon</button>
+
+        <div id="result" class="result"></div>
+
+        <div id="iconPreview" class="icon-preview">
+            <h3>Icon 预览:</h3>
+            <img id="previewImage" src="" alt="Icon Preview">
+        </div>
+    </div>
+
+    <script>
+        function validateIcon() {
+            const iconDataInput = document.getElementById('iconData').value.trim();
+            const resultDiv = document.getElementById('result');
+            const iconPreview = document.getElementById('iconPreview');
+            const previewImage = document.getElementById('previewImage');
+
+            // 清空之前的结果
+            resultDiv.innerHTML = '';
+            resultDiv.className = 'result';
+            iconPreview.classList.remove('show');
+
+            // 基本格式检查
+            if (!iconDataInput) {
+                showResult('请输入 iconData', false);
+                return;
+            }
+
+            if (!iconDataInput.startsWith('data:image/')) {
+                showResult('iconData 必须以 data:image/ 开头', false);
+                return;
+            }
+
+            // 提取 base64 数据
+            const base64Data = iconDataInput.split(',')[1];
+            if (!base64Data) {
+                showResult('无法提取 base64 数据', false);
+                return;
+            }
+
+            // 验证 base64 数据长度
+            try {
+                const decodedData = atob(base64Data);
+                const decodedLength = decodedData.length;
+
+                let resultHtml = '<div class="result-item">Base64 解码成功</div>';
+                resultHtml += `<div class="result-item">解码后数据长度: ${decodedLength} 字节</div>`;
+
+                // 检查数据长度是否合理
+                if (decodedLength < 100) {
+                    resultHtml += '<div class="result-item">⚠️ 数据长度过短，可能无效</div>';
+                }
+
+                // 尝试加载图片
+                const img = new Image();
+                img.onload = function() {
+                    resultHtml += `<div class="result-item">✅ 图片加载成功</div>`;
+                    resultHtml += `<div class="result-item">图片尺寸: ${img.width} x ${img.height}</div>`;
+
+                    // 检查图片尺寸
+                    if (img.width >= 16 && img.height >= 16) {
+                        resultHtml += '<div class="result-item">✅ 图片尺寸合理</div>';
+                        showResult(resultHtml, true);
+
+                        // 显示预览
+                        previewImage.src = iconDataInput;
+                        iconPreview.classList.add('show');
+                    } else {
+                        resultHtml += '<div class="result-item">⚠️ 图片尺寸过小</div>';
+                        showResult(resultHtml, false);
+                    }
+                };
+
+                img.onerror = function() {
+                    resultHtml += '<div class="result-item">❌ 图片加载失败</div>';
+                    showResult(resultHtml, false);
+                };
+
+                // 设置超时
+                const timeout = setTimeout(() => {
+                    resultHtml += '<div class="result-item">❌ 图片加载超时</div>';
+                    showResult(resultHtml, false);
+                }, 5000);
+
+                img.onload = function() {
+                    clearTimeout(timeout);
+                    resultHtml += `<div class="result-item">✅ 图片加载成功</div>`;
+                    resultHtml += `<div class="result-item">图片尺寸: ${img.width} x ${img.height}</div>`;
+
+                    // 检查图片尺寸
+                    if (img.width >= 16 && img.height >= 16) {
+                        resultHtml += '<div class="result-item">✅ 图片尺寸合理</div>';
+                        showResult(resultHtml, true);
+
+                        // 显示预览
+                        previewImage.src = iconDataInput;
+                        iconPreview.classList.add('show');
+                    } else {
+                        resultHtml += '<div class="result-item">⚠️ 图片尺寸过小</div>';
+                        showResult(resultHtml, false);
+                    }
+                };
+
+                img.src = iconDataInput;
+
+            } catch (error) {
+                showResult(`Base64 解码失败: ${error.message}`, false);
+            }
+        }
+
+        function showResult(message, isValid) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = isValid ? 'result valid' : 'result invalid';
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

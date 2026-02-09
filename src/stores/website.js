@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { parseSearchQuery, applyFilters } from '../utils/searchParser'
+import db from '../utils/indexedDB'
 
 export const useWebsiteStore = defineStore('website', () => {
   // 状态
@@ -52,10 +53,9 @@ export const useWebsiteStore = defineStore('website', () => {
     }))
   }
 
-  function addWebsite(website) {
+  async function addWebsite(website) {
     const websiteWithDefaults = {
       ...website,
-      id: Date.now(),
       visitCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -71,7 +71,22 @@ export const useWebsiteStore = defineStore('website', () => {
       iconError: null
     }
 
+    // 先保存到数据库，获取ID
+    let dbId
+    try {
+      dbId = await db.addWebsite(websiteWithDefaults)
+    } catch (error) {
+      console.error('保存网站到数据库失败:', error)
+      throw error
+    }
+
+    // 使用数据库返回的ID
+    websiteWithDefaults.id = dbId
+
+    // 添加到store
     websites.value.push(websiteWithDefaults)
+
+    return websiteWithDefaults
   }
 
   function updateWebsite(id, data) {
