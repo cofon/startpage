@@ -579,15 +579,15 @@ onMounted(async () => {
 
           />
           <div class="website-info">
+            <div class="website-description" :title="website.name">{{ website.description }}</div>
             <a
-              class="website-name"
-              :title="website.name"
+              class="website-url"
+              :title="website.url"
               :href="website.url"
               target="_blank"
               rel="noopener noreferrer"
               @click.stop
-            >{{ website.name }}</a>
-            <div class="website-description">{{ website.description }}</div>
+            >{{ website.url }}</a>
             <div v-if="website.tags && website.tags.length > 0" class="website-tags">
               <span v-for="tag in website.tags" :key="tag" class="tag">{{ tag }}</span>
             </div>
@@ -929,6 +929,21 @@ onMounted(async () => {
 
 .website-item.grid .website-description {
   display: none; /* 在grid模式下隐藏描述 */
+}
+
+.website-url {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  text-decoration: none; /* 移除下划线 */
+  display: block;
+}
+
+.website-item.grid .website-url {
+  display: none; /* 在grid模式下隐藏URL */
 }
 
 .website-tags {
