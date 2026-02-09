@@ -1,36 +1,33 @@
-/**
- * 默认搜索引擎配置
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
 
-const defaultSearchEngines = [
-  {
-    id: 'baidu',
-    name: '百度',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+    <style>
+        svg{
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
   <circle cx="20" cy="20" r="16" fill="currentColor"/>
   <text x="20" y="26" text-anchor="middle" font-size="20" font-weight="bold" fill="white">B</text>
-</svg>`,
-    template: 'https://www.baidu.com/s?wd={query}',
-    iconColor: '#2932e1',
-    order: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'bing',
-    name: '必应',
-    //     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-    //   <circle cx="20" cy="20" r="16" fill="currentColor"/>
-    //   <text x="20" y="26" text-anchor="middle" font-size="20" font-weight="bold" fill="white">B</text>
-    // </svg>`,
-    icon: `<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+</svg>
+    
+   <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  width="40px" height="40px" viewBox="0 0 40 40"
  preserveAspectRatio="xMidYMid meet">
   <!-- 圆形背景：使用currentColor，继承外部color属性 -->
   <circle cx="20" cy="20" r="16" fill="currentColor"/>
-
+  
   <!-- 必应图形：白色填充，调整变换让图形居中在圆形内 -->
-  <g transform="translate(12, 29) scale(0.00096, -0.00096)" fill="#FFFFFF" stroke="none">
+  <g transform="translate(12, 29) scale(0.0009, -0.0009)" fill="#FFFFFF" stroke="none">
     <path d="M3148 11358 l3 -9093 92 -48 c51 -27 200 -107 332 -179 132 -72 269
     -147 305 -166 36 -19 110 -61 165 -92 55 -31 177 -99 270 -150 94 -51 206
     -114 250 -140 44 -26 152 -87 240 -135 88 -48 205 -113 260 -145 55 -31 206
@@ -66,39 +63,11 @@ const defaultSearchEngines = [
     -1440 511 -137 49 -315 112 -395 140 -196 70 -505 180 -795 283 -266 94 -370
     133 -457 171 -20 9 -40 16 -45 16 -4 0 -7 -4092 -5 -9092z"/>
   </g>
-</svg>`,
-    template: 'https://www.bing.com/search?q={query}',
-    iconColor: '#008373',
-    order: 2,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'yandex',
-    name: 'Yandex',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-  <circle cx="20" cy="20" r="16" fill="currentColor"/>
-  <text x="20" y="26" text-anchor="middle" font-size="20" font-weight="bold" fill="white">Y</text>
-</svg>`,
-    template: 'https://yandex.com/search/?text={query}',
-    iconColor: '#fc3f1d',
-    order: 3,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'local',
-    name: '本地',
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-  <circle cx="20" cy="20" r="16" fill="currentColor"/>
-  <text x="20" y="26" text-anchor="middle" font-size="20" font-weight="bold" fill="white">L</text>
-</svg>`,
-    template: '',
-    iconColor: '#6b7280',
-    order: 4,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+</svg>
 
-export default defaultSearchEngines
+
+
+
+
+</body>
+</html>

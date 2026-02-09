@@ -135,6 +135,13 @@ startpage/
 
 存储网站信息，包含以下字段：
 
+  <!-- iconUrl: 'https://github.githubassets.com/favicons/favicon.svg', // 原始 URL
+  iconData: 'data:image/[format];base64,...', // 从网络获取的 favicon 转换的 base64 数据（PNG/ICO/JPG等格式）
+  iconGenerateData: 'data:image/svg+xml;base64,...', // 本地生成的 SVG 图标
+  iconCanFetch: true, // 是否可以从网络获取 icon（布尔值）
+  iconFetchAttempts: 0, // 尝试从网络获取的次数（数字）
+  iconLastFetchTime: null, // 最后一次尝试从网络获取的时间戳 -->
+
 ```javascript
 {
   id: number,              // 自增ID (主键)
@@ -142,6 +149,12 @@ startpage/
   url: string,             // 网站链接
   description: string,     // 网站描述
   icon: string,            // 图标URL（不再使用，暂时保留）
+  iconUrl: string,         // 原始 URL
+  iconData: string,        // 从网络获取的 favicon 转换的 base64 数据（PNG/ICO/JPG等格式）
+  iconGenerateData: string, // 本地生成的 SVG 图标
+  iconCanFetch: boolean,   // 是否可以从网络获取 icon（布尔值）
+  iconFetchAttempts: number, // 尝试从网络获取的次数（数字）
+  iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳
   tags: Array,             // 标签数组 [tag1, tag2, ...]
   isMarked: boolean,       // 是否为已标记网站
   markOrder: number,       // marked网站排序（仅当isMarked为true时有效）
@@ -320,15 +333,14 @@ startpage/
 
 - **打开设置**：点击右上角settings图标
 - **包含的功能**：主题 搜索引擎 添加网站 显示模式 数据管理
-    - **主题切换**：浅色、深色、跟随系统
-    - **搜索引擎管理**：添加、删除自定义搜索引擎
-    - **添加网站**: 添加网站
-    - **显示模式**：切换搜索结果的网格/列表显示方式
-    - **更多设置**：
-        - **导出数据** ：JSON 格式
-        - **导入数据** ：JSON 格式
+  - **主题切换**：浅色、深色、跟随系统
+  - **搜索引擎管理**：添加、删除自定义搜索引擎
+  - **添加网站**: 添加网站
+  - **显示模式**：切换搜索结果的网格/列表显示方式
+  - **更多设置**：
+    - **导出数据** ：JSON 格式
+    - **导入数据** ：JSON 格式
 - **关闭设置**：点击 settings面板外，Esc键
-
 
 ## 🔧 开发指南
 
@@ -350,7 +362,6 @@ npm run format
 2. 在 `src/components/` 中创建或修改组件
 3. 在 `src/utils/` 中添加工具函数
 4. 更新相关文档
-
 
 ## 📦 部署
 
@@ -379,12 +390,9 @@ MIT License
 
 如有问题或建议，请提交 Issue。
 
-
-
 ## 未完成的功能
 
-- 网站item没有复制URL功能，需要添加
-- settings  icon 太丑，换 
+- settings icon 太丑，换
 - 设置面板 主题面板 主题列表UI太丑，需要修改
 - 浮动通知条未实现
 - 搜索引擎如果保存的icon不是SVG，会直接把网址显示出来
@@ -392,6 +400,7 @@ MIT License
 
 ## 已完成功能
 
+- 网站item没有复制URL功能，需要添加，给网站item添加a标签使用浏览器默认的右键复制链接 OK
 - 搜索引擎增删改查已测试，搜索引擎图标需要修改，需要一个完整的方案, 确实使用SVG OK
 - icon问题，获取不到一直获取，这很傻，修改方案：一律使用本地或者数据库中的图标，如果数据库没有使用本地图标，从网络获取到的图标保存到数据库中，下次使用数据库中的图标 OK
 - 点击添加/取消标记时控制台播错，编辑删除没有测试，已修复 OK
