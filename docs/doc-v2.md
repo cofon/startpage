@@ -74,7 +74,7 @@ startpage/
 │   │   ├── WebsiteDialog.vue         # (显示模块网站item的edit图标)网站编辑对话框
 │   │   └── WebsiteIcon.vue           # 网站图标组件
 │   ├── stores/             # Pinia 状态管理
-│   │   ├── counter.js      # 计数器状态（示例）
+│   │   ├── counter.js      # 计数器状态(示例)
 │   │   ├── search.js       # 搜索状态管理
 │   │   ├── setting.js      # 全局设置管理
 │   │   └── website.js      # 网站数据管理
@@ -90,7 +90,7 @@ startpage/
 │   │   └── startpage-backup-2026-02-05.json # 数据备份文件
 │   ├── router/             # 路由配置
 │   │   └── index.js        # Vue Router 配置
-│   ├── config/             # 配置目录（空）
+│   ├── config/             # 配置目录(空)
 │   ├── App.vue             # 主应用根组件
 │   └── main.js             # 应用入口文件
 ├── public/                 # 静态资源目录
@@ -136,10 +136,10 @@ startpage/
 存储网站信息，包含以下字段：
 
   <!-- iconUrl: 'https://github.githubassets.com/favicons/favicon.svg', // 原始 URL
-  iconData: 'data:image/[format];base64,...', // 从网络获取的 favicon 转换的 base64 数据（PNG/ICO/JPG等格式）
+  iconData: 'data:image/[format];base64,...', // 从网络获取的 favicon 转换的 base64 数据(PNG/ICO/JPG等格式)
   iconGenerateData: 'data:image/svg+xml;base64,...', // 本地生成的 SVG 图标
-  iconCanFetch: true, // 是否可以从网络获取 icon（布尔值）
-  iconFetchAttempts: 0, // 尝试从网络获取的次数（数字）
+  iconCanFetch: true, // 是否可以从网络获取 icon(布尔值)
+  iconFetchAttempts: 0, // 尝试从网络获取的次数(数字)
   iconLastFetchTime: null, // 最后一次尝试从网络获取的时间戳 -->
 
 ```javascript
@@ -148,22 +148,22 @@ startpage/
   name: string,            // 网站名称
   url: string,             // 网站链接
   description: string,     // 网站描述
-  icon: string,            // 图标URL（不再使用，暂时保留）
-  iconUrl: string,         // 原始 URL
-  iconData: string,        // 从网络获取的 favicon 转换的 base64 数据（PNG/ICO/JPG等格式）
+  icon: string,            // 图标URL(不再使用，暂时保留)
+  iconUrl: string,         // 原始 URL (用不到，暂时保留)
+  iconData: string,        // 从网络获取的 icon 的 base64(PNG/ICO/JPG等)
   iconGenerateData: string, // 本地生成的 SVG 图标
-  iconCanFetch: boolean,   // 是否可以从网络获取 icon（布尔值）
-  iconFetchAttempts: number, // 尝试从网络获取的次数（数字）
+  iconCanFetch: boolean,   // 是否可以从网络获取 icon(布尔值)
+  iconFetchAttempts: number, // 尝试从网络获取的次数(数字)
   iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳
   tags: Array,             // 标签数组 [tag1, tag2, ...]
   isMarked: boolean,       // 是否为已标记网站
-  markOrder: number,       // marked网站排序（仅当isMarked为true时有效）
+  markOrder: number,       // marked网站排序(仅当isMarked为true时有效)
   visitCount: number,      // 访问次数统计
   lastVisited: Date,       // 最近访问时间
   createdAt: Date,         // 创建时间
   updatedAt: Date,         // 更新时间
-  isActive: boolean,       // 是否激活状态（正常搜索不显示非激活的网站）
-  isHidden: boolean        // 是否隐藏状态（正常搜索不显示隐藏的网站）
+  isActive: boolean,       // 是否激活状态(正常搜索不显示非激活的网站)
+  isHidden: boolean        // 是否隐藏状态(正常搜索不显示隐藏的网站)
 }
 ```
 
@@ -171,7 +171,7 @@ startpage/
 
 - `isMarked`: 用于快速查询已标记网站
 - `markOrder`: 用于按顺序获取已标记网站
-- `tags`: 用于快速查询指定标签的网站（tags数组中的所有tag都索引）
+- `tags`: 用于快速查询指定标签的网站(tags数组中的所有tag都索引)
 - `isActive`: 用于查询激活状态的网站
 - `isHidden`: 用于查询隐藏状态的网站
 
@@ -224,13 +224,13 @@ startpage/
     id: string,
     name: string,
     colors: {
-        primary: string, // 主色调（按钮、链接等）
+        primary: string, // 主色调(按钮、链接等)
         primaryHover: string, // 主色调悬停态
         primaryActive: string, // 主色调激活态
-        textMain: string, // 主要文本 （标题、正文）
-        textSecondary: string, // 次要文本 （描述、辅助信息）
+        textMain: string, // 主要文本 (标题、正文)
+        textSecondary: string, // 次要文本 (描述、辅助信息)
         textDisabled: string, // 禁用文本
-        textOnPrimary: string, // 主色调上的文字 （如按钮文字）
+        textOnPrimary: string, // 主色调上的文字 (如按钮文字)
         bgPage: string, // 页面背景
         bgCard: string, // 卡片背景
         bgHover: string, // 悬停背景
@@ -283,13 +283,13 @@ startpage/
 - 普通搜索：直接输入关键词，搜索网站名称、URL、描述和标签
 - 组合搜索：多个关键词以空格分割，例：baidu 工作 会搜索同时包含"baidu"和"工作"的网站
 - **特殊搜索**：
-  --all：显示所有网站（包括已删除和隐藏的）
+  --all：显示所有网站(包括已删除和隐藏的)
   --active：显示所有活跃的网站
   --active false：显示所有非活跃的网站
-  --inactive：显示所有非活跃的网站（同 --active false）
+  --inactive：显示所有非活跃的网站(同 --active false)
   --marked：显示所有已标记的网站
   --marked false：显示所有未标记的网站
-  --unmarked：显示所有未标记的网站（同 --marked false）
+  --unmarked：显示所有未标记的网站(同 --marked false)
   --hidden：显示所有隐藏的网站
   --visible：显示所有可见的网站
   --tag <tagname>：显示包含指定标签的网站
@@ -393,10 +393,10 @@ MIT License
 ## 未完成的功能
 
 - settings icon 太丑，换
-- 浮动通知条未实现
 
 ## 已完成功能
 
+- 浮动通知条未实现
 - 添加/编辑网站面板添加 iconData iconGenerateData输入框，有些网站获取icon失败可以手动添加 修改获取icon的逻辑，会过滤掉大部分错误的icon，少数不管它 OK
 - 搜索引擎如果保存的icon不是SVG，会直接把网址显示出来，这个不改了，只使用SVG图标 OK
 - 设置面板 主题面板 主题列表UI太丑，需要修改
