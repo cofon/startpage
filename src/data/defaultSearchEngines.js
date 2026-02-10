@@ -19,6 +19,9 @@ const defaultSearchEngines = [
   {
     id: 'bing',
     name: '必应',
+    // 因为百度必应都是B开头, SVG除了背景全都相同
+    // 修改必应的图标为类似必应官方图标的样式
+    // 百度继续使用字母B生成的图标
     //     icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
     //   <circle cx="20" cy="20" r="16" fill="currentColor"/>
     //   <text x="20" y="26" text-anchor="middle" font-size="20" font-weight="bold" fill="white">B</text>
@@ -26,10 +29,10 @@ const defaultSearchEngines = [
     icon: `<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
  width="40px" height="40px" viewBox="0 0 40 40"
  preserveAspectRatio="xMidYMid meet">
-  <!-- 圆形背景：使用currentColor，继承外部color属性 -->
+  <!-- 圆形背景: 使用currentColor, 继承外部color属性 -->
   <circle cx="20" cy="20" r="16" fill="currentColor"/>
 
-  <!-- 必应图形：白色填充，调整变换让图形居中在圆形内 -->
+  <!-- 必应图形: 白色填充, 调整变换让图形居中在圆形内 -->
   <g transform="translate(12, 29) scale(0.00096, -0.00096)" fill="#FFFFFF" stroke="none">
     <path d="M3148 11358 l3 -9093 92 -48 c51 -27 200 -107 332 -179 132 -72 269
     -147 305 -166 36 -19 110 -61 165 -92 55 -31 177 -99 270 -150 94 -51 206

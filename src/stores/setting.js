@@ -10,9 +10,9 @@ import defaultSearchEngines from '../data/defaultSearchEngines'
 
 export const useSettingStore = defineStore('setting', () => {
   // 状态
-  const selectedThemeId = ref('light')
+  const selectedThemeId = ref('auto')
   const themes = ref([])
-  const selectedSearchEngineId = ref('baidu')
+  const selectedSearchEngineId = ref('local')
   const searchEngines = ref([])
   const searchResultLayout = ref('list') // 'grid' 或 'list'
   const lastBackupTime = ref(null)

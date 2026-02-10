@@ -40,7 +40,7 @@ export const useSearchStore = defineStore('search', () => {
   // 加载搜索引擎图标
   async function loadEngineIcons() {
     for (const engine of settingStore.searchEngines) {
-      // 图标已经是内联的 SVG 字符串，直接使用
+      // 图标已经是内联的 SVG 字符串, 直接使用
       engineIcons.value[engine.id] = engine.icon
     }
   }
@@ -55,12 +55,12 @@ export const useSearchStore = defineStore('search', () => {
   // 监听搜索引擎切换
   watch(() => settingStore.selectedSearchEngineId, (newEngine, oldEngine) => {
     if (newEngine === 'local') {
-      // 切换到本地搜索，清空输入框
+      // 切换到本地搜索, 清空输入框
       query.value = ''
       results.value = websiteStore.markedWebsites
       setDisplayMode('marked')
     } else if (oldEngine === 'local' && newEngine !== 'local') {
-      // 从本地切换到网络搜索，清空输入框和结果
+      // 从本地切换到网络搜索, 清空输入框和结果
       query.value = ''
       results.value = websiteStore.markedWebsites
       setDisplayMode('marked')
@@ -74,7 +74,7 @@ export const useSearchStore = defineStore('search', () => {
       if (query.value.trim()) {
         setDisplayMode('search')
       } else {
-        // 当查询词为空时，显示已标记的网站
+        // 当查询词为空时, 显示已标记的网站
         results.value = websiteStore.markedWebsites
         setDisplayMode('marked')
       }

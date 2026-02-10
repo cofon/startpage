@@ -9,7 +9,7 @@ const DB_VERSION = 5
 // 表名
 const STORE_WEBSITES = 'websites'
 const STORE_SETTINGS = 'settings'
-const STORE_ICONS = 'icons'
+const STORE_ICONS = 'icons' // 版本 4 中已删除
 const STORE_THEMES = 'themes'
 const STORE_SEARCH_ENGINES = 'searchEngines'
 
