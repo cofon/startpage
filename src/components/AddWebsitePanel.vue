@@ -1,7 +1,14 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
+import {
+  isValidUrl,
+  extractSiteNameFromUrl,
+  generateDefaultIcon,
+  fetchWebsiteInfo,
+  fetchWebsiteIcon
+} from '../utils/websiteUtils'
 
 const emit = defineEmits(['close'])
 
@@ -16,8 +23,19 @@ const formData = ref({
   tags: '',
   isMarked: false,
   isActive: true,
-  isHidden: false
+  isHidden: false,
+  iconData: '',
+  networkIconData: ''
 })
+
+// URL验证状态
+const urlValidation = ref({
+  isValid: false,
+  message: ''
+})
+
+// 加载状态
+const isLoading = ref(false)
 
 // 获取所有标签
 const allTags = computed(() => {
@@ -59,6 +77,73 @@ function toggleTag(tag) {
   formData.value.tags = tags.join(', ')
 }
 
+// 监听URL变化，自动填充网站名称和图标
+watch(() => formData.value.url, async (newUrl) => {
+  if (!newUrl) {
+    urlValidation.value = {
+      isValid: false,
+      message: ''
+    }
+    formData.value.iconData = ''
+    formData.value.networkIconData = ''
+    return
+  }
+
+  // 验证URL
+  if (isValidUrl(newUrl)) {
+    urlValidation.value = {
+      isValid: true,
+      message: ''
+    }
+
+    // 立即生成图标（基于URL）
+    const siteName = extractSiteNameFromUrl(newUrl)
+    const iconSvg = generateDefaultIcon(siteName)
+    formData.value.iconData = iconSvg
+
+    // 如果名称为空，使用提取的网站名
+    if (!formData.value.name) {
+      formData.value.name = siteName
+    }
+
+    // 获取网站信息和图标
+    isLoading.value = true
+    try {
+      // 获取网站信息（标题和描述）
+      const { title, description } = await fetchWebsiteInfo(newUrl)
+
+      // 使用获取到的标题更新名称
+      if (title) {
+        formData.value.name = title
+        // 重新生成图标（基于真实的网站标题）
+        formData.value.iconData = generateDefaultIcon(title)
+      }
+
+      // 使用获取到的描述（如果有）
+      if (description) {
+        formData.value.description = description
+      }
+
+      // 获取网站图标
+      const networkIcon = await fetchWebsiteIcon(newUrl)
+      if (networkIcon) {
+        formData.value.networkIconData = networkIcon
+      }
+    } catch (error) {
+      console.error('获取网站信息失败:', error)
+    } finally {
+      isLoading.value = false
+    }
+  } else {
+    urlValidation.value = {
+      isValid: false,
+      message: '请输入有效的URL（如：https://www.example.com）'
+    }
+    formData.value.iconData = ''
+    formData.value.networkIconData = ''
+  }
+})
+
 // 提交表单
 async function handleSubmit() {
   try {
@@ -69,9 +154,7 @@ async function handleSubmit() {
     }
 
     // 验证URL格式
-    try {
-      new URL(formData.value.url)
-    } catch {
+    if (!isValidUrl(formData.value.url)) {
       notificationStore.warning('请输入有效的URL')
       return
     }
@@ -92,7 +175,12 @@ async function handleSubmit() {
       markOrder: 0,
       visitCount: 0,
       isActive: formData.value.isActive,
-      isHidden: formData.value.isHidden
+      isHidden: formData.value.isHidden,
+      iconData: formData.value.iconData,
+      iconGenerateData: {
+        type: 'default',
+        siteName: formData.value.name
+      }
     })
 
     // 等待一小段时间，确保数据库保存完成
@@ -116,6 +204,22 @@ function handleCancel() {
   <div class="add-website-panel">
 
     <div class="form-group">
+      <label for="website-url">网站链接 <span class="required">*</span></label>
+      <input
+        id="website-url"
+        v-model="formData.url"
+        type="url"
+        class="form-input"
+        :class="{ 'error': !urlValidation.isValid && formData.url }"
+        placeholder="https://example.com"
+        maxlength="500"
+      >
+      <div v-if="!urlValidation.isValid && formData.url" class="error-message">
+        {{ urlValidation.message }}
+      </div>
+    </div>
+
+    <div class="form-group">
       <label for="website-name">网站名称 <span class="required">*</span></label>
       <input
         id="website-name"
@@ -127,16 +231,37 @@ function handleCancel() {
       >
     </div>
 
-    <div class="form-group">
-      <label for="website-url">网站链接 <span class="required">*</span></label>
-      <input
-        id="website-url"
-        v-model="formData.url"
-        type="url"
-        class="form-input"
-        placeholder="https://example.com"
-        maxlength="500"
-      >
+    <!-- 图标预览 -->
+    <div class="icon-preview">
+      <label>网站图标预览</label>
+      <div class="icon-display-container">
+        <div class="icon-display">
+          <div class="icon-label">自动生成</div>
+          <div class="icon-image">
+            <div v-if="formData.iconData" v-html="formData.iconData"></div>
+            <div v-else class="icon-placeholder">
+              <span class="placeholder-text">?</span>
+            </div>
+          </div>
+        </div>
+        <div class="icon-display">
+          <div class="icon-label">网络获取</div>
+          <div class="icon-image">
+            <img 
+              v-if="formData.networkIconData" 
+              :src="formData.networkIconData" 
+              alt="网站图标"
+            >
+            <div v-else class="icon-placeholder">
+              <span class="placeholder-text">?</span>
+            </div>
+          </div>
+        </div>
+        <div v-if="isLoading" class="loading-indicator">
+          <div class="spinner"></div>
+          <span>正在获取网站信息...</span>
+        </div>
+      </div>
     </div>
 
     <div class="form-group">
@@ -263,6 +388,113 @@ function handleCancel() {
 .form-textarea:focus {
   outline: none;
   border-color: var(--color-border-focus);
+}
+
+/* 图标预览 */
+.icon-preview {
+  margin-bottom: 20px;
+}
+
+.icon-preview label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 500;
+  color: var(--color-text-main);
+}
+
+.icon-display-container {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px;
+  background-color: var(--color-bg-hover);
+  border-radius: 12px;
+  position: relative;
+}
+
+.icon-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.icon-image {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--color-bg-page);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.icon-image svg {
+  width: 100%;
+  height: 100%;
+}
+
+.icon-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.icon-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-hover);
+  border: 2px dashed var(--color-border-base);
+  border-radius: 12px;
+}
+
+.placeholder-text {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--color-text-secondary);
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 标签输入容器 */

@@ -3,6 +3,8 @@
  * 负责管理网站和设置的数据库操作
  */
 
+import { importSingleWebsite } from './websiteImportUtils'
+
 const DB_NAME = 'StartPageDB'
 const DB_VERSION = 5
 
@@ -402,122 +404,10 @@ class IndexedDB {
           }
 
           for (const website of data.websites) {
-            // 验证url字段
-            if (!website.url) {
-              console.warn('跳过无效网站：缺少url字段', website)
+            importSingleWebsite(website, websitesStore, () => {
               processedCount++
               if (processedCount === total) resolve()
-              continue
-            }
-
-            // 填充默认字段
-            const websiteToImport = {
-              ...website,
-              iconCanFetch: website.iconCanFetch !== undefined ? website.iconCanFetch : true,
-              isMarked: website.isMarked !== undefined ? website.isMarked : false,
-              isActive: website.isActive !== undefined ? website.isActive : true,
-              isHidden: website.isHidden !== undefined ? website.isHidden : false
-            }
-
-            // 检查是否需要生成新ID
-            let needNewId = false
-            if (websiteToImport.id) {
-              // 如果有ID，检查数据库是否存在相同ID
-              const getReq = websitesStore.get(websiteToImport.id)
-              getReq.onsuccess = () => {
-                const existingWebsite = getReq.result
-                if (existingWebsite) {
-                  // 如果ID存在，检查URL是否相同
-                  if (existingWebsite.url !== websiteToImport.url) {
-                    // URL不同，生成新ID
-                    delete websiteToImport.id
-                    needNewId = true
-                  } else {
-                    // URL相同，跳过
-                    console.warn('跳过重复网站：URL已存在', websiteToImport.url)
-                    processedCount++
-                    if (processedCount === total) resolve()
-                    return
-                  }
-                }
-
-                if (needNewId) {
-                  // 检查URL是否已存在
-                  const indexReq = websitesStore.index('url').get(websiteToImport.url)
-                  indexReq.onsuccess = () => {
-                    if (indexReq.result) {
-                      // URL已存在，跳过
-                      console.warn('跳过重复网站：URL已存在', websiteToImport.url)
-                      processedCount++
-                      if (processedCount === total) resolve()
-                      return
-                    } else {
-                      // URL不存在，添加
-                      const addReq = websitesStore.add(websiteToImport)
-                      addReq.onsuccess = () => {
-                        processedCount++
-                        if (processedCount === total) resolve()
-                      }
-                      addReq.onerror = () => {
-                        console.error('添加网站失败:', websiteToImport)
-                        processedCount++
-                        if (processedCount === total) resolve()
-                      }
-                    }
-                  }
-                  indexReq.onerror = () => {
-                    console.error('检查URL失败:', websiteToImport.url)
-                    processedCount++
-                    if (processedCount === total) resolve()
-                  }
-                } else {
-                  const addReq = websitesStore.add(websiteToImport)
-                  addReq.onsuccess = () => {
-                    processedCount++
-                    if (processedCount === total) resolve()
-                  }
-                  addReq.onerror = () => {
-                    console.error('添加网站失败:', websiteToImport)
-                    processedCount++
-                    if (processedCount === total) resolve()
-                  }
-                }
-              }
-              getReq.onerror = () => {
-                console.error('检查网站ID失败:', websiteToImport.id)
-                processedCount++
-                if (processedCount === total) resolve()
-              }
-            } else {
-              // 没有ID，检查URL是否已存在
-              const indexReq = websitesStore.index('url').get(websiteToImport.url)
-              indexReq.onsuccess = () => {
-                if (indexReq.result) {
-                  // URL已存在，跳过
-                  console.warn('跳过重复网站：URL已存在', websiteToImport.url)
-                  processedCount++
-                  if (processedCount === total) resolve()
-                  return
-                } else {
-                  // URL不存在，添加
-                  const addReq = websitesStore.add(websiteToImport)
-                  addReq.onsuccess = () => {
-                    processedCount++
-                    if (processedCount === total) resolve()
-                  }
-                  addReq.onerror = () => {
-                    console.error('添加网站失败:', websiteToImport)
-                    processedCount++
-                    if (processedCount === total) resolve()
-                  }
-                }
-              }
-              indexReq.onerror = () => {
-                console.error('检查URL失败:', websiteToImport.url)
-                processedCount++
-                if (processedCount === total) resolve()
-              }
-            }
+            })
           }
         })
       }
