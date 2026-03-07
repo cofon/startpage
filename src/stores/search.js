@@ -18,7 +18,10 @@ export const useSearchStore = defineStore('search', () => {
   const showTagsList = ref(false)
 
   // 显示模式 - 控制显示模块应该显示什么内容
-  const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty'
+  const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty' | 'settings' | 'help'
+
+  // 命令模式
+  const commandMode = ref(null) // 'theme' | 'search' | 'add' | 'import' | 'export' | 'layout' | 'help' | null
 
   // 计算属性
   const isLocalSearch = computed(() => {
@@ -71,10 +74,8 @@ export const useSearchStore = defineStore('search', () => {
   watch(query, () => {
     if (isLocalSearch.value) {
       performSearch()
-      if (query.value.trim()) {
-        setDisplayMode('search')
-      } else {
-        // 当查询词为空时, 显示已标记的网站
+      // 如果不是命令模式且查询词为空，显示已标记的网站
+      if (!query.value.trim() && !commandMode.value) {
         results.value = websiteStore.markedWebsites
         setDisplayMode('marked')
       }
@@ -108,12 +109,71 @@ export const useSearchStore = defineStore('search', () => {
       // 查询词为空时显示已标记的网站
       results.value = websiteStore.markedWebsites
       setDisplayMode('marked')
+      commandMode.value = null
       return
     }
 
-    // 执行本地搜索（包括特殊命令处理）
+    // 检查是否是命令模式（以 -- 开头）
+    const trimmedQuery = query.value.trim()
+    if (trimmedQuery.startsWith('--')) {
+      handleCommand(trimmedQuery)
+      return
+    }
+
+    // 执行本地搜索
     results.value = websiteStore.searchWebsites(query.value)
     setDisplayMode('search')
+    commandMode.value = null
+  }
+
+  // 处理命令模式
+  function handleCommand(command) {
+    const cmd = command.toLowerCase().substring(2).trim()
+
+    switch (cmd) {
+      case 'theme':
+        commandMode.value = 'theme'
+        setDisplayMode('settings')
+        break
+      case 'search':
+        commandMode.value = 'search'
+        setDisplayMode('settings')
+        break
+      case 'help':
+        commandMode.value = 'help'
+        setDisplayMode('help')
+        break
+      case 'add':
+        commandMode.value = 'add'
+        setDisplayMode('settings')
+        break
+      case 'import':
+        commandMode.value = 'import'
+        setDisplayMode('settings')
+        break
+      case 'export':
+        commandMode.value = 'export'
+        setDisplayMode('settings')
+        break
+      case 'layout':
+        commandMode.value = 'layout'
+        setDisplayMode('settings')
+        break
+      default:
+        // 其他命令（如 --inactive, --active false）传递给现有的搜索逻辑
+        results.value = websiteStore.searchWebsites(command)
+        setDisplayMode('search')
+        commandMode.value = null
+        break
+    }
+  }
+
+  // 清除命令模式
+  function clearCommandMode() {
+    commandMode.value = null
+    query.value = ''
+    results.value = websiteStore.markedWebsites
+    setDisplayMode('marked')
   }
 
   function searchByTag(tag) {
@@ -156,6 +216,7 @@ export const useSearchStore = defineStore('search', () => {
     showTagsList,
     engineIcons,
     displayMode,
+    commandMode,
     // Computed
     isLocalSearch,
     currentEngine,
@@ -172,6 +233,8 @@ export const useSearchStore = defineStore('search', () => {
     executeSearch,
     loadEngineIcons,
     setDisplayMode,
-    getDisplayMode
+    getDisplayMode,
+    handleCommand,
+    clearCommandMode
   }
 })

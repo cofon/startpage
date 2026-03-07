@@ -8,10 +8,11 @@ import db from './utils/indexedDB'
 import iconManager from './utils/iconManager'
 import SearchEngineSelector from './components/SearchEngineSelector.vue'
 import WebsiteDialog from './components/WebsiteDialog.vue'
-import SettingsPanel from './components/SettingsPanel.vue'
 import WebsiteIcon from './components/WebsiteIcon.vue'
 import { defaultWebsites } from './data/defaultWebsites'
 import NotificationContainer from './components/NotificationContainer.vue'
+import CommandSettings from './components/CommandSettings.vue'
+import HelpPanel from './components/HelpPanel.vue'
 
 // 初始化 stores
 const websiteStore = useWebsiteStore()
@@ -32,17 +33,6 @@ const isLocalSearchEngine = computed(() => {
 // 网站对话框
 const showWebsiteDialog = ref(false)
 const editingWebsite = ref(null)
-
-// 设置面板
-const showSettingsPanel = ref(false)
-const settingsButtonRef = ref(null)
-
-// 移除 settings-button 的焦点
-function blurSettingsButton() {
-  if (settingsButtonRef.value) {
-    settingsButtonRef.value.blur()
-  }
-}
 
 // 是否首次使用
 const isFirstTime = ref(false)
@@ -657,6 +647,12 @@ onMounted(async () => {
           <p>收藏夹功能开发中...</p>
         </div>
       </div>
+
+      <!-- 命令模式：设置面板 -->
+      <CommandSettings v-if="searchStore.displayMode === 'settings'" />
+
+      <!-- 命令模式：帮助面板 -->
+      <HelpPanel v-if="searchStore.displayMode === 'help'" />
     </div>
 
     <!-- 网站管理对话框 -->
@@ -666,17 +662,7 @@ onMounted(async () => {
       @save="saveWebsite"
     />
 
-    <!-- 设置模块 -->
-    <div class="settings-module">
-      <button ref="settingsButtonRef" class="settings-button" @click="showSettingsPanel = true">⚙️</button>
-    </div>
-
-    <!-- 设置面板 -->
-    <SettingsPanel
-      v-model="showSettingsPanel"
-      @open-add-website="openAddWebsite"
-      @blur-settings-button="blurSettingsButton"
-    />
+    <!-- 设置模块已移除，使用命令模式 --theme 和 --search 访问设置 -->
   </div>
 </template>
 
