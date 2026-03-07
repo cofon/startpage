@@ -5,6 +5,7 @@ import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
 import { useNotificationStore } from './stores/notification'
 import db from './utils/indexedDB'
+import iconManager from './utils/iconManager'
 import { defaultWebsites } from './data/defaultWebsites'
 import { normalizeWebsiteForDB } from './utils/websiteNormalizer'
 import { handleWebsiteDeleted, handleWebsiteRestored, handleWebsiteMarkToggled } from './utils/displayModeManager'
@@ -157,6 +158,7 @@ onMounted(async () => {
         websiteStore.setWebsites(websites)
       }
     } else {
+      isFirstTime.value = true
       const websitesWithIds = []
       for (const website of defaultWebsites) {
         const id = await db.addWebsite(website)

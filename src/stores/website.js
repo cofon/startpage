@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { parseSearchQuery, applyFilters } from '../utils/searchParser'
+import { createWebsiteObject } from '../utils/websiteNormalizer'
 import db from '../utils/indexedDB'
 
 export const useWebsiteStore = defineStore('website', () => {
@@ -36,40 +37,18 @@ export const useWebsiteStore = defineStore('website', () => {
 
   // Actions
   function setWebsites(data) {
-    websites.value = data.map(website => ({
-      // 确保每个网站都有图标相关的字段
-      iconUrl: website.url || '',
-      iconData: website.iconData || null,
-      iconGenerateData: website.iconGenerateData || null,
-      iconCanFetch: website.iconCanFetch !== undefined ? website.iconCanFetch : true,
-      iconFetchAttempts: website.iconFetchAttempts || 0,
-      iconLastFetchTime: website.iconLastFetchTime || null,
-      iconError: website.iconError || null,
-      isActive: website.isActive !== undefined ? website.isActive : true,  // 添加isActive字段的处理
-      isHidden: website.isHidden !== undefined ? website.isHidden : false,  // 添加isHidden字段的处理
-      // 如果isMarked为false，则将markOrder设置为null
-      markOrder: website.isMarked ? website.markOrder : null,
-      ...website
-    }))
+    websites.value = data.map(website => createWebsiteObject(website))
   }
 
   async function addWebsite(website) {
-    const websiteWithDefaults = {
+    const websiteWithDefaults = createWebsiteObject({
       ...website,
       visitCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
       isActive: true,
-      isHidden: false,  // 默认为false
-      // 图标相关字段
-      iconUrl: website.url || '',
-      iconData: null,
-      iconGenerateData: null,
-      iconCanFetch: true,
-      iconFetchAttempts: 0,
-      iconLastFetchTime: null,
-      iconError: null
-    }
+      isHidden: false
+    })
 
     // 先保存到数据库，获取ID
     let dbId

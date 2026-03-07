@@ -3,7 +3,7 @@
  * 负责管理搜索输入、结果和搜索引擎状态
  */
 import { defineStore } from 'pinia'
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from './website'
 import { useSettingStore } from './setting'
 import { updateDisplayResults, refreshCurrentDisplay } from '../utils/displayModeManager'
@@ -78,10 +78,8 @@ export const useSearchStore = defineStore('search', () => {
 
   // Actions
   function init() {
-    // 使用 nextTick 确保 websiteStore 已经初始化
-    nextTick(() => {
-      results.value = websiteStore.markedWebsites
-    })
+    // 初始化时显示已标记的网站
+    results.value = websiteStore.markedWebsites
   }
 
   function setQuery(newQuery) {
@@ -101,8 +99,7 @@ export const useSearchStore = defineStore('search', () => {
 
     if (!query.value.trim()) {
       // 查询词为空时显示已标记的网站
-      results.value = websiteStore.markedWebsites
-      setDisplayMode('marked')
+      refreshCurrentDisplay({ results, displayMode }, websiteStore)
       commandMode.value = null
       return
     }
@@ -166,7 +163,7 @@ export const useSearchStore = defineStore('search', () => {
   function clearCommandMode() {
     commandMode.value = null
     query.value = ''
-    results.value = websiteStore.markedWebsites
+    refreshCurrentDisplay({ results, displayMode }, websiteStore)
   }
 
   function searchByTag(tag) {
