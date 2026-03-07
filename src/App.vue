@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useWebsiteStore } from './stores/website'
 import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
@@ -20,9 +20,96 @@ const settingStore = useSettingStore()
 const searchStore = useSearchStore()
 const notificationStore = useNotificationStore()
 
-// 页面卸载时清除页面级别的缓存
+// 引用显示模块
+const displayModuleRef = ref(null)
+
+// 引用网站列表
+const websiteListRef = ref(null)
+
+// 显示模块高度
+const displayModuleHeight = ref(0)
+
+// 计算搜索模块的上边距
+const searchModuleMarginTop = computed(() => {
+  // 如果不是 marked 模式，使用默认值
+  if (searchStore.displayMode !== 'marked') {
+    return '40px'
+  }
+
+  // 获取视口高度
+  const viewportHeight = window.innerHeight
+
+  // 获取搜索模块的高度（搜索框 60px + 标签列表 40px + 搜索模块下边距 30px）
+  const searchModuleHeight = 60 + (searchStore.showTagsList && searchStore.currentTags.length > 0 ? 40 : 0) + 30
+
+  // 获取网站列表的实际内容高度
+  const websiteListHeight = displayModuleHeight.value
+
+  // 计算可用空间（视口高度 - 搜索模块高度 - 主容器padding 40px）
+  const totalAvailableSpace = viewportHeight - searchModuleHeight - 40
+
+  // 如果网站列表高度小于可用空间，使用剩余空间计算间距
+  // 否则使用固定值，让内容在显示模块中滚动
+  const availableSpace = websiteListHeight < totalAvailableSpace ? totalAvailableSpace - websiteListHeight : 0
+
+  // 计算上下空白空间（上边占 1/3，下边占 2/3）
+  const topSpace = Math.max(20, availableSpace / 3) // 上方最小 20px
+
+  return `${topSpace}px`
+})
+
+// 监听显示模块高度变化
+function updateDisplayModuleHeight() {
+  if (websiteListRef.value) {
+    displayModuleHeight.value = websiteListRef.value.offsetHeight
+  }
+}
+
+// 使用 ResizeObserver 监听显示模块高度变化
+let resizeObserver = null
+
+// 监听窗口大小变化
+let resizeHandler = null
+
+onMounted(() => {
+  // 初始化高度
+  updateDisplayModuleHeight()
+
+  // 创建 ResizeObserver
+  resizeObserver = new ResizeObserver(() => {
+    updateDisplayModuleHeight()
+  })
+
+  // 开始观察网站列表
+  if (websiteListRef.value) {
+    resizeObserver.observe(websiteListRef.value)
+  }
+
+  // 添加窗口大小变化监听
+  resizeHandler = () => {
+    updateDisplayModuleHeight()
+  }
+  window.addEventListener('resize', resizeHandler)
+})
+
 onUnmounted(() => {
+  // 清理 ResizeObserver
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+
+  // 移除窗口大小变化监听
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+  }
+
+  // 清除页面级别的缓存
   iconManager.clearPageCache()
+})
+
+// 监听 displayMode 变化，更新高度
+watch(() => searchStore.displayMode, () => {
+  updateDisplayModuleHeight()
 })
 
 // 计算属性：判断当前搜索引擎是否为本地搜索
@@ -483,7 +570,7 @@ onMounted(async () => {
     <!-- 通知容器 -->
     <NotificationContainer />
     <!-- 搜索模块 -->
-    <div class="search-module">
+    <div class="search-module" :style="{ marginTop: searchModuleMarginTop }">
       <div class="search-container">
         <!-- 搜索框组件将在这里实现 -->
         <div class="search-box">
@@ -518,9 +605,9 @@ onMounted(async () => {
     </div>
 
     <!-- 显示模块 -->
-    <div class="display-module">
+    <div class="display-module" ref="displayModuleRef">
       <!-- 已标记网站列表 -->
-      <div v-if="searchStore.displayMode === 'marked'" class="website-list grid">
+      <div v-if="searchStore.displayMode === 'marked'" class="website-list grid marked-list" ref="websiteListRef">
         <div
           v-for="(website, index) in searchStore.results"
           :key="website.id"
@@ -547,29 +634,6 @@ onMounted(async () => {
               rel="noopener noreferrer"
               @click.stop
             >{{ website.name }}</a>
-          </div>
-          <div class="website-actions">
-            <button class="action-icon-button" @click.stop="toggleWebsiteMark(website)">
-              {{ website.isMarked ? '★' : '☆' }}
-            </button>
-            <button class="action-icon-button" @click.stop="openEditWebsite(website)">
-              ✎
-            </button>
-            <button
-              v-if="website.isActive"
-              class="action-icon-button delete"
-              @click.stop="deleteWebsite(website)"
-            >
-              ✕
-            </button>
-            <button
-              v-else
-              class="action-icon-button restore"
-              @click.stop="restoreWebsite(website)"
-              title="恢复网站"
-            >
-              ↺
-            </button>
           </div>
         </div>
       </div>
@@ -688,8 +752,8 @@ onMounted(async () => {
 .search-module {
   width: 100%;
   max-width: 800px;
-  margin-bottom: 60px; /* 增加下方间距 */
-  margin-top: 40px; /* 添加上方间距 */
+  margin-bottom: 30px; /* 正常的下方间距 */
+  /* margin-top 由动态样式控制 */
 }
 
 .search-container {
@@ -801,8 +865,8 @@ onMounted(async () => {
 /* 显示模块 */
 .display-module {
   width: 100%;
-  max-width: 1200px;
-  flex: 1;
+  max-width: 800px;
+  overflow-y: auto;
 }
 
 .website-list {
@@ -814,6 +878,12 @@ onMounted(async () => {
 /* 网格模式 */
 .website-list.grid {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+/* 已标记网站列表 - 更紧凑的布局 */
+.website-list.grid.marked-list {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
 }
 
 /* 列表模式 */
@@ -852,6 +922,13 @@ onMounted(async () => {
   padding: 15px 10px; /* 调整内边距，增加顶部空间 */
 }
 
+/* 已标记网站列表的 item 样式 - 更紧凑 */
+.website-list.grid.marked-list .website-item {
+  min-height: 90px;
+  height: 100px;
+  padding: 8px 6px;
+}
+
 .website-item.list {
   flex-direction: row;
   text-align: left;
@@ -863,6 +940,14 @@ onMounted(async () => {
   height: 48px;
   margin-bottom: 8px; /* 调整图标下方间距 */
   margin-top: 10px; /* 添加上边距，使图标稍微向下移动 */
+}
+
+/* 已标记网站列表的图标样式 - 更小 */
+.website-list.grid.marked-list .website-icon {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 6px;
+  margin-top: 18px;
 }
 
 .website-item.list .website-icon {
@@ -893,10 +978,17 @@ onMounted(async () => {
   margin-top: 5px; /* 添加上边距使整个信息块稍微向下移动 */
 }
 
+/* 已标记网站列表的信息样式 - 更紧凑 */
+.website-list.grid.marked-list .website-info {
+  padding: 0 4px;
+  margin-top: auto;
+  margin-bottom: 8px;
+}
+
 .website-name {
   font-size: 14px; /* 稍微减小字体 */
   font-weight: 500;
-  margin-bottom: 5px;
+  margin-top: 3px;
   overflow: hidden;
   text-overflow: clip;
   white-space: nowrap; /* 确保不换行 */
@@ -920,6 +1012,12 @@ onMounted(async () => {
   min-width: 0;
   padding: 0 5px;
   flex-shrink: 1;
+}
+
+/* 已标记网站列表的网站名称样式 - 更小的字体 */
+.website-list.grid.marked-list .website-name {
+  font-size: 12px;
+  padding: 0 2px;
 }
 
 .website-description {
