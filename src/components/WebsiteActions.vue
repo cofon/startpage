@@ -4,7 +4,6 @@
  * 用于显示网站的操作按钮组（标记、编辑、删除、恢复）
  */
 import { useNotificationStore } from '../stores/notification'
-import { onMounted } from 'vue'
 
 const props = defineProps({
   website: {
@@ -13,13 +12,7 @@ const props = defineProps({
   }
 })
 
-// 添加调试信息
-onMounted(() => {
-  console.log('[WebsiteActions] Component mounted')
-  console.log('[WebsiteActions] Website:', props.website)
-  console.log('[WebsiteActions] isMarked:', props.website?.isMarked)
-  console.log('[WebsiteActions] isActive:', props.website?.isActive)
-})
+
 
 const emit = defineEmits(['toggle-mark', 'edit', 'delete', 'restore'])
 
@@ -48,10 +41,6 @@ function handleRestore(event) {
 
 <template>
   <div class="website-actions">
-    <!-- 调试信息 -->
-    <div style="display: none;">
-      Actions for: {{ website?.name }}
-    </div>
     <button
       class="action-icon-button"
       @click.stop="(event) => handleToggleMark(event)"
@@ -86,13 +75,10 @@ function handleRestore(event) {
 </template>
 
 <style scoped>
-/* 调试样式 */
 .website-actions {
-  display: flex !important;
+  display: flex;
   gap: 8px;
   align-items: center;
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid red;
   flex-shrink: 0;
   min-width: 100px;
 }

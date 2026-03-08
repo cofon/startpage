@@ -77,7 +77,7 @@ export async function handleDrop(targetIndex, websiteStore, searchStore) {
   websiteStore.reorderMarkedWebsites(newOrder)
 
   // 更新searchStore.results
-  searchStore.results.value = websiteStore.markedWebsites
+  searchStore.results = websiteStore.markedWebsites
 
   // 更新数据库中的顺序
   for (let i = 0; i < newOrder.length; i++) {
@@ -105,4 +105,8 @@ export async function handleDrop(targetIndex, websiteStore, searchStore) {
 
   // 显示成功通知
   notificationStore.success('排序已更新')
+
+  // 重置拖拽状态
+  draggedIndex.value = -1
+  draggedItem.value = null
 }

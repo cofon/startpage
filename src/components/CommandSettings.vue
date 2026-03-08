@@ -6,7 +6,7 @@ import { useNotificationStore } from '../stores/notification'
 import db from '../utils/indexedDB'
 import ThemeSettings from './ThemeSettings.vue'
 import SearchSettings from './SearchSettings.vue'
-import LayoutSwitch from './LayoutSwitch.vue'
+// import LayoutSwitch from './LayoutSwitch-伪删除.vue'
 import AddWebsitePanel from './AddWebsitePanel.vue'
 
 const searchStore = useSearchStore()
@@ -179,7 +179,7 @@ function triggerImport() {
             accept=".json"
             style="display: none"
             @change="handleImport"
-          >
+          />
         </div>
       </div>
 

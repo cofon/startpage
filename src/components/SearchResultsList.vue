@@ -3,7 +3,7 @@
  * 搜索结果列表组件
  * 用于显示搜索结果，包含网站信息和操作按钮
  */
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import WebsiteIcon from './WebsiteIcon.vue'
 import WebsiteActions from './WebsiteActions.vue'
 
@@ -11,21 +11,10 @@ const props = defineProps({
   websites: {
     type: Array,
     required: true
-  },
-  layout: {
-    type: String,
-    default: 'list',
-    validator: (value) => ['grid', 'list'].includes(value)
   }
 })
 
-// 添加调试信息
-onMounted(() => {
-  console.log('[SearchResultsList] Component mounted')
-  console.log('[SearchResultsList] Websites count:', props.websites?.length)
-  console.log('[SearchResultsList] Layout:', props.layout)
-  console.log('[SearchResultsList] First website:', props.websites?.[0])
-})
+
 
 const emit = defineEmits(['click', 'toggle-mark', 'edit', 'delete', 'restore'])
 
@@ -99,12 +88,11 @@ function handleRestore(website) {
 </script>
 
 <template>
-  <div class="search-results-list" :class="layout">
+  <div class="search-results-list">
     <div
       v-for="website in websites"
       :key="website.id"
       class="website-item"
-      :class="layout"
     >
       <a
         :href="website.url"
@@ -139,30 +127,17 @@ function handleRestore(website) {
         @delete="handleDelete"
         @restore="handleRestore"
       />
-      <!-- 调试信息 -->
-      <div style="display: none;">
-        Actions rendered for: {{ website.name }}
-      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .search-results-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
   width: 100%;
   max-width: 100%;
-}
-
-/* 列表模式 */
-.search-results-list.list {
-  grid-template-columns: 1fr;
-}
-
-/* 网格模式 */
-.search-results-list.grid {
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .website-item {
@@ -186,18 +161,7 @@ function handleRestore(website) {
   box-shadow: var(--shadow-medium);
 }
 
-.website-item.grid {
-  flex-direction: column;
-  text-align: center;
-}
 
-.website-item.grid .website-link-wrapper {
-  flex-direction: column;
-}
-
-.website-item.grid .website-actions {
-  margin-top: 8px;
-}
 
 .website-link-wrapper {
   display: flex;
@@ -218,9 +182,7 @@ function handleRestore(website) {
   overflow: hidden;
 }
 
-.website-item.grid .website-info {
-  width: 100%;
-}
+
 
 /* WebsiteActions 的样式在其组件内部定义 */
 

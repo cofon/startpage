@@ -87,10 +87,6 @@ function handleWebsiteClick(website, event) {
         rel="noopener noreferrer"
         class="website-link-wrapper"
         @click.stop
-        @dragstart="(event) => handleDragStart(website, index)"
-        @dragend="(event) => handleDragEnd(event)"
-        @dragover.prevent
-        @drop="(event) => handleDrop(index, websiteStore, searchStore)"
       >
         <WebsiteIcon :website="website" />
         <div class="website-info">

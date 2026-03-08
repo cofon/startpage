@@ -8,7 +8,7 @@ import db from '../utils/indexedDB'
 import ThemeSettings from './ThemeSettings.vue'
 import SearchSettings from './SearchSettings.vue'
 import AddWebsitePanel from './AddWebsitePanel.vue'
-import LayoutSwitch from './LayoutSwitch.vue'
+// import LayoutSwitch from './LayoutSwitch-伪删除.vue'
 
 // 点击外部关闭指令
 const vClickOutside = {
@@ -22,14 +22,14 @@ const vClickOutside = {
   },
   unmounted(el) {
     document.removeEventListener('click', el._clickOutside)
-  }
+  },
 }
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'blur-settings-button'])
@@ -82,7 +82,7 @@ async function handleExport() {
     // 生成日期时间字符串，格式为：YYYYMMDDHHmmss
     const now = new Date()
     const year = now.getFullYear().toString()
-    const month = String(now.getMonth() + 1).padStart(2, '0')  // 月份从0开始，需要加1
+    const month = String(now.getMonth() + 1).padStart(2, '0') // 月份从0开始，需要加1
     const day = String(now.getDate()).padStart(2, '0')
     const hours = String(now.getHours()).padStart(2, '0')
     const minutes = String(now.getMinutes()).padStart(2, '0')
@@ -216,14 +216,28 @@ onUnmounted(() => {
             </button>
             <transition name="dropdown">
               <div v-if="showMoreMenu" class="more-menu">
-                <button class="menu-item" @click="handleExport(); closeMoreMenu()">
+                <button
+                  class="menu-item"
+                  @click="
+                    handleExport()
+                    closeMoreMenu()
+                  "
+                >
                   <span class="menu-icon">⬇️</span>
                   <span>导出数据</span>
                 </button>
                 <button class="menu-item" @click="triggerImport">
                   <span class="menu-icon">⬆️</span>
                   <span>导入数据</span>
-                  <input ref="importFile" id="import-file" name="importFile" type="file" accept=".json" @change="handleImport" style="display: none;">
+                  <input
+                    ref="importFile"
+                    id="import-file"
+                    name="importFile"
+                    type="file"
+                    accept=".json"
+                    @change="handleImport"
+                    style="display: none"
+                  />
                 </button>
               </div>
             </transition>
@@ -417,8 +431,4 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(-10px);
 }
-
-
-
-
 </style>

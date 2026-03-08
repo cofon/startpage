@@ -32,7 +32,6 @@ defineExpose({
     <SearchResultsList
       v-else-if="searchStore.displayMode === 'search'"
       :websites="searchStore.results"
-      :layout="settingStore.searchResultLayout"
       @click="$emit('website-click', $event)"
       @toggle-mark="$emit('toggle-mark', $event)"
       @edit="$emit('edit', $event)"

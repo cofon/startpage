@@ -14,7 +14,6 @@ export const useSettingStore = defineStore('setting', () => {
   const themes = ref([])
   const selectedSearchEngineId = ref('local')
   const searchEngines = ref([])
-  const searchResultLayout = ref('list') // 'grid' 或 'list'
   const lastBackupTime = ref(null)
 
   // ==================== 主题管理 ====================
@@ -249,18 +248,18 @@ export const useSettingStore = defineStore('setting', () => {
   // ==================== 其他设置 ====================
 
   // 设置搜索结果布局
-  function setSearchResultLayout(layout) {
-    if (layout === 'grid' || layout === 'list') {
-      searchResultLayout.value = layout
-      saveSettings()
-    }
-  }
+  // function setSearchResultLayout(layout) {
+  //   if (layout === 'grid' || layout === 'list') {
+  //     searchResultLayout.value = layout
+  //     saveSettings()
+  //   }
+  // }
 
   // 切换搜索结果布局
-  function toggleLayout() {
-    searchResultLayout.value = searchResultLayout.value === 'grid' ? 'list' : 'grid'
-    saveSettings()
-  }
+  // function toggleLayout() {
+  //   searchResultLayout.value = searchResultLayout.value === 'grid' ? 'list' : 'grid'
+  //   saveSettings()
+  // }
 
   // 更新最后备份时间
   function updateLastBackupTime() {
@@ -272,7 +271,7 @@ export const useSettingStore = defineStore('setting', () => {
     const settings = {
       selectedThemeId: selectedThemeId.value,
       selectedSearchEngineId: selectedSearchEngineId.value,
-      searchResultLayout: searchResultLayout.value,
+      // searchResultLayout: searchResultLayout.value,
       lastBackupTime: lastBackupTime.value ? lastBackupTime.value.toISOString() : null
     }
     await db.saveSettings(settings)
@@ -288,9 +287,9 @@ export const useSettingStore = defineStore('setting', () => {
       if (savedSettings.selectedSearchEngineId) {
         selectedSearchEngineId.value = savedSettings.selectedSearchEngineId
       }
-      if (savedSettings.searchResultLayout) {
-        searchResultLayout.value = savedSettings.searchResultLayout
-      }
+      // if (savedSettings.searchResultLayout) {
+      //   searchResultLayout.value = savedSettings.searchResultLayout
+      // }
       if (savedSettings.lastBackupTime) {
         lastBackupTime.value = new Date(savedSettings.lastBackupTime)
       }
@@ -324,7 +323,7 @@ export const useSettingStore = defineStore('setting', () => {
     themes,
     selectedSearchEngineId,
     searchEngines,
-    searchResultLayout,
+    // searchResultLayout,
     lastBackupTime,
     // Actions
     setTheme,
@@ -335,8 +334,8 @@ export const useSettingStore = defineStore('setting', () => {
     addSearchEngine,
     updateSearchEngine,
     deleteSearchEngine,
-    setSearchResultLayout,
-    toggleLayout,
+    // setSearchResultLayout,
+    // toggleLayout,
     updateLastBackupTime,
     saveSettings,
     loadSettings,
