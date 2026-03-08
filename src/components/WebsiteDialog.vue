@@ -163,19 +163,19 @@ async function saveWebsite() {
   }
 }
 
-// // 添加标签
-// function addTag() {
-//   const tag = tagInput.value.trim()
-//   if (tag && !form.value.tags.includes(tag)) {
-//     form.value.tags.push(tag)
-//     tagInput.value = ''
-//   }
-// }
+// 添加标签
+function addTag() {
+  const tag = tagInput.value.trim()
+  if (tag && !form.value.tags.includes(tag)) {
+    form.value.tags.push(tag)
+    tagInput.value = ''
+  }
+}
 
-// // 移除标签
-// function removeTag(index) {
-//   form.value.tags.splice(index, 1)
-// }
+// 移除标签
+function removeTag(index) {
+  form.value.tags.splice(index, 1)
+}
 
 // 监听对话框打开状态
 watch(() => props.modelValue, (newVal) => {
@@ -247,7 +247,8 @@ watch(() => props.modelValue, (newVal) => {
               id="tag-input"
               name="tags"
               class="form-input"
-              placeholder="输入标签，用逗号、分号或空格分隔"
+              placeholder="输入标签，按回车添加"
+              @keyup.enter="addTag"
             >
             <div v-if="allTags.length > 0" class="tags-dropdown">
               <div
@@ -261,7 +262,18 @@ watch(() => props.modelValue, (newVal) => {
               </div>
             </div>
           </div>
-          <div class="form-hint">点击保存按钮时添加标签，使用英文逗号、英文分号或空格分隔多个标签</div>
+          <!-- 显示已添加的标签 -->
+          <div v-if="form.tags.length > 0" class="added-tags">
+            <span
+              v-for="(tag, index) in form.tags"
+              :key="tag"
+              class="added-tag"
+            >
+              {{ tag }}
+              <span class="remove-tag" @click="removeTag(index)">×</span>
+            </span>
+          </div>
+          <div class="form-hint">输入标签后按回车添加，或从下拉列表中选择</div>
         </div>
 
         <div class="form-group">
@@ -431,6 +443,37 @@ watch(() => props.modelValue, (newVal) => {
   font-size: 12px;
   color: #999;
   margin-top: 4px;
+}
+
+.added-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.added-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background-color: #409eff;
+  color: white;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.remove-tag {
+  margin-left: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.remove-tag:hover {
+  opacity: 1;
 }
 
 .checkbox-group {

@@ -68,7 +68,7 @@ export const useWebsiteStore = defineStore('website', () => {
     return websiteWithDefaults
   }
 
-  function updateWebsite(id, data) {
+  async function updateWebsite(id, data) {
     const index = websites.value.findIndex(w => w.id === id)
     if (index !== -1) {
       // 创建一个新的网站对象，确保数组类型的字段也被正确更新
@@ -82,6 +82,8 @@ export const useWebsiteStore = defineStore('website', () => {
         updatedWebsite.tags = [...data.tags]
       }
       websites.value[index] = updatedWebsite
+      // 更新数据库
+      await db.updateWebsite(updatedWebsite)
     }
   }
 
