@@ -4,6 +4,7 @@
  * 用于显示网站的操作按钮组（标记、编辑、删除、恢复）
  */
 import { useNotificationStore } from '../stores/notification'
+import { onMounted } from 'vue'
 
 const props = defineProps({
   website: {
@@ -12,39 +13,55 @@ const props = defineProps({
   }
 })
 
+// 添加调试信息
+onMounted(() => {
+  console.log('[WebsiteActions] Component mounted')
+  console.log('[WebsiteActions] Website:', props.website)
+  console.log('[WebsiteActions] isMarked:', props.website?.isMarked)
+  console.log('[WebsiteActions] isActive:', props.website?.isActive)
+})
+
 const emit = defineEmits(['toggle-mark', 'edit', 'delete', 'restore'])
 
 const notificationStore = useNotificationStore()
 
-function handleToggleMark() {
+function handleToggleMark(event) {
+  event.stopPropagation()
   emit('toggle-mark', props.website)
 }
 
-function handleEdit() {
+function handleEdit(event) {
+  event.stopPropagation()
   emit('edit', props.website)
 }
 
-function handleDelete() {
+function handleDelete(event) {
+  event.stopPropagation()
   emit('delete', props.website)
 }
 
-function handleRestore() {
+function handleRestore(event) {
+  event.stopPropagation()
   emit('restore', props.website)
 }
 </script>
 
 <template>
   <div class="website-actions">
+    <!-- 调试信息 -->
+    <div style="display: none;">
+      Actions for: {{ website?.name }}
+    </div>
     <button
       class="action-icon-button"
-      @click="handleToggleMark"
+      @click.stop="(event) => handleToggleMark(event)"
       :title="website.isMarked ? '取消标记' : '标记'"
     >
       {{ website.isMarked ? '★' : '☆' }}
     </button>
     <button
       class="action-icon-button"
-      @click="handleEdit"
+      @click.stop="(event) => handleEdit(event)"
       title="编辑"
     >
       ✎
@@ -52,7 +69,7 @@ function handleRestore() {
     <button
       v-if="website.isActive"
       class="action-icon-button delete"
-      @click="handleDelete"
+      @click.stop="(event) => handleDelete(event)"
       title="删除"
     >
       ✕
@@ -60,7 +77,7 @@ function handleRestore() {
     <button
       v-else
       class="action-icon-button restore"
-      @click="handleRestore"
+      @click.stop="(event) => handleRestore(event)"
       title="恢复"
     >
       ↺
@@ -69,10 +86,15 @@ function handleRestore() {
 </template>
 
 <style scoped>
+/* 调试样式 */
 .website-actions {
-  display: flex;
+  display: flex !important;
   gap: 8px;
   align-items: center;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid red;
+  flex-shrink: 0;
+  min-width: 100px;
 }
 
 .action-icon-button {

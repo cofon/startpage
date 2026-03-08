@@ -58,11 +58,10 @@ export const useSearchStore = defineStore('search', () => {
 
   // 监听搜索引擎切换
   watch(() => settingStore.selectedSearchEngineId, (newEngine, oldEngine) => {
-    if (newEngine === 'local' || (oldEngine === 'local' && newEngine !== 'local')) {
-      // 切换搜索引擎，清空输入框
-      query.value = ''
-      refreshCurrentDisplay({ results, displayMode }, websiteStore)
-    }
+    // 切换搜索引擎，清空输入框并显示 marked list
+    query.value = ''
+    displayMode.value = 'marked'
+    results.value = websiteStore.markedWebsites
   })
 
   // 监听查询变化
@@ -73,6 +72,10 @@ export const useSearchStore = defineStore('search', () => {
       if (!query.value.trim() && !commandMode.value) {
         refreshCurrentDisplay({ results, displayMode }, websiteStore)
       }
+    } else {
+      // 网络搜索时，始终显示 marked list
+      displayMode.value = 'marked'
+      results.value = websiteStore.markedWebsites
     }
   })
 
@@ -80,6 +83,7 @@ export const useSearchStore = defineStore('search', () => {
   function init() {
     // 使用 nextTick 确保 websiteStore 已经初始化
     nextTick(() => {
+      displayMode.value = 'marked'
       results.value = websiteStore.markedWebsites
     })
   }
@@ -90,11 +94,14 @@ export const useSearchStore = defineStore('search', () => {
 
   function clearQuery() {
     query.value = ''
+    displayMode.value = 'marked'
     results.value = websiteStore.markedWebsites
   }
 
   function performSearch() {
     if (!isLocalSearch.value) {
+      // 网络搜索时，始终显示 marked list
+      displayMode.value = 'marked'
       results.value = websiteStore.markedWebsites
       return
     }
@@ -166,6 +173,7 @@ export const useSearchStore = defineStore('search', () => {
   function clearCommandMode() {
     commandMode.value = null
     query.value = ''
+    displayMode.value = 'marked'
     results.value = websiteStore.markedWebsites
   }
 

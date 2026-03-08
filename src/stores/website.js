@@ -71,11 +71,17 @@ export const useWebsiteStore = defineStore('website', () => {
   function updateWebsite(id, data) {
     const index = websites.value.findIndex(w => w.id === id)
     if (index !== -1) {
-      websites.value[index] = {
+      // 创建一个新的网站对象，确保数组类型的字段也被正确更新
+      const updatedWebsite = {
         ...websites.value[index],
         ...data,
         updatedAt: new Date()
       }
+      // 如果 data 中包含 tags，确保创建一个新的数组
+      if (data.tags && Array.isArray(data.tags)) {
+        updatedWebsite.tags = [...data.tags]
+      }
+      websites.value[index] = updatedWebsite
     }
   }
 

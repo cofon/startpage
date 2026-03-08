@@ -74,26 +74,31 @@ function handleWebsiteClick(website, event) {
       class="website-item"
       :class="{ 'dragging': draggedIndex === index }"
       draggable="true"
-      @mousedown="handleMouseDown"
+      @mousedown="(event) => handleMouseDown(event)"
       @click="(event) => handleWebsiteClick(website, event)"
-      @dragstart="() => handleDragStart(website, index)"
-      @dragend="handleDragEnd"
+      @dragstart="(event) => handleDragStart(website, index)"
+      @dragend="(event) => handleDragEnd(event)"
       @dragover.prevent
-      @drop="() => handleDrop(index, websiteStore, searchStore)"
+      @drop="(event) => handleDrop(index, websiteStore, searchStore)"
     >
-      <WebsiteIcon :website="website" />
-      <div class="website-info">
-        <a
-          class="website-name"
-          :title="website.name"
-          :href="website.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          @click.stop
-        >
-          {{ website.name }}
-        </a>
-      </div>
+      <a
+        :href="website.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="website-link-wrapper"
+        @click.stop
+        @dragstart="(event) => handleDragStart(website, index)"
+        @dragend="(event) => handleDragEnd(event)"
+        @dragover.prevent
+        @drop="(event) => handleDrop(index, websiteStore, searchStore)"
+      >
+        <WebsiteIcon :website="website" />
+        <div class="website-info">
+          <span class="website-name" :title="website.name">
+            {{ website.name }}
+          </span>
+        </div>
+      </a>
     </div>
   </div>
 </template>
@@ -129,6 +134,17 @@ function handleWebsiteClick(website, event) {
   transform: scale(0.95);
 }
 
+.website-link-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
 .website-info {
   text-align: center;
   width: 100%;
@@ -138,14 +154,13 @@ function handleWebsiteClick(website, event) {
   display: block;
   font-size: 14px;
   color: var(--color-text-main);
-  text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: color 0.2s ease;
 }
 
-.website-name:hover {
+.website-link-wrapper:hover .website-name {
   color: var(--color-primary);
 }
 </style>

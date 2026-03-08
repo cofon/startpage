@@ -73,13 +73,23 @@ function openEditWebsite(website) {
 // 保存网站
 async function saveWebsite(websiteData) {
   if (editingWebsite.value) {
-    // 更新现有网站
-    await websiteStore.updateWebsite(editingWebsite.value.id, websiteData)
+    // WebsiteDialog 已经调用了 updateWebsite，这里只需要更新数据库和刷新显示
     const websiteToUpdate = normalizeWebsiteForDB(websiteData)
     await db.updateWebsite(websiteToUpdate)
+
+    // 如果当前显示模式是搜索，重新执行搜索
+    if (searchStore.displayMode === 'search') {
+      if (searchStore.query && searchStore.query.trim()) {
+        searchStore.results = websiteStore.searchWebsites(searchStore.query)
+      } else {
+        searchStore.results = []
+      }
+    } else if (searchStore.displayMode === 'marked') {
+      // 如果当前显示模式是已标记，刷新已标记列表
+      searchStore.results = websiteStore.markedWebsites
+    }
   } else {
-    // 添加新网站
-    await websiteStore.addWebsite(websiteData)
+    // WebsiteDialog 已经调用了 addWebsite，这里只需要更新数据库
     const newWebsite = websiteStore.websites[websiteStore.websites.length - 1]
     const websiteToAdd = normalizeWebsiteForDB(newWebsite)
     await db.addWebsite(websiteToAdd)
@@ -88,24 +98,20 @@ async function saveWebsite(websiteData) {
 
 // 删除网站（软删除）
 async function deleteWebsite(website) {
-  if (confirm(`确定要删除 "${website.name}" 吗？`)) {
-    await websiteStore.deleteWebsite(website.id)
-    const websiteToUpdate = normalizeWebsiteForDB({ ...website, isActive: false, updatedAt: new Date() })
-    await db.updateWebsite(websiteToUpdate)
-    handleWebsiteDeleted(searchStore, websiteStore, website.id)
-    notificationStore.success(`已删除网站：${website.name}`)
-  }
+  await websiteStore.deleteWebsite(website.id)
+  const websiteToUpdate = normalizeWebsiteForDB({ ...website, isActive: false, updatedAt: new Date() })
+  await db.updateWebsite(websiteToUpdate)
+  handleWebsiteDeleted(searchStore, websiteStore, website.id)
+  notificationStore.success(`已删除网站：${website.name}`)
 }
 
 // 恢复网站（将 isActive 设置为 true）
 async function restoreWebsite(website) {
-  if (confirm(`确定要恢复 "${website.name}" 吗？`)) {
-    websiteStore.updateWebsite(website.id, { isActive: true })
-    const websiteToUpdate = normalizeWebsiteForDB({ ...website, isActive: true, updatedAt: new Date() })
-    await db.updateWebsite(websiteToUpdate)
-    handleWebsiteRestored(searchStore, websiteStore, website.id)
-    notificationStore.success(`已恢复网站：${website.name}`)
-  }
+  websiteStore.updateWebsite(website.id, { isActive: true })
+  const websiteToUpdate = normalizeWebsiteForDB({ ...website, isActive: true, updatedAt: new Date() })
+  await db.updateWebsite(websiteToUpdate)
+  handleWebsiteRestored(searchStore, websiteStore, website.id)
+  notificationStore.success(`已恢复网站：${website.name}`)
 }
 
 // 切换网站标记状态

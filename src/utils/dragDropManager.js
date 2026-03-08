@@ -77,7 +77,7 @@ export async function handleDrop(targetIndex, websiteStore, searchStore) {
   websiteStore.reorderMarkedWebsites(newOrder)
 
   // 更新searchStore.results
-  searchStore.results = websiteStore.markedWebsites
+  searchStore.results.value = websiteStore.markedWebsites
 
   // 更新数据库中的顺序
   for (let i = 0; i < newOrder.length; i++) {

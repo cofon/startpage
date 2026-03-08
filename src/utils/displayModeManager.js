@@ -15,8 +15,8 @@ export function updateDisplayResults(searchStore, websiteStore, mode) {
       searchStore.results = websiteStore.markedWebsites
       break
     case 'search':
-      if (searchStore.query.value && searchStore.query.value.trim()) {
-        searchStore.results = websiteStore.searchWebsites(searchStore.query.value)
+      if (searchStore.query && searchStore.query.trim()) {
+        searchStore.results = websiteStore.searchWebsites(searchStore.query)
       } else {
         searchStore.results = []
       }
@@ -62,7 +62,12 @@ export function handleWebsiteRestored(searchStore, websiteStore, websiteId) {
   if (searchStore.displayMode === 'marked') {
     searchStore.results = websiteStore.markedWebsites
   } else if (searchStore.displayMode === 'search') {
-    searchStore.results = searchStore.results.filter(w => w.id !== websiteId)
+    // 重新执行搜索，确保恢复的网站如果匹配搜索词会显示出来
+    if (searchStore.query && searchStore.query.trim()) {
+      searchStore.results = websiteStore.searchWebsites(searchStore.query)
+    } else {
+      searchStore.results = []
+    }
   }
 }
 
@@ -76,8 +81,8 @@ export function handleWebsiteMarkToggled(searchStore, websiteStore, isMarked) {
   if (searchStore.displayMode === 'marked') {
     searchStore.results = websiteStore.markedWebsites
   } else if (searchStore.displayMode === 'search') {
-    if (searchStore.query.value && searchStore.query.value.trim()) {
-      searchStore.results = websiteStore.searchWebsites(searchStore.query.value)
+    if (searchStore.query && searchStore.query.trim()) {
+      searchStore.results = websiteStore.searchWebsites(searchStore.query)
     }
   }
 }

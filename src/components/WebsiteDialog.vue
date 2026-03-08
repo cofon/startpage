@@ -147,7 +147,7 @@ async function saveWebsite() {
     if (props.website) {
       // 更新现有网站
       websiteData.id = props.website.id
-      await websiteStore.updateWebsite(websiteData)
+      await websiteStore.updateWebsite(props.website.id, websiteData)
       notificationStore.success('网站更新成功！')
     } else {
       // 添加新网站
