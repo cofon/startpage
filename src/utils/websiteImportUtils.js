@@ -30,7 +30,6 @@ export function validateWebsite(website) {
 export function fillDefaultFields(website) {
   return {
     ...website,
-    iconCanFetch: website.iconCanFetch !== undefined ? website.iconCanFetch : true,
     isMarked: website.isMarked !== undefined ? website.isMarked : false,
     isActive: website.isActive !== undefined ? website.isActive : true,
     isHidden: website.isHidden !== undefined ? website.isHidden : false
@@ -83,9 +82,17 @@ export function importSingleWebsite(website, websitesStore, onComplete) {
   const urlIndexReq = websitesStore.index('url').get(websiteToImport.url)
   urlIndexReq.onsuccess = () => {
     if (urlIndexReq.result) {
-      // URL 已存在，跳过
-      console.warn('跳过重复网站：URL已存在', websiteToImport.url)
-      onComplete()
+      // URL 已存在，更新网站数据
+      const existingWebsite = urlIndexReq.result
+      // 保留原有ID，更新其他字段
+      const updatedWebsite = {
+        ...existingWebsite,
+        ...websiteToImport,
+        id: existingWebsite.id,  // 确保使用原有ID
+        updatedAt: new Date()  // 更新时间戳
+      }
+      // 更新网站
+      updateWebsiteInStore(updatedWebsite, websitesStore, onComplete)
       return
     }
 
@@ -131,6 +138,24 @@ function addWebsiteToStore(website, websitesStore, onComplete) {
   }
   addReq.onerror = () => {
     console.error('添加网站失败:', website)
+    onComplete()
+  }
+}
+
+/**
+ * 更新存储中的网站数据
+ * @param {Object} website - 网站数据对象
+ * @param {Object} websitesStore - IndexedDB 的 websites 存储对象
+ * @param {Function} onComplete - 完成回调函数
+ * @returns {void}
+ */
+function updateWebsiteInStore(website, websitesStore, onComplete) {
+  const updateReq = websitesStore.put(website)
+  updateReq.onsuccess = () => {
+    onComplete()
+  }
+  updateReq.onerror = () => {
+    console.error('更新网站失败:', website)
     onComplete()
   }
 }

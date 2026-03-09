@@ -1,0 +1,15 @@
+{
+  "websites": [
+    {
+      "url": "https://www.zhihu.com/question/660717118/answer/2012167804879659670",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://www.zhihu.com/question/662065754/answer/2014040439313958896",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    }
+  ],
+  "settings": {},
+  "themes": [],
+  "searchEngines": []
+}

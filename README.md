@@ -302,22 +302,20 @@ displayMode: ref('marked') // 控制显示模块显示什么
 {
   id: number,              // 自增 ID (主键)
   name: string,            // 网站名称
+  title: string,           // 网站标题（新增）
   url: string,             // 网站链接
   description: string,     // 网站描述
-  iconData: string,        // 从网络获取的图标 Base64 (data:image/[format];base64,...)
-  iconGenerateData: string,// 本地生成的 SVG 图标
-  iconCanFetch: boolean,   // 是否可从网络获取图标
-  iconFetchAttempts: number,// 网络获取尝试次数
-  iconLastFetchTime: Date, // 最后获取时间戳
+  iconData: string,        // 从网络获取的 icon 的 base64(PNG/ICO/JPG等)
+  iconGenerateData: string, // 本地生成的 SVG 图标
   tags: Array,             // 标签数组 [tag1, tag2, ...]
-  isMarked: boolean,       // 是否已标记
-  markOrder: number,       // 标记排序 (isMarked=true 时有效)
-  visitCount: number,      // 访问次数
-  lastVisited: Date,       // 最后访问时间
+  isMarked: boolean,       // 是否为已标记网站
+  markOrder: number,       // marked 网站排序 (仅当 isMarked 为 true 时有效)
+  visitCount: number,      // 访问次数统计
+  lastVisited: Date,       // 最近访问时间
   createdAt: Date,         // 创建时间
   updatedAt: Date,         // 更新时间
-  isActive: boolean,       // 是否激活（正常显示）
-  isHidden: boolean        // 是否隐藏
+  isActive: boolean,       // 是否激活状态 (正常搜索不显示非激活的网站)
+  isHidden: boolean        // 是否隐藏状态 (正常搜索不显示隐藏的网站)
 }
 ```
 
@@ -328,6 +326,13 @@ displayMode: ref('marked') // 控制显示模块显示什么
 - `isActive`：查询活跃状态
 - `isHidden`：查询隐藏状态
 - `url`：按 URL 查询
+
+已删除字段：
+- `iconUrl`: string,         // 原始 URL (版本 7 已删除)
+- `icon`: string,            // 图标 URL(版本 7 已删除)
+- `iconCanFetch`: boolean,   // 是否可以从网络获取 icon(版本 7 已删除)
+- `iconFetchAttempts`: number, // 尝试从网络获取的次数 (版本 7 已删除)
+- `iconLastFetchTime`: Date, // 最后一次尝试从网络获取的时间戳 (版本 7 已删除)
 
 #### settings 表
 存储应用设置：
@@ -468,6 +473,7 @@ MIT License
   - 搜索命令解析器改进
   - 图标获取逻辑优化
   - 通知系统完善
+  - 数据库结构优化，移除冗余字段，新增 title 字段
 - **性能提升**：
   - 组件拆分更细粒度
   - 状态管理优化
@@ -512,77 +518,38 @@ MIT License
 6. 添加批量管理方案(暂时不考虑，有必要时再添加)
 7. 显示模块显示的是marked list的时候，调整UI显示，让搜索框下移
 8. 点击链接在新的标签页打开，修改为在当前页面打开
-9. 已经使用python获取网站数据，数据表website的字段需要修改，太多冗余
 
 ###### 当前要做的事情
-- 数据库 数据表 website 添加字段 title
-- 显示模块显示的是search result list的时候, website-description当前显示的是description
-- 如果description不为空，则使用description字段
-- 如果description为空，则使用title字段
-- 如果description和title都为空，则使用name字段
-- 优先级：description > title > name
-- 添加网站时要检测，确保 name title description 至少有一个不为空
-- 导入数据时要检测，确保 name title description 至少有一个不为空
+- [x] 数据库 数据表 website 添加字段 title
+- [x] 显示模块显示的是search result list的时候, website-description当前显示的是description
+- [x] 如果description不为空，则使用description字段
+- [x] 如果description为空，则使用title字段
+- [x] 如果description和title都为空，则使用name字段
+- [x] 优先级：description > title > name
+- [x] 添加网站时要检测，确保 name title description 至少有一个不为空
+- [x] 导入数据时要检测，确保 name title description 至少有一个不为空
 
-websites表当前字段：
-  id: number,              // 自增ID (主键)
+websites 表当前字段：
+  id: number,              // 自增 ID (主键)
   name: string,            // 网站名称
+  title: string,           // 网站标题（新增）
   url: string,             // 网站链接
   description: string,     // 网站描述
-  icon: string,            // 图标URL(不再使用，暂时保留)
-  iconUrl: string,         // 原始 URL (用不到，暂时保留)
   iconData: string,        // 从网络获取的 icon 的 base64(PNG/ICO/JPG等)
   iconGenerateData: string, // 本地生成的 SVG 图标
-  iconCanFetch: boolean,   // 是否可以从网络获取 icon(布尔值)
-  iconFetchAttempts: number, // 尝试从网络获取的次数(数字)
-  iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳
   tags: Array,             // 标签数组 [tag1, tag2, ...]
   isMarked: boolean,       // 是否为已标记网站
-  markOrder: number,       // marked网站排序(仅当isMarked为true时有效)
+  markOrder: number,       // marked 网站排序 (仅当 isMarked 为 true 时有效)
   visitCount: number,      // 访问次数统计
   lastVisited: Date,       // 最近访问时间
   createdAt: Date,         // 创建时间
   updatedAt: Date,         // 更新时间
-  isActive: boolean,       // 是否激活状态(正常搜索不显示非激活的网站)
-  isHidden: boolean        // 是否隐藏状态(正常搜索不显示隐藏的网站)
-添加字段：
-  title string, // 网站标题
-删除字段：
-  iconUrl: string, // 原始 URL (用不到，暂时保留)
-  icon: string,            // 图标URL(不再使用，暂时保留)
-  iconCanFetch: boolean,   // 是否可以从网络获取 icon(布尔值)
-  iconFetchAttempts: number, // 尝试从网络获取的次数(数字)
-  iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳
+  isActive: boolean,       // 是否激活状态 (正常搜索不显示非激活的网站)
+  isHidden: boolean        // 是否隐藏状态 (正常搜索不显示隐藏的网站)
 
-添加网站逻辑修改：
-- 因为新增了title字段，所以添加网站逻辑需要修改
-- 检测name title description字段，三者至少有一个不为空
-- 不要再获取网站的icon图标，因为这个修改为使用python获取了，生成一个svg图标就行
-- 获取网络图标的逻辑全部删除掉(python里的不要动)
-- 不要再获取网站的title description，因为这个修改为使用python获取了
-- 获取网站title description的逻辑全部删除掉(python里的不要动)
-
-添加网站的面板有以下内容：
-- 网站名 对应websites表name字段
-- 网站标题 对应websites表title字段
-- 网站描述 对应websites表description字段
-- 网站链接 对应websites表url字段
-- icon图标 对应websites表iconData字段
-  - (这个是python获取的，这里只是预留一个入口，实际用不到)
-  - 要有一个输入框，用户可以输入网站图标的base64编码
-  - 要有一个按钮，用户可以点击按钮，打开一个图标选择器，用户选择图标，图标转为base64编码
-  - 要有一个预览区域，用户可以预览图标
-- SVG图标 对应websites表 iconGenerateData字段
-  - (这个是程序生成的，这里这是预留一个入口，实际用不到)
-  - 要有一个输入框，用户可以输入网站图标的SVG代码
-  - 要有一个按钮，用户可以点击按钮，打开一个SVG选择器，用户选择SVG，SVG转为代码
-  - 要有一个预览区域，用户可以预览SVG
-- 网站设置 对应websites表isActive isHidden isMarked字段(保留当前代码就行)
-- 标签 对应websites表tags字段(保留当前代码就行)
-
-编辑网站面板：
-- 添加网站title输入框，自动填充网站的title字段
-- 添加网站icon图标输入框，自动填充网站的iconData字段
-- 添加网站SVG图标输入框，自动填充网站的iconGenerateData字段
-
-因为数据库字段有变化，检查导入数据的逻辑，适应新的字段
+已删除字段：
+  iconUrl: string,         // 原始 URL (版本 7 已删除)
+  icon: string,            // 图标 URL(版本 7 已删除)
+  iconCanFetch: boolean,   // 是否可以从网络获取 icon(版本 7 已删除)
+  iconFetchAttempts: number, // 尝试从网络获取的次数 (版本 7 已删除)
+  iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳 (版本 7 已删除)

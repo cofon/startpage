@@ -88,14 +88,14 @@ function handleRestore(website) {
 
 /**
  * 获取网站显示文本
- * 优先级：description > title > name
+ * 优先级：title > description > name
  */
 function getWebsiteDisplayText(website) {
-  if (website.description && website.description.trim() !== '') {
-    return website.description
-  }
   if (website.title && website.title.trim() !== '') {
     return website.title
+  }
+  if (website.description && website.description.trim() !== '') {
+    return website.description
   }
   return website.name || ''
 }

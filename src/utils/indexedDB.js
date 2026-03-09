@@ -6,7 +6,7 @@
 import { importSingleWebsite } from './websiteImportUtils'
 
 const DB_NAME = 'StartPageDB'
-const DB_VERSION = 6
+const DB_VERSION = 7
 
 // 表名
 const STORE_WEBSITES = 'websites'
@@ -56,8 +56,9 @@ class IndexedDB {
           websiteStore.createIndex('isHidden', 'isHidden', { unique: false }) // 添加 isHidden 索引
           websiteStore.createIndex('url', 'url', { unique: false }) // 添加 url 索引
         } else {
-          // 如果 websites 存储已存在，获取它以添加新索引
-          websiteStore = event.target.result.transaction(STORE_WEBSITES).objectStore(STORE_WEBSITES)
+          // 如果 websites 存储已存在，通过 transaction 获取它
+          const transaction = event.target.transaction
+          websiteStore = transaction.objectStore(STORE_WEBSITES)
         }
 
         // 创建 settings 表
@@ -99,6 +100,30 @@ class IndexedDB {
             websiteStore.createIndex('title', 'title', { unique: false })
           }
         }
+
+        // 版本 7：删除不需要的字段（iconUrl, iconCanFetch, iconFetchAttempts, iconLastFetchTime）
+        if (oldVersion < 7 && websiteStore) {
+          // 获取所有网站数据
+          const request = websiteStore.getAll()
+          
+          request.onsuccess = () => {
+            const websites = request.result || []
+            
+            // 遍历所有网站，删除不需要的字段
+            websites.forEach(website => {
+              const updatedWebsite = { ...website }
+              
+              // 删除不需要的字段
+              delete updatedWebsite.iconUrl
+              delete updatedWebsite.iconCanFetch
+              delete updatedWebsite.iconFetchAttempts
+              delete updatedWebsite.iconLastFetchTime
+              
+              // 更新网站数据
+              websiteStore.put(updatedWebsite)
+            })
+          }
+        }
       }
     })
   }
@@ -113,12 +138,17 @@ class IndexedDB {
     const store = transaction.objectStore(STORE_WEBSITES)
 
     // 确保 website 对象是一个纯净的 JavaScript 对象，而不是响应式对象
-    const plainWebsite = {
-      ...website
-    }
+    // 使用 JSON.parse(JSON.stringify()) 来深度克隆并移除响应式属性
+    const plainWebsite = JSON.parse(JSON.stringify(website))
     
     // 删除 id 字段，让 IndexedDB 自动生成（因为 keyPath 配置了 autoIncrement: true）
     delete plainWebsite.id
+    
+    // 删除已废弃的字段
+    delete plainWebsite.iconUrl
+    delete plainWebsite.iconCanFetch
+    delete plainWebsite.iconFetchAttempts
+    delete plainWebsite.iconLastFetchTime
 
     return new Promise((resolve, reject) => {
       const request = store.add(plainWebsite)
@@ -142,10 +172,15 @@ class IndexedDB {
     const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
     const store = transaction.objectStore(STORE_WEBSITES)
 
-    // 确保website对象是一个纯净的JavaScript对象，而不是响应式对象
-    const plainWebsite = {
-      ...website
-    }
+    // 确保 website 对象是一个纯净的 JavaScript 对象，而不是响应式对象
+    // 使用 JSON.parse(JSON.stringify()) 来深度克隆并移除响应式属性
+    const plainWebsite = JSON.parse(JSON.stringify(website))
+    
+    // 删除已废弃的字段
+    delete plainWebsite.iconUrl
+    delete plainWebsite.iconCanFetch
+    delete plainWebsite.iconFetchAttempts
+    delete plainWebsite.iconLastFetchTime
 
     return new Promise((resolve, reject) => {
       const request = store.put(plainWebsite)

@@ -7,36 +7,6 @@ Website Fetcher - 网站数据获取工具
 - 自动检测并转换图片格式为 Base64 Data URI
 - 为无法获取图标的网站生成 SVG 占位图标
 - 支持增量获取和断点续传
-- 支持从起始页项目导出的 JSON 文件中加载并更新 websites 数据
-
-使用示例：
-
-1. 基本用法 - 从 URL 列表获取数据：
-    fetcher = WebsiteFetcher(max_workers=5, timeout=10)
-    urls = ['https://www.baidu.com', 'https://www.google.com']
-    websites = fetcher.batch_fetch(urls)
-    # 注意：现在不再保存到 websites.json
-
-2. 从起始页导出文件更新数据：
-    fetcher = WebsiteFetcher()
-    # 从起始页备份文件加载并更新缺失的 title/description/iconData
-    updated_websites = fetcher.update_websites_from_export(
-        'startpage-backup-20260309-132958.json',
-        output_filename='websites-updated.json'  # 可选，保存结果
-    )
-    
-3. 单独加载导出文件：
-    fetcher = WebsiteFetcher()
-    websites = fetcher.load_startpage_export('startpage-backup-20260309-132958.json')
-
-WebsiteFetcher - 网站数据获取工具
-
-功能说明：
-- 批量获取网站的标题、描述、图标等信息
-- 支持多线程并发请求，提高效率
-- 自动检测并转换图片格式为 Base64 Data URI
-- 为无法获取图标的网站生成 SVG 占位图标
-- 支持增量获取和断点续传
 
 使用示例：
     fetcher = WebsiteFetcher(max_workers=5, timeout=10)
@@ -52,7 +22,6 @@ import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from datetime import datetime
-import logging
 
 # 尝试导入 favicon 库（可选依赖）
 try:
@@ -75,16 +44,14 @@ class WebsiteFetcher:
         max_workers (int): 最大并发线程数
         timeout (int): 请求超时时间（秒）
         session (requests.Session): 配置好的 requests 会话对象
-        logger (logging.Logger): 日志记录器
     """
     
-    def __init__(self, max_workers=5, timeout=10, logger=None):
+    def __init__(self, max_workers=5, timeout=10):
         """初始化工具类
         
         Args:
             max_workers (int, optional): 最大并发数，默认 5 个线程
             timeout (int, optional): 请求超时时间，默认 10 秒
-            logger (logging.Logger, optional): 日志记录器，如果不提供则创建默认 logger
             
         Example:
             >>> fetcher = WebsiteFetcher(max_workers=10, timeout=15)
@@ -93,18 +60,7 @@ class WebsiteFetcher:
         self.max_workers = max_workers
         self.timeout = timeout
         self.session = self._create_session()
-        
-        # 配置日志记录器
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger('WebsiteFetcher.WebsiteFetcher')
-            if not self.logger.handlers:
-                handler = logging.StreamHandler()
-                handler.setFormatter(logging.Formatter('%(asctime)s\t%(levelname)s\t%(message)s'))
-                self.logger.addHandler(handler)
-                self.logger.setLevel(logging.INFO)
-
+    
     def _create_session(self):
         """创建带有重试机制的 HTTP Session
         
@@ -729,8 +685,6 @@ class WebsiteFetcher:
             
         except Exception as e:
             # 捕获所有异常，避免单个网站失败影响整体流程
-            error_type = type(e).__name__
-            self.logger.error(f'FETCH_ERROR\t{error_type}\t{url}\t{str(e)}')
             print(f"获取 {url} 数据失败：{e}")
             return None
         
@@ -756,10 +710,7 @@ class WebsiteFetcher:
             >>> len(results)
             3
         """
-        self.logger.info(f'BATCH_FETCH_START\tTOTAL_URLS\t{len(urls)}')
         results = []
-        success_count = 0
-        failed_urls = []
         
         # 使用线程池并发执行
         # max_workers 控制同时运行的线程数，过多线程会增加服务器压力
@@ -781,288 +732,114 @@ class WebsiteFetcher:
                         result = future.result()
                         if result:
                             results.append(result)
-                            success_count += 1
                             pbar.set_postfix({'status': '✓', 'url': url[:30]})
-                            self.logger.info(f'FETCH_SUCCESS\t{url}\t{result.get("title", "N/A")}')
                         else:
                             pbar.set_postfix({'status': '✗', 'url': url[:30]})
-                            failed_urls.append(url)
-                            self.logger.warning(f'FETCH_FAILED\tNO_DATA\t{url}')
                     except Exception as e:
                         # 捕获任务执行过程中的异常
                         pbar.set_postfix({'status': '✗', 'url': url[:30]})
-                        failed_urls.append(url)
-                        self.logger.error(f'TASK_ERROR\t{type(e).__name__}\t{url}\t{str(e)}')
-
-        self.logger.info(f'BATCH_FETCH_END\tTOTAL_URLS\t{len(urls)}\tSUCCESS\t{success_count}\tFAILED\t{len(failed_urls)}')
+                    pbar.update(1)  # 更新进度条
+        
         return results
     
-    
-    def load_startpage_export(self, filename):
-        """从起始页项目导出的 JSON 文件中加载 websites 数据
+    def load_existing_data(self, filename='websites.json'):
+        """加载已有的网站数据
         
-        起始页项目导出的 JSON 格式：
-        {
-          "websites": [{ website1 }, { website2 }, { website3 }],
-          "settings": { settings },
-          "themes": [{ theme1 }, { theme2 }, { theme3 }],
-          "searchEngines": [{ searchEngine1 }, { searchEngine2 }, { searchEngine3 }]
-        }
+        支持两种 JSON 格式：
+        1. 直接的数组格式：[{...}, {...}]
+        2. 包含 websites 键的对象：{"websites": [{...}, {...}]}
+        
+        为什么需要支持两种格式？
+        - 不同版本的导出格式可能不同
+        - 提高兼容性和容错性
         
         Args:
-            filename (str): 起始页导出的 JSON 文件名，例如 'startpage-backup-20260309-132958.json'
+            filename (str, optional): JSON 文件名，默认 'websites.json'
             
         Returns:
-            list[dict]: websites 数组，如果文件不存在或格式错误则返回空列表
+            dict: 以 URL 为键的字典，用于快速查找，例如 {"https://www.baidu.com": {...}}
             
         Example:
-            >>> websites = fetcher.load_startpage_export('startpage-backup-20260309-132958.json')
-            >>> print(len(websites))
+            >>> existing = fetcher.load_existing_data('backup.json')
+            >>> print(len(existing))
             50
         """
-        full_data = self.load_startpage_export_full(filename)
-        if full_data and 'websites' in full_data:
-            return full_data['websites']
-        return []
-    
-    def load_startpage_export_full(self, filename):
-        """从起始页项目导出的 JSON 文件中加载完整数据
-        
-        起始页项目导出的 JSON 格式：
-        {
-          "websites": [{ website1 }, { website2 }, { website3 }],
-          "settings": { settings },
-          "themes": [{ theme1 }, { theme2 }, { theme3 }],
-          "searchEngines": [{ searchEngine1 }, { searchEngine2 }, { searchEngine3 }]
-        }
-        
-        Args:
-            filename (str): 起始页导出的 JSON 文件名，例如 'startpage-backup-20260309-132958.json'
-            
-        Returns:
-            dict: 完整的导出数据，包含 websites、settings、themes、searchEngines，如果文件不存在或格式错误则返回 None
-            
-        Example:
-            >>> data = fetcher.load_startpage_export_full('startpage-backup-20260309-132958.json')
-            >>> print(data['websites'])
-            [...]
-            >>> print(data['settings'])
-            {...}
-        """
-        self.logger.info(f'LOAD_FILE_START\t{filename}')
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                # 检查是否是有效的字典结构
-                if isinstance(data, dict):
-                    self.logger.info(f'LOAD_FILE_SUCCESS\tWEBSITES_COUNT\t{len(data.get("websites", []))}')
-                    print(f"从 {filename} 中加载了 {len(data.get('websites', []))} 个网站")
-                    return data
-                else:
-                    self.logger.warning(f'LOAD_FILE_WARNING\tINVALID_FORMAT\t{filename}')
-                    print(f"警告：{filename} 格式不正确，未找到数据结构")
-                    return None
+                # 检查数据结构：如果是包含 websites 键的对象，则提取该数组
+                if isinstance(data, dict) and 'websites' in data:
+                    data = data['websites']
+                # 转换为以 URL 为键的字典
+                # 这样可以通过 URL 快速查找已存在的网站数据
+                return {item['url']: item for item in data}
         except FileNotFoundError:
-            self.logger.error(f'LOAD_FILE_ERROR\tFILE_NOT_FOUND\t{filename}')
-            print(f"错误：文件 {filename} 不存在")
-            return None
-        except json.JSONDecodeError as e:
-            self.logger.error(f'LOAD_FILE_ERROR\tJSON_DECODE_ERROR\t{filename}\t{str(e)}')
-            print(f"错误：{filename} 不是有效的 JSON 文件：{e}")
-            return None
-
-    def update_websites_from_export(self, export_filename, output_filename=None):
-        """从起始页导出的 JSON 文件中获取并更新 websites 数据
+            # 文件不存在时返回空字典
+            return {}
+    
+    def batch_fetch_incremental(self, urls, existing_data=None):
+        """增量获取网站数据（只获取新的 URL）
         
-        处理逻辑：
-        1. 加载导出文件中的完整数据（包括 websites、settings、themes、searchEngines）
-        2. 遍历 websites 数组，检查并补充缺失的字段
-        3. 对于 title、description、iconData 为空的项，重新获取数据
-        4. 为缺少 iconGenerateData 的网站生成 SVG 图标（同一域名使用相同 SVG）
-        5. 可选择保存结果到文件（如果指定 output_filename），保持原始 JSON 结构
+        使用场景：
+        - 已有部分数据，只需补充新增的 URL
+        - 避免重复请求，节省时间和带宽
+        - 支持断点续传
+        
+        工作原理：
+        1. 加载已有数据（或从参数获取）
+        2. 过滤出尚未获取的 URL
+        3. 只获取新的 URL
+        4. 返回新获取的数据
         
         Args:
-            export_filename (str): 起始页导出的 JSON 文件名
-            output_filename (str, optional): 输出文件名，如果为 None 则不保存
+            urls (list[str]): 完整的 URL 列表（包含新旧 URL）
+            existing_data (dict, optional): 已有数据（URL 为键的字典），如果为 None 则自动加载
             
         Returns:
-            list[dict]: 更新后的 websites 列表
+            list[dict]: 新获取的网站数据列表
             
         Example:
-            >>> updated = fetcher.update_websites_from_export('startpage-backup-20260309-132958.json')
-            >>> print(f"更新了 {len(updated)} 个网站")
+            >>> # 假设已有 10 个网站数据
+            >>> existing = fetcher.load_existing_data()
+            >>> # 新增 5 个 URL，其中 3 个是新的
+            >>> new_urls = ["https://new1.com", "https://new2.com", "https://existing.com"]
+            >>> new_data = fetcher.batch_fetch_incremental(new_urls, existing)
+            >>> len(new_data)
+            2
         """
-        self.logger.info(f'UPDATE_START\tEXPORT_FILE\t{export_filename}')
+        if existing_data is None:
+            existing_data = {}
         
-        # 加载导出文件的完整数据
-        full_data = self.load_startpage_export_full(export_filename)
+        # 过滤出新的 URL
+        # 只获取尚未存在于 existing_data 中的 URL
+        new_urls = [url for url in urls if url not in existing_data]
         
-        if not full_data or 'websites' not in full_data:
-            self.logger.warning('UPDATE_WARNING\tNO_DATA\tNo websites to process')
-            print("没有需要处理的网站数据")
+        if not new_urls:
+            print("没有需要获取的新 URL")
             return []
         
-        websites = full_data['websites']
+        print(f"总共 {len(urls)} 个 URL，其中 {len(new_urls)} 个需要获取")
         
-        if not websites:
-            self.logger.warning('UPDATE_WARNING\tEMPTY_WEBSITES\twebsites array is empty')
-            print("没有需要处理的网站数据")
-            return []
-        
-        total_count = len(websites)
-        self.logger.info(f'PROCESSING_START\tTOTAL_WEBSITES\t{total_count}')
-        print(f"开始处理 {len(websites)} 个网站...")
-        
-        # 需要补充数据的网站 URL 列表
-        urls_to_fetch = []
-        
-        # 统计各字段缺失情况
-        missing_title = 0
-        missing_description = 0
-        missing_icon = 0
-        missing_svg = 0
-        
-        # 域名到 SVG 图标的映射缓存，确保同一域名使用相同 SVG
-        domain_svg_cache = {}
-        
-        # 第一次遍历：识别需要补充数据的网站
-        for website in websites:
-            needs_update = False
-            
-            # 检查 title 是否为空
-            if not website.get('title'):
-                needs_update = True
-                missing_title += 1
-            
-            # 检查 description 是否为空
-            if not website.get('description'):
-                needs_update = True
-                missing_description += 1
-            
-            # 检查 iconData 是否为空
-            if not website.get('iconData'):
-                needs_update = True
-                missing_icon += 1
-            
-            if needs_update and website.get('url'):
-                urls_to_fetch.append(website['url'])
-        
-        if not urls_to_fetch:
-            self.logger.info('UPDATE_INFO\tALL_COMPLETE\tNo updates needed')
-            print("所有网站数据都已完整，无需更新")
-        else:
-            self.logger.info(f'MISSING_FIELDS_STATISTICS\tTITLE\t{missing_title}\tDESCRIPTION\t{missing_description}\tICONDATA\t{missing_icon}')
-            self.logger.info(f'URLS_TO_FETCH\tCOUNT\t{len(urls_to_fetch)}')
-            print(f"发现 {len(urls_to_fetch)} 个网站需要补充数据")
-            
-            # 批量获取需要补充的数据
-            fetched_data_list = self.batch_fetch(urls_to_fetch)
-            
-            # 创建 URL 到获取数据的映射，便于快速查找
-            fetched_map = {data['url']: data for data in fetched_data_list}
-            
-            # 第二次遍历：更新 websites 数据
-            updated_count = 0
-            for website in websites:
-                url = website.get('url')
-                if not url:
-                    continue
-                
-                # 如果有获取到的数据，更新对应字段
-                if url in fetched_map:
-                    fetched = fetched_map[url]
-                    
-                    # 更新 title 字段（如果原为空）
-                    if not website.get('title') and fetched.get('title'):
-                        website['title'] = fetched['title']
-                    
-                    # 更新 description 字段（如果原为空）
-                    if not website.get('description') and fetched.get('description'):
-                        website['description'] = fetched['description']
-                    
-                    # 更新 iconData 字段（如果原为空）
-                    if not website.get('iconData') and fetched.get('iconData'):
-                        website['iconData'] = fetched['iconData']
-                    
-                    updated_count += 1
-        
-        # 第三次遍历：为缺少 iconGenerateData 的网站补充SVG 图标
-        # 优化策略：
-        # 1. 先收集所有已有 iconGenerateData 的域名和 SVG
-        # 2. 对于缺少 SVG 的网站，优先使用同域名的已有 SVG
-        # 3. 只有当同域名没有任何 SVG 时，才生成新的 SVG
-        
-        svg_generated_count = 0
-        svg_reused_count = 0
-        domain_svg_cache = {}
-        
-        # 第一次遍历：收集所有已有 iconGenerateData 的域名
-        self.logger.info('SVG_COLLECTION_START\tCollecting existing SVGs')
-        for website in websites:
-            url = website.get('url')
-            if not url:
-                continue
-            
-            icon_data = website.get('iconGenerateData')
-            if icon_data:
-                domain = self.extract_domain(url)
-                # 如果该域名还没有缓存，则存入（保留第一个遇到的）
-                if domain not in domain_svg_cache:
-                    domain_svg_cache[domain] = icon_data
-                    self.logger.info(f'SVG_COLLECTED\t{domain}\t{url}')
-        
-        self.logger.info(f'SVG_COLLECTION_END\tDOMAINS_WITH_SVG\t{len(domain_svg_cache)}')
-        
-        # 第二次遍历：为缺少 iconGenerateData 的网站补充 SVG
-        for website in websites:
-            url = website.get('url')
-            if not url:
-                continue
-            
-            # 检查是否需要补充 SVG
-            if not website.get('iconGenerateData'):
-                domain = self.extract_domain(url)
-                
-                # 检查是否已经为该域名收集或生成过 SVG
-                if domain in domain_svg_cache:
-                    # 使用该域名已有的 SVG（可能是收集的，也可能是生成的）
-                    website['iconGenerateData'] = domain_svg_cache[domain]
-                    svg_reused_count += 1
-                    self.logger.info(f'SVG_REUSED\t{domain}\t{url}')
-                else:
-                    # 该域名没有任何 SVG，生成新的并缓存
-                    svg_icon = self.generate_svg_icon(url)
-                    website['iconGenerateData'] = svg_icon
-                    domain_svg_cache[domain] = svg_icon
-                    svg_generated_count += 1
-                    self.logger.info(f'SVG_GENERATED\t{domain}\t{url}')
-        
-        self.logger.info(f'SVG_GENERATION_COMPLETE\tGENERATED\t{svg_generated_count}\tREUSED\t{svg_reused_count}\tTOTAL_DOMAINS\t{len(domain_svg_cache)}')
-        print(f"为 {svg_generated_count} 个网站生成了 SVG 图标，复用了 {svg_reused_count} 个同域名的 SVG")
-        
-        # 如果指定了输出文件名，保存完整的 JSON 结构
-        if output_filename:
-            self.save_full_data_to_json(full_data, output_filename)
-            self.logger.info(f'OUTPUT_SAVED\t{output_filename}')
-        
-        return websites
+        return self.batch_fetch(new_urls)
     
-    def save_full_data_to_json(self, full_data, filename='websites-updated.json'):
-        """保存完整的起始页导出数据到 JSON 文件
+    def save_to_json(self, data, filename='websites.json'):
+        """保存数据到 JSON 文件
         
-        保持与输入文件相同的结构，包含 websites、settings、themes、searchEngines
+        使用 UTF-8 编码，格式化输出（缩进 2 空格）
+        
+        参数说明：
+        - ensure_ascii=False: 允许输出非 ASCII 字符（如中文），而不是\\uXXXX 转义
+        - indent=2: 格式化输出，缩进 2 空格，便于阅读
         
         Args:
-            full_data (dict): 完整的导出数据
-            filename (str, optional): 输出文件名，默认 'websites-updated.json'
+            data (list|dict): 要保存的数据，可以是列表或字典
+            filename (str, optional): 输出文件名，默认 'websites.json'
+            
+        Example:
+            >>> data = [{'url': 'https://www.baidu.com', 'name': '百度'}]
+            >>> fetcher.save_to_json(data, 'baidu.json')
+            数据已保存到 baidu.json
         """
-        self.logger.info(f'SAVE_FILE_START\t{filename}\tWEBSITES_COUNT\t{len(full_data.get("websites", []))}')
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(full_data, f, ensure_ascii=False, indent=2)
-            self.logger.info(f'SAVE_FILE_SUCCESS\t{filename}')
-            print(f"数据已保存到 {filename}")
-        except Exception as e:
-            self.logger.error(f'SAVE_FILE_ERROR\t{filename}\t{str(e)}')
-            print(f"保存文件失败：{e}")
-            raise
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"数据已保存到 {filename}")

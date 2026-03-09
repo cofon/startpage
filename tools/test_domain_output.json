@@ -1,0 +1,35 @@
+{
+  "websites": [
+    {
+      "url": "https://www.baidu.com/a1/b1",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://www.baidu.com/a2/b2",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://www.baidu.com/a3/b3",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://www.google.com/search",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://www.google.com/maps",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5XPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://github.com/user1/repo1",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5HPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    },
+    {
+      "url": "https://github.com/user2/repo2",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgICAgICAgICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzRhOTBlMiIvPgogICAgICAgICAgICA8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIj5HPC90ZXh0PgogICAgICAgIDwvc3ZnPg=="
+    }
+  ],
+  "settings": {},
+  "themes": [],
+  "searchEngines": []
+}

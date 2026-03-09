@@ -76,3 +76,24 @@ websites.json格式:
       {website3}
     ]
 }
+
+
+## 关于reauirements的说明
+虽然有 requirements.txt 文件，但是pip安装的时候没有按照这个版本安装，都是最新版本
+安装时的版本：
+beautifulsoup4==4.13.5
+certifi==2025.8.3
+charset-normalizer==3.4.3
+colorama==0.4.6
+EbookLib==0.19
+favicon==0.7.0
+idna==3.10
+lxml==6.0.1
+pillow==12.1.1
+requests==2.32.5
+six==1.17.0
+soupsieve==2.8
+tqdm==4.67.3
+typing_extensions==4.15.0
+urllib3==2.5.0
+

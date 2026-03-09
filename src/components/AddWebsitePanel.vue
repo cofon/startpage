@@ -95,9 +95,9 @@ function toggleTag(tag) {
   formData.value.tags = tags.join(', ')
 }
 
-// 监听URL变化，自动填充网站名称和图标
-watch(() => formData.value.url, (newUrl) => {
-  if (!newUrl) {
+// 处理URL变化（包括从浏览器历史记录选择URL）
+function processUrlChange(url) {
+  if (!url) {
     urlValidation.value = {
       isValid: false,
       message: ''
@@ -108,14 +108,14 @@ watch(() => formData.value.url, (newUrl) => {
   }
 
   // 验证URL
-  if (isValidUrl(newUrl)) {
+  if (isValidUrl(url)) {
     urlValidation.value = {
       isValid: true,
       message: ''
     }
 
     // 提取网站名并自动填充
-    const siteName = extractSiteNameFromUrl(newUrl)
+    const siteName = extractSiteNameFromUrl(url)
     formData.value.name = siteName
 
     // 生成SVG图标并转换为Base64编码
@@ -132,6 +132,16 @@ watch(() => formData.value.url, (newUrl) => {
     formData.value.iconData = ''
     formData.value.iconGenerateData = ''
   }
+}
+
+// 处理URL变化（包括从浏览器历史记录选择URL）
+function handleUrlChange() {
+  processUrlChange(formData.value.url)
+}
+
+// 监听URL变化，自动填充网站名称和图标
+watch(() => formData.value.url, (newUrl) => {
+  processUrlChange(newUrl)
 })
 
 // 提交表单
@@ -206,6 +216,7 @@ function handleCancel() {
         :class="{ 'error': !urlValidation.isValid && formData.url }"
         placeholder="https://example.com"
         maxlength="500"
+        @change="handleUrlChange"
       >
       <div v-if="!urlValidation.isValid && formData.url" class="error-message">
         {{ urlValidation.message }}
@@ -271,7 +282,7 @@ function handleCancel() {
         <div class="icon-display">
           <div class="icon-label">SVG预览</div>
           <div class="icon-image">
-            <img v-if="formData.iconGenerateData" :src="encodeSvg(formData.iconGenerateData)" alt="SVG图标">
+            <img v-if="formData.iconGenerateData" :src="formData.iconGenerateData" alt="SVG图标">
             <div v-else class="icon-placeholder">
               <span class="placeholder-text">?</span>
             </div>

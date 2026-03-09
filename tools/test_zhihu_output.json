@@ -1,0 +1,37 @@
+{
+  "websites": [
+    {
+      "url": "https://www.zhihu.com/question/660717118/answer/2012167804879659670",
+      "title": "知乎问题 1",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iMzIiIHk9IjQwIiBmb250LXNpemU9IjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+VGVzdDwvdGV4dD48L3N2Zz4="
+    },
+    {
+      "url": "https://www.zhihu.com/question/662065754/answer/2014040439313958896",
+      "title": "知乎问题 2",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iMzIiIHk9IjQwIiBmb250LXNpemU9IjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+VGVzdDwvdGV4dD48L3N2Zz4="
+    },
+    {
+      "url": "https://www.zhihu.com/question/663000000/answer/2015000000000000000",
+      "title": "知乎问题 3",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iMzIiIHk9IjQwIiBmb250LXNpemU9IjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+VGVzdDwvdGV4dD48L3N2Zz4="
+    },
+    {
+      "url": "https://github.com/user1/repo1",
+      "title": "GitHub Repo 1",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iMzIiIHk9IjQwIiBmb250LXNpemU9IjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+RzwvdGV4dD48L3N2Zz4="
+    },
+    {
+      "url": "https://github.com/user2/repo2",
+      "title": "GitHub Repo 2",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iMzIiIHk9IjQwIiBmb250LXNpemU9IjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+RzwvdGV4dD48L3N2Zz4="
+    },
+    {
+      "url": "https://github.com/user3/repo3",
+      "title": "GitHub Repo 3",
+      "iconGenerateData": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjNGE5MGUyIi8+PHRleHQgeD0iMzIiIHk9IjQwIiBmb250LXNpemU9IjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSI+RzwvdGV4dD48L3N2Zz4="
+    }
+  ],
+  "settings": {},
+  "themes": [],
+  "searchEngines": []
+}
