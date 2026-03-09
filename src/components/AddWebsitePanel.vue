@@ -6,8 +6,8 @@ import {
   isValidUrl,
   extractSiteNameFromUrl,
   generateDefaultIcon,
-  fetchWebsiteInfo,
-  fetchWebsiteIcon
+  // fetchWebsiteInfo,
+  // fetchWebsiteIcon
 } from '../utils/websiteUtils'
 
 const emit = defineEmits(['close'])
@@ -53,7 +53,7 @@ const urlValidation = ref({
 })
 
 // 加载状态
-const isLoading = ref(false)
+// const isLoading = ref(false)
 
 // 获取所有标签
 const allTags = computed(() => {
@@ -173,7 +173,7 @@ async function handleSubmit() {
       isHidden: formData.value.isHidden,
       iconData: '', // 图标输入框保持为空
       iconGenerateData: formData.value.iconGenerateData // 使用Base64格式的SVG
-     
+
     })
 
     // 等待一小段时间，确保数据库保存完成
