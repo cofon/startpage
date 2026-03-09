@@ -35,3 +35,26 @@
 方案4. 单独写一个程序专门用来获取网站数据，然后把数据导入到起始页；
 因为是本地的纯静态页面，获取icon和title时有跨域问题，虽然有代理暂时可以解决，但是代理服务不稳定，
 你帮我想一下还有没有更好的方案
+
+
+
+  id: number,              // 自增ID (主键)
+  name: string,            // 网站名称
+  url: string,             // 网站链接
+  description: string,     // 网站描述
+  icon: string,            // 图标URL(不再使用，暂时保留)
+  iconUrl: string,         // 原始 URL (用不到，暂时保留)
+  iconData: string,        // 从网络获取的 icon 的 base64(PNG/ICO/JPG等)
+  iconGenerateData: string, // 本地生成的 SVG 图标
+  iconCanFetch: boolean,   // 是否可以从网络获取 icon(布尔值)
+  iconFetchAttempts: number, // 尝试从网络获取的次数(数字)
+  iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳
+  tags: Array,             // 标签数组 [tag1, tag2, ...]
+  isMarked: boolean,       // 是否为已标记网站
+  markOrder: number,       // marked网站排序(仅当isMarked为true时有效)
+  visitCount: number,      // 访问次数统计
+  lastVisited: Date,       // 最近访问时间
+  createdAt: Date,         // 创建时间
+  updatedAt: Date,         // 更新时间
+  isActive: boolean,       // 是否激活状态(正常搜索不显示非激活的网站)
+  isHidden: boolean        // 是否隐藏状态(正常搜索不显示隐藏的网站)
