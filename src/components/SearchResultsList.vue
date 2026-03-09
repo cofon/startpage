@@ -85,6 +85,20 @@ function handleDelete(website) {
 function handleRestore(website) {
   emit('restore', website)
 }
+
+/**
+ * 获取网站显示文本
+ * 优先级：description > title > name
+ */
+function getWebsiteDisplayText(website) {
+  if (website.description && website.description.trim() !== '') {
+    return website.description
+  }
+  if (website.title && website.title.trim() !== '') {
+    return website.title
+  }
+  return website.name || ''
+}
 </script>
 
 <template>
@@ -104,8 +118,8 @@ function handleRestore(website) {
       >
         <WebsiteIcon :website="website" />
         <div class="website-info">
-          <div class="website-description" :title="website.name">
-            {{ website.description }}
+          <div class="website-description" :title="getWebsiteDisplayText(website)">
+            {{ getWebsiteDisplayText(website) }}
           </div>
           <span
             class="website-url"

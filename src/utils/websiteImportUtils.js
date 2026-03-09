@@ -9,7 +9,17 @@
  * @returns {boolean} - 是否有效
  */
 export function validateWebsite(website) {
-  return website && website.url
+  // 验证URL是否存在
+  if (!website || !website.url) {
+    return false
+  }
+  
+  // 验证name、title、description至少有一个不为空
+  const hasName = website.name && website.name.trim() !== ''
+  const hasTitle = website.title && website.title.trim() !== ''
+  const hasDescription = website.description && website.description.trim() !== ''
+  
+  return hasName || hasTitle || hasDescription
 }
 
 /**

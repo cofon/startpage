@@ -310,6 +310,7 @@ export function createDefaultWebsiteData(url) {
 
   return {
     name: siteName,
+    title: '',
     url: url,
     description: '',
     tags: [],
@@ -322,10 +323,6 @@ export function createDefaultWebsiteData(url) {
     iconGenerateData: {
       type: 'default',
       siteName: siteName
-    },
-    iconCanFetch: true,
-    iconFetchAttempts: 0,
-    iconLastFetchTime: null,
-    iconError: null
+    }
   }
 }

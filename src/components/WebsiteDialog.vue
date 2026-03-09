@@ -20,44 +20,71 @@ const emit = defineEmits(['update:modelValue', 'save'])
 const websiteStore = useWebsiteStore()
 const notificationStore = useNotificationStore()
 
+// 编码SVG为Base64
+function encodeSvg(svg) {
+  if (!svg) return ''
+  // 如果已经是Base64格式，直接返回
+  if (svg.startsWith('data:image/svg+xml;base64,') || svg.startsWith('data:image/svg+xml;utf8,')) {
+    return svg
+  }
+  // 否则进行Base64编码
+  // 使用encodeURIComponent处理Unicode字符
+  const encodedSvg = encodeURIComponent(svg)
+    .replace(/%([0-9A-F]{2})/g,
+      function toSolidBytes(match, p1) {
+        return String.fromCharCode('0x' + p1)
+      })
+  return `data:image/svg+xml;base64,${btoa(encodedSvg)}`
+}
+
 // 表单数据
 const form = ref({
   name: '',
+  title: '',
   url: '',
   description: '',
-  iconUrl: '',
   tags: [],
   isMarked: false,
   isActive: true,
   isHidden: false,
   // 图标相关字段
-  iconData: null,
-  iconGenerateData: null,
-  iconCanFetch: true,
-  iconFetchAttempts: 0,
-  iconLastFetchTime: null,
-  iconError: null
+  iconData: '',
+  iconGenerateData: ''
 })
 
 // 标签输入
 const tagInput = ref('')
+
+// 获取当前输入的标签列表
+const currentTags = computed(() => {
+  return tagInput.value
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t)
+})
 
 // 使用 store 中的所有标签
 const allTags = computed(() => websiteStore.allTags)
 
 // 判断标签是否已添加
 function isTagAdded(tag) {
-  return form.value.tags.includes(tag)
+  return currentTags.value.includes(tag)
 }
 
 // 切换标签（添加或删除）
 function toggleTag(tag) {
-  const index = form.value.tags.indexOf(tag)
+  const tags = [...currentTags.value]
+  const index = tags.indexOf(tag)
+
   if (index > -1) {
-    form.value.tags.splice(index, 1)
+    // 如果标签已存在，则移除
+    tags.splice(index, 1)
   } else {
-    form.value.tags.push(tag)
+    // 如果标签不存在，则添加
+    tags.push(tag)
   }
+
+  tagInput.value = tags.join(', ')
 }
 
 // 对话框标题
@@ -69,40 +96,35 @@ const dialogTitle = computed(() => {
 function openDialog() {
   if (props.website) {
     form.value = {
-      name: props.website.name,
+      name: props.website.name || '',
+      title: props.website.title || '',
       url: props.website.url,
       description: props.website.description || '',
-      iconUrl: props.website.iconUrl || '',
       tags: props.website.tags ? [...props.website.tags] : [],
       isMarked: props.website.isMarked || false,
       isActive: props.website.isActive !== undefined ? props.website.isActive : true,
       isHidden: props.website.isHidden || false,
       // 保留现有的图标相关字段
-      iconData: props.website.iconData || null,
-      iconGenerateData: props.website.iconGenerateData || null,
-      iconCanFetch: props.website.iconCanFetch !== undefined ? props.website.iconCanFetch : true,
-      iconFetchAttempts: props.website.iconFetchAttempts || 0,
-      iconLastFetchTime: props.website.iconLastFetchTime || null,
-      iconError: props.website.iconError || null
+      iconData: props.website.iconData || '',
+      iconGenerateData: props.website.iconGenerateData || ''
     }
+    // 将标签数组转换为逗号分隔的字符串
+    tagInput.value = props.website.tags ? props.website.tags.join(', ') : ''
   } else {
     // 新建网站时初始化所有字段
     form.value = {
       name: '',
+      title: '',
       url: '',
       description: '',
-      iconUrl: '',
       tags: [],
       isMarked: false,
       isActive: true,
       isHidden: false,
-      iconData: null,
-      iconGenerateData: null,
-      iconCanFetch: true,
-      iconFetchAttempts: 0,
-      iconLastFetchTime: null,
-      iconError: null
+      iconData: '',
+      iconGenerateData: ''
     }
+    tagInput.value = ''
   }
 }
 
@@ -113,15 +135,21 @@ function closeDialog() {
 
 // 验证表单
 function validateForm() {
-  if (!form.value.name || !form.value.url) {
-    notificationStore.warning('请填写网站名称和链接')
-    return false
-  }
-
+  // 验证URL格式
   try {
     new URL(form.value.url)
   } catch {
     notificationStore.warning('请输入有效的URL')
+    return false
+  }
+
+  // 验证name、title、description至少有一个不为空
+  const hasName = form.value.name && form.value.name.trim() !== ''
+  const hasTitle = form.value.title && form.value.title.trim() !== ''
+  const hasDescription = form.value.description && form.value.description.trim() !== ''
+  
+  if (!hasName && !hasTitle && !hasDescription) {
+    notificationStore.warning('请填写网站名称、标题或描述中的至少一项')
     return false
   }
 
@@ -135,13 +163,33 @@ async function saveWebsite() {
   }
 
   try {
+    // 将逗号分隔的字符串转换为标签数组
+    const tagsArray = tagInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t)
+
     const websiteData = {
       ...form.value,
-      tags: [...form.value.tags],
+      tags: tagsArray,
       // 确保布尔值正确
       isMarked: !!form.value.isMarked,
       isActive: !!form.value.isActive,
-      isHidden: !!form.value.isHidden
+      isHidden: !!form.value.isHidden,
+      // 处理iconGenerateData，检查是否为Base64格式
+      iconGenerateData: (() => {
+        if (!form.value.iconGenerateData) return form.value.iconGenerateData
+        if (typeof form.value.iconGenerateData !== 'string') return form.value.iconGenerateData
+        if (form.value.iconGenerateData.startsWith('data:image/svg+xml;base64,') || 
+            form.value.iconGenerateData.startsWith('data:image/svg+xml;utf8,')) {
+          return form.value.iconGenerateData
+        }
+        try {
+          return JSON.parse(form.value.iconGenerateData)
+        } catch (e) {
+          return form.value.iconGenerateData
+        }
+      })()
     }
 
     if (props.website) {
@@ -195,12 +243,23 @@ watch(() => props.modelValue, (newVal) => {
 
       <div class="dialog-body">
         <div class="form-group">
-          <label for="website-name">网站名称 *</label>
+          <label for="website-name">网站名称</label>
           <input
             id="website-name"
             v-model="form.name"
             type="text"
             placeholder="例如：GitHub"
+            class="form-input"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="website-title">网站标题</label>
+          <input
+            id="website-title"
+            v-model="form.title"
+            type="text"
+            placeholder="例如：GitHub - 全球最大的代码托管平台"
             class="form-input"
           >
         </div>
@@ -228,27 +287,46 @@ watch(() => props.modelValue, (newVal) => {
         </div>
 
         <div class="form-group">
-          <label for="website-icon">图标URL</label>
-          <input
+          <label for="website-icon">图标Base64编码</label>
+          <textarea
             id="website-icon"
-            v-model="form.iconUrl"
+            v-model="form.iconData"
             type="text"
-            placeholder="图标URL（可选）"
+            placeholder="输入图标的base64编码"
             class="form-input"
-          >
+            rows="3"
+          ></textarea>
+          <div class="icon-preview-small">
+            <img v-if="form.iconData" :src="form.iconData" alt="网站图标">
+            <div v-else class="icon-placeholder-small">?</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="website-svg">SVG图标代码</label>
+          <textarea
+            id="website-svg"
+            v-model="form.iconGenerateData"
+            type="text"
+            placeholder="输入SVG代码"
+            class="form-input"
+            rows="3"
+          ></textarea>
+          <div class="icon-preview-small">
+            <img v-if="form.iconGenerateData" :src="encodeSvg(form.iconGenerateData)" alt="SVG图标">
+            <div v-else class="icon-placeholder-small">?</div>
+          </div>
         </div>
 
         <div class="form-group">
           <label for="tag-input">标签</label>
           <div class="tags-input-container">
             <input
+              id="tag-input"
               v-model="tagInput"
               type="text"
-              id="tag-input"
-              name="tags"
               class="form-input"
-              placeholder="输入标签，按回车添加"
-              @keyup.enter="addTag"
+              placeholder="输入标签，用逗号分隔"
             >
             <div v-if="allTags.length > 0" class="tags-dropdown">
               <div
@@ -262,18 +340,7 @@ watch(() => props.modelValue, (newVal) => {
               </div>
             </div>
           </div>
-          <!-- 显示已添加的标签 -->
-          <div v-if="form.tags.length > 0" class="added-tags">
-            <span
-              v-for="(tag, index) in form.tags"
-              :key="tag"
-              class="added-tag"
-            >
-              {{ tag }}
-              <span class="remove-tag" @click="removeTag(index)">×</span>
-            </span>
-          </div>
-          <div class="form-hint">输入标签后按回车添加，或从下拉列表中选择</div>
+          <div class="form-hint">点击标签可添加或移除</div>
         </div>
 
         <div class="form-group">
@@ -497,6 +564,43 @@ watch(() => props.modelValue, (newVal) => {
   margin: 0;
   vertical-align: middle;
   margin-right: 6px;
+}
+
+.icon-preview-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-top: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.icon-preview-small img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.icon-preview-small div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-preview-small svg {
+  width: 100%;
+  height: 100%;
+}
+
+.icon-placeholder-small {
+  font-size: 24px;
+  color: #999;
+  font-weight: bold;
 }
 
 .dialog-footer {

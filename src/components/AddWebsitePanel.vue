@@ -15,9 +15,27 @@ const emit = defineEmits(['close'])
 const websiteStore = useWebsiteStore()
 const notificationStore = useNotificationStore()
 
+// 编码SVG为Base64
+function encodeSvg(svg) {
+  if (!svg) return ''
+  // 如果已经是Base64格式，直接返回
+  if (svg.startsWith('data:image/svg+xml;base64,') || svg.startsWith('data:image/svg+xml;utf8,')) {
+    return svg
+  }
+  // 否则进行Base64编码
+  // 使用encodeURIComponent处理Unicode字符
+  const encodedSvg = encodeURIComponent(svg)
+    .replace(/%([0-9A-F]{2})/g,
+      function toSolidBytes(match, p1) {
+        return String.fromCharCode('0x' + p1)
+      })
+  return `data:image/svg+xml;base64,${btoa(encodedSvg)}`
+}
+
 // 表单数据
 const formData = ref({
   name: '',
+  title: '',
   url: '',
   description: '',
   tags: '',
@@ -25,7 +43,7 @@ const formData = ref({
   isActive: true,
   isHidden: false,
   iconData: '',
-  networkIconData: ''
+  iconGenerateData: ''
 })
 
 // URL验证状态
@@ -78,14 +96,14 @@ function toggleTag(tag) {
 }
 
 // 监听URL变化，自动填充网站名称和图标
-watch(() => formData.value.url, async (newUrl) => {
+watch(() => formData.value.url, (newUrl) => {
   if (!newUrl) {
     urlValidation.value = {
       isValid: false,
       message: ''
     }
     formData.value.iconData = ''
-    formData.value.networkIconData = ''
+    formData.value.iconGenerateData = ''
     return
   }
 
@@ -96,66 +114,42 @@ watch(() => formData.value.url, async (newUrl) => {
       message: ''
     }
 
-    // 立即生成图标（基于URL）
+    // 提取网站名并自动填充
     const siteName = extractSiteNameFromUrl(newUrl)
+    formData.value.name = siteName
+
+    // 生成SVG图标并转换为Base64编码
     const iconSvg = generateDefaultIcon(siteName)
-    formData.value.iconData = iconSvg
+    formData.value.iconGenerateData = encodeSvg(iconSvg)
 
-    // 如果名称为空，使用提取的网站名
-    if (!formData.value.name) {
-      formData.value.name = siteName
-    }
-
-    // 获取网站信息和图标
-    isLoading.value = true
-    try {
-      // 获取网站信息（标题和描述）
-      const { title, description } = await fetchWebsiteInfo(newUrl)
-
-      // 使用获取到的标题更新名称
-      if (title) {
-        formData.value.name = title
-        // 重新生成图标（基于真实的网站标题）
-        formData.value.iconData = generateDefaultIcon(title)
-      }
-
-      // 使用获取到的描述（如果有）
-      if (description) {
-        formData.value.description = description
-      }
-
-      // 获取网站图标
-      const networkIcon = await fetchWebsiteIcon(newUrl)
-      if (networkIcon) {
-        formData.value.networkIconData = networkIcon
-      }
-    } catch (error) {
-      console.error('获取网站信息失败:', error)
-    } finally {
-      isLoading.value = false
-    }
+    // 图标输入框保持为空
+    formData.value.iconData = ''
   } else {
     urlValidation.value = {
       isValid: false,
       message: '请输入有效的URL（如：https://www.example.com）'
     }
     formData.value.iconData = ''
-    formData.value.networkIconData = ''
+    formData.value.iconGenerateData = ''
   }
 })
 
 // 提交表单
 async function handleSubmit() {
   try {
-    // 验证必填字段
-    if (!formData.value.name || !formData.value.url) {
-      notificationStore.warning('请填写网站名称和链接')
-      return
-    }
-
     // 验证URL格式
     if (!isValidUrl(formData.value.url)) {
       notificationStore.warning('请输入有效的URL')
+      return
+    }
+
+    // 验证name、title、description至少有一个不为空
+    const hasName = formData.value.name && formData.value.name.trim() !== ''
+    const hasTitle = formData.value.title && formData.value.title.trim() !== ''
+    const hasDescription = formData.value.description && formData.value.description.trim() !== ''
+
+    if (!hasName && !hasTitle && !hasDescription) {
+      notificationStore.warning('请填写网站名称、标题或描述中的至少一项')
       return
     }
 
@@ -168,6 +162,7 @@ async function handleSubmit() {
     // 添加网站
     await websiteStore.addWebsite({
       name: formData.value.name,
+      title: formData.value.title,
       url: formData.value.url,
       description: formData.value.description,
       tags: tags,
@@ -176,11 +171,9 @@ async function handleSubmit() {
       visitCount: 0,
       isActive: formData.value.isActive,
       isHidden: formData.value.isHidden,
-      iconData: formData.value.iconData,
-      iconGenerateData: {
-        type: 'default',
-        siteName: formData.value.name
-      }
+      iconData: '', // 图标输入框保持为空
+      iconGenerateData: formData.value.iconGenerateData // 使用Base64格式的SVG
+     
     })
 
     // 等待一小段时间，确保数据库保存完成
@@ -220,7 +213,7 @@ function handleCancel() {
     </div>
 
     <div class="form-group">
-      <label for="website-name">网站名称 <span class="required">*</span></label>
+      <label for="website-name">网站名称</label>
       <input
         id="website-name"
         v-model="formData.name"
@@ -231,36 +224,69 @@ function handleCancel() {
       >
     </div>
 
+    <div class="form-group">
+      <label for="website-title">网站标题</label>
+      <input
+        id="website-title"
+        v-model="formData.title"
+        type="text"
+        class="form-input"
+        placeholder="输入网站标题"
+        maxlength="200"
+      >
+    </div>
+
     <!-- 图标预览 -->
     <div class="icon-preview">
-      <label>网站图标预览</label>
+      <label>网站图标</label>
       <div class="icon-display-container">
         <div class="icon-display">
-          <div class="icon-label">自动生成</div>
+          <div class="icon-label">图标预览</div>
           <div class="icon-image">
-            <div v-if="formData.iconData" v-html="formData.iconData"></div>
+            <img v-if="formData.iconData" :src="formData.iconData" alt="网站图标">
             <div v-else class="icon-placeholder">
               <span class="placeholder-text">?</span>
             </div>
           </div>
         </div>
+
+
+      </div>
+      <div class="icon-input">
+        <label for="icon-data-input">图标Base64编码</label>
+        <textarea
+          id="icon-data-input"
+          v-model="formData.iconData"
+          class="form-textarea"
+          placeholder="输入图标的base64编码"
+          rows="3"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- SVG图标 -->
+    <div class="icon-preview">
+      <label>SVG图标</label>
+      <div class="icon-display-container">
         <div class="icon-display">
-          <div class="icon-label">网络获取</div>
+          <div class="icon-label">SVG预览</div>
           <div class="icon-image">
-            <img 
-              v-if="formData.networkIconData" 
-              :src="formData.networkIconData" 
-              alt="网站图标"
-            >
+            <img v-if="formData.iconGenerateData" :src="encodeSvg(formData.iconGenerateData)" alt="SVG图标">
             <div v-else class="icon-placeholder">
               <span class="placeholder-text">?</span>
             </div>
           </div>
         </div>
-        <div v-if="isLoading" class="loading-indicator">
-          <div class="spinner"></div>
-          <span>正在获取网站信息...</span>
-        </div>
+      </div>
+      <div class="icon-input">
+        <label for="icon-generate-data-input">SVG代码</label>
+        <textarea
+          id="icon-generate-data-input"
+          v-model="formData.iconGenerateData"
+          class="form-textarea"
+          placeholder="输入SVG代码"
+          rows="3"
+        ></textarea>
       </div>
     </div>
 
@@ -458,6 +484,18 @@ function handleCancel() {
   background-color: var(--color-bg-hover);
   border: 2px dashed var(--color-border-base);
   border-radius: 12px;
+}
+
+.icon-input {
+  margin-top: 12px;
+}
+
+.icon-input label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--color-text-main);
+  font-size: 14px;
 }
 
 .placeholder-text {

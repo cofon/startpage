@@ -6,7 +6,7 @@
 import { importSingleWebsite } from './websiteImportUtils'
 
 const DB_NAME = 'StartPageDB'
-const DB_VERSION = 5
+const DB_VERSION = 6
 
 // 表名
 const STORE_WEBSITES = 'websites'
@@ -41,8 +41,9 @@ class IndexedDB {
         const oldVersion = event.oldVersion || 0
 
         // 创建 websites 表
+        let websiteStore
         if (!db.objectStoreNames.contains(STORE_WEBSITES)) {
-          const websiteStore = db.createObjectStore(STORE_WEBSITES, {
+          websiteStore = db.createObjectStore(STORE_WEBSITES, {
             keyPath: 'id',
             autoIncrement: true
           })
@@ -52,10 +53,11 @@ class IndexedDB {
           websiteStore.createIndex('markOrder', 'markOrder', { unique: false })
           websiteStore.createIndex('tags', 'tags', { unique: false, multiEntry: true })
           websiteStore.createIndex('isActive', 'isActive', { unique: false })
-          websiteStore.createIndex('isHidden', 'isHidden', { unique: false }) // 添加isHidden索引
-          websiteStore.createIndex('url', 'url', { unique: false }) // 添加url索引
+          websiteStore.createIndex('isHidden', 'isHidden', { unique: false }) // 添加 isHidden 索引
+          websiteStore.createIndex('url', 'url', { unique: false }) // 添加 url 索引
         } else {
-          // 如果websites存储已存在，我们不需要做任何事，因为索引已经存在或将在数据库版本升级时添加
+          // 如果 websites 存储已存在，获取它以添加新索引
+          websiteStore = event.target.result.transaction(STORE_WEBSITES).objectStore(STORE_WEBSITES)
         }
 
         // 创建 settings 表
@@ -89,6 +91,14 @@ class IndexedDB {
             engineStore.createIndex('order', 'order', { unique: false })
           }
         }
+
+        // 版本 6：添加 title 字段索引
+        if (oldVersion < 6 && websiteStore) {
+          // 添加 title 字段索引
+          if (!websiteStore.indexNames.contains('title')) {
+            websiteStore.createIndex('title', 'title', { unique: false })
+          }
+        }
       }
     })
   }
@@ -102,10 +112,13 @@ class IndexedDB {
     const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
     const store = transaction.objectStore(STORE_WEBSITES)
 
-    // 确保website对象是一个纯净的JavaScript对象，而不是响应式对象
+    // 确保 website 对象是一个纯净的 JavaScript 对象，而不是响应式对象
     const plainWebsite = {
       ...website
     }
+    
+    // 删除 id 字段，让 IndexedDB 自动生成（因为 keyPath 配置了 autoIncrement: true）
+    delete plainWebsite.id
 
     return new Promise((resolve, reject) => {
       const request = store.add(plainWebsite)
