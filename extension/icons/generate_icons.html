@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>生成插件图标</title>
+</head>
+<body>
+  <h2>生成插件图标</h2>
+  <p>右键点击下面的画布，选择"图片另存为"保存图标</p>
+  
+  <canvas id="canvas16" width="16" height="16"></canvas>
+  <p>16x16</p>
+  
+  <canvas id="canvas48" width="48" height="48"></canvas>
+  <p>48x48</p>
+  
+  <canvas id="canvas128" width="128" height="128"></canvas>
+  <p>128x128</p>
+  
+  <script>
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId)
+      const ctx = canvas.getContext('2d')
+      
+      // 背景渐变
+      const gradient = ctx.createLinearGradient(0, 0, size, size)
+      gradient.addColorStop(0, '#2196F3')
+      gradient.addColorStop(1, '#1976D2')
+      ctx.fillStyle= gradient
+      ctx.fillRect(0, 0, size, size)
+      
+      // 绘制字母 S
+      ctx.fillStyle = 'white'
+      ctx.font = `bold ${size * 0.6}px Arial`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('S', size / 2, size / 2)
+      
+      // 添加光泽效果
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
+      ctx.beginPath()
+      ctx.arc(size * 0.3, size * 0.3, size * 0.2, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    
+    drawIcon('canvas16', 16)
+    drawIcon('canvas48', 48)
+    drawIcon('canvas128', 128)
+    
+    // 自动下载
+    setTimeout(() => {
+      downloadCanvas('canvas16', 'icon16.png')
+      downloadCanvas('canvas48', 'icon48.png')
+      downloadCanvas('canvas128', 'icon128.png')
+    }, 1000)
+    
+    function downloadCanvas(canvasId, filename) {
+      const canvas = document.getElementById(canvasId)
+      const link = document.createElement('a')
+      link.download = filename
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "websites": [
+    {
+      "name": "百度",
+      "title": "百度一下，你就知道",
+      "url": "https://www.baidu.com/",
+      "description": "全球最大的中文搜索引擎",
+      "tags": ["搜索", "search"],
+      "isMarked": true,
+      "markOrder": 1,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    },
+    {
+      "name": "Google",
+      "title": "Google",
+      "url": "https://www.google.com",
+      "description": "全球最大的搜索引擎",
+      "tags": ["搜索", "search", "engine"],
+      "isMarked": true,
+      "markOrder": 2,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    },
+    {
+      "name": "GitHub",
+      "title": "GitHub: Let's build from here",
+      "url": "https://github.com",
+      "description": "代码托管平台",
+      "tags": ["开发", "代码", "git"],
+      "isMarked": false,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    },
+    {
+      "title": "仅包含 title 字段的网站",
+      "url": "https://www.example1.com",
+      "description": "导入时会自动同步到 name 字段",
+      "tags": ["test"],
+      "isMarked": false,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    },
+    {
+      "name": "仅包含 name 字段的网站",
+      "url": "https://www.example2.com",
+      "description": "导入时会自动同步到 title 字段",
+      "tags": ["test"],
+      "isMarked": false,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    }
+  ]
+}

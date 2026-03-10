@@ -1,0 +1,37 @@
+{
+  "websites": [
+    {
+      "name": "Google",
+      "url": "https://www.google.com",
+      "description": "全球最大的搜索引擎",
+      "tags": ["搜索", "工具"],
+      "isMarked": true,
+      "markOrder": 1,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    },
+    {
+      "name": "GitHub",
+      "url": "https://github.com",
+      "description": "代码托管平台",
+      "tags": ["开发", "代码"],
+      "isMarked": true,
+      "markOrder": 2,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    },
+    {
+      "name": "Stack Overflow",
+      "url": "https://stackoverflow.com",
+      "description": "程序员问答社区",
+      "tags": ["开发", "问答"],
+      "isMarked": false,
+      "markOrder": 0,
+      "isActive": true,
+      "isHidden": false,
+      "visitCount": 0
+    }
+  ]
+}

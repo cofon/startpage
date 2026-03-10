@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StartPage - 添加网站</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 标签页切换 -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="add">添加网站</button>
+      <button class="tab-btn" data-tab="import">导入数据</button>
+      <button class="tab-btn" data-tab="export">导出数据</button>
+    </div>
+
+    <!-- 添加网站面板 -->
+    <div id="add-panel" class="panel active">
+      <h2>添加网站</h2>
+      <form id="add-form">
+        <div class="form-group">
+          <label for="name">网站名称 *</label>
+          <input type="text" id="name" required placeholder="例如：Google">
+        </div>
+
+        <div class="form-group">
+          <label for="url">网站 URL *</label>
+          <input type="url" id="url" required placeholder="https://www.google.com">
+        </div>
+
+        <div class="form-group">
+          <label for="description">描述</label>
+          <textarea id="description" rows="3" placeholder="网站描述（可选）"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="tags">标签</label>
+          <input type="text" id="tags" placeholder="用逗号分隔，例如：搜索，工具">
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="isMarked">
+            标记为常用（显示在起始页）
+          </label>
+        </div>
+
+        <button type="submit" class="btn-primary">保存</button>
+      </form>
+      
+      <div id="message" class="message"></div>
+    </div>
+
+    <!-- 导入数据面板 -->
+    <div id="import-panel" class="panel">
+      <h2>导入数据</h2>
+      <p class="desc">从现有起始页项目导入备份的 JSON 数据文件。</p>
+      
+      <div class="import-section">
+        <label for="import-file" class="file-label">
+          <span class="icon">📁</span>
+          <span>选择 JSON 文件</span>
+        </label>
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+        <div id="file-name" class="file-name"></div>
+      </div>
+
+      <button id="import-btn" class="btn-primary" disabled>开始导入</button>
+      
+      <div id="import-progress" class="progress" style="display: none;">
+        <div class="progress-bar"></div>
+        <div class="progress-text"></div>
+      </div>
+
+      <div id="import-message" class="message"></div>
+    </div>
+
+    <!-- 导出数据面板 -->
+    <div id="export-panel" class="panel">
+      <h2>导出数据</h2>
+      <p class="desc">导出所有网站数据到 JSON 文件，可用于备份或迁移。</p>
+      
+      <button id="export-btn" class="btn-primary">导出数据</button>
+      
+      <div id="export-message" class="message"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
