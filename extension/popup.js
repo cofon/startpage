@@ -256,18 +256,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ========== 页面加载时自动获取当前页面元数据 ==========
   (async function autoFillCurrentTabMetadata() {
-   try {
-     console.log('[Popup] 尝试获取当前页面元数据...')
+  try {
+    console.log('[Popup] 尝试获取当前页面元数据...')
       
-     const metadata = await chrome.runtime.sendMessage({
+   const metadata = await chrome.runtime.sendMessage({
         action: 'FETCH_METADATA',
         fromCurrentTab: true
       })
       
-     console.log('[Popup] 收到元数据响应:', metadata)
+    console.log('[Popup] 收到元数据响应:', metadata)
       
-     if (metadata) {
-       console.log('[Popup] 获取到元数据:', metadata)
+    if (metadata && metadata.url) {
+      console.log('[Popup] 获取到元数据:', metadata)
         
         // 填充表单字段
         document.getElementById('title').value = metadata.title || ''
@@ -275,17 +275,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('description').value = metadata.description || ''
         
         // 保存 iconData 到临时变量
-       if (metadata.iconData) {
+     if (metadata.iconData) {
           window.tempIconData = metadata.iconData
-         console.log('[Popup] 已保存图标数据')
+        console.log('[Popup] 已保存图标数据')
         }
         
-       console.log('[Popup] 表单已自动填充')
+      console.log('[Popup] 表单已自动填充')
       } else {
-       console.log('[Popup] 未获取到元数据（返回 null）')
+      console.log('[Popup] 未获取到元数据（返回 null 或没有 URL）')
       }
     } catch (error) {
-     console.error('[Popup] 获取元数据失败:', error)
+    console.error('[Popup] 获取元数据失败:', error)
+      // 失败时不显示错误提示，避免干扰用户
     }
   })()
 })

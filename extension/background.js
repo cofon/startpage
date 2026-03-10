@@ -194,8 +194,10 @@ async function exportWebsites() {
   }
 }
 
-// 监听消息
+// ========== 统一消息处理器 ==========
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Background] 收到消息:', message.action, 'fromCurrentTab:', message.fromCurrentTab, 'url:', message.url)
+  
   const handleAsync = async () => {
     switch (message.action) {
       case 'addWebsite':
@@ -207,10 +209,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'exportWebsites':
         return await exportWebsites()
       
-      // ========== 新增：转发给起始页的消息 ==========
+      // ========== 转发给起始页的消息 ==========
       case 'ADD_WEBSITE':
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
+      
+      // ========== 获取元数据 ==========
+      case 'FETCH_METADATA': {
+      console.log('[Background] 开始处理 FETCH_METADATA 请求')
+       
+      if (message.fromCurrentTab) {
+        console.log('[Background] 从当前标签页获取元数据')
+         return await fetchMetadataFromCurrentTab()
+       } else if (message.url) {
+        console.log('[Background] 从 URL 获取元数据:', message.url)
+         return await fetchMetadataFromURL(message.url)
+       }
+      console.log('[Background] 无效的请求参数')
+       return null
+      }
+      
+      // ========== 获取图标 ==========
+      case 'FETCH_ICON': {
+       return await fetchIconAsBase64(message.url)
+      }
       
      default:
         return {
@@ -220,7 +242,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
   
-  handleAsync().then(sendResponse)
+  handleAsync().then(result => {
+  console.log('[Background] 发送响应:', message.action, result ? '有数据' : 'null')
+    sendResponse(result)
+  }).catch(err => {
+  console.error('[Background] 处理消息出错:', err)
+    sendResponse({ 
+      success: false, 
+      error: err.message || '处理失败' 
+    })
+  })
   
   // 返回 true 表示异步响应
   return true
@@ -404,44 +435,6 @@ async function fetchIconAsBase64(iconUrl) {
     return null
   }
 }
-
-// ========== 注册为消息处理器 ==========
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[Background] 收到消息:', message.action, 'fromCurrentTab:', message.fromCurrentTab, 'url:', message.url)
-  
-  // 处理获取元数据的请求
-  if (message.action === 'FETCH_METADATA') {
-  const handleFetch = async () => {
-     console.log('[Background] 开始处理 FETCH_METADATA 请求')
-     
-    if (message.fromCurrentTab) {
-       console.log('[Background] 从当前标签页获取元数据')
-       return await fetchMetadataFromCurrentTab()
-     } else if (message.url) {
-       console.log('[Background] 从 URL 获取元数据:', message.url)
-       return await fetchMetadataFromURL(message.url)
-     }
-     console.log('[Background] 无效的请求参数')
-     return null
-   }
-    
-   handleFetch().then(result => {
-     console.log('[Background] 获取元数据完成，发送响应:', result ? '有数据' : 'null')
-     sendResponse(result)
-   }).catch(err => {
-     console.error('[Background] 获取元数据出错:', err)
-     sendResponse(null)
-   })
-   
-    return true // 保持通道开启
-  }
-  
-  // 处理获取图标的请求
-  if (message.action === 'FETCH_ICON') {
-   fetchIconAsBase64(message.url).then(sendResponse)
-    return true
-  }
-})
 
 // 插件安装时初始化
 chrome.runtime.onInstalled.addListener(() => {
