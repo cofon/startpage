@@ -20,8 +20,13 @@
       <h2>添加网站</h2>
       <form id="add-form">
         <div class="form-group">
-          <label for="name">网站名称 *</label>
-          <input type="text" id="name" required placeholder="例如：Google">
+          <label for="name">网站名称</label>
+          <input type="text" id="name" placeholder="自定义名称（用于 Marked List 显示，可选）">
+        </div>
+
+        <div class="form-group">
+          <label for="title">网页标题</label>
+          <input type="text" id="title" placeholder="网页原始标题（用于搜索结果，可选）">
         </div>
 
         <div class="form-group">
@@ -42,11 +47,14 @@
         <div class="form-group">
           <label>
             <input type="checkbox" id="isMarked">
-            标记为常用（显示在起始页）
+            标记为常用（显示在起始页，默认不勾选）
           </label>
         </div>
 
         <button type="submit" class="btn-primary">保存</button>
+        
+        <!-- 新增：获取元数据按钮 -->
+        <button type="button" id="fetch-metadata-btn" class="btn-secondary">自动获取信息</button>
       </form>
       
       <div id="message" class="message"></div>

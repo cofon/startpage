@@ -23,7 +23,14 @@
   "permissions": [
     "storage",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "file:///*",
+    "http://localhost/*",
+    "https://*/*",
+    "http://*/*"
   ],
   "commands": {
     "_execute_action": {
@@ -34,6 +41,13 @@
       "description": "打开 StartPage 弹窗"
     }
   },
+  "content_scripts": [
+    {
+      "matches": ["file:///*/startpage/dist/index.html", "http://localhost/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }

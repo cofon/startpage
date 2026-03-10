@@ -207,6 +207,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'exportWebsites':
         return await exportWebsites()
       
+      // ========== 新增：转发给起始页的消息 ==========
+      case 'ADD_WEBSITE':
+        // 转发到起始页的 content.js
+        return await forwardToStartPage(message)
+      
      default:
         return {
           success: false,
@@ -219,6 +224,223 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // 返回 true 表示异步响应
   return true
+})
+
+// ========== 新增：转发消息到起始页 ==========
+async function forwardToStartPage(message) {
+  try {
+  console.log('[Background] 转发消息到起始页:', message.action)
+    
+    // 查找起始页的标签页
+  const tabs = await chrome.tabs.query({ 
+      url: [
+        'file:///*/startpage/dist/index.html',
+        'http://localhost/*'
+      ] 
+    })
+    
+    if (tabs.length === 0) {
+    console.error('[Background] 未找到起始页标签页')
+      return {
+        success: false,
+        error: '起始页未打开，请先打开起始页后再试'
+      }
+    }
+    
+    // 使用第一个匹配的标签页
+  const targetTab = tabs[0]
+  console.log('[Background] 找到起始页标签页 ID:', targetTab.id)
+    
+    // 发送到 content.js
+   return new Promise((resolve) => {
+     chrome.tabs.sendMessage(targetTab.id, message, (response) => {
+       if (chrome.runtime.lastError) {
+       console.error('[Background] 发送消息失败:', chrome.runtime.lastError.message)
+         resolve({
+           success: false,
+           error: '无法连接到起始页，请刷新起始页后重试'
+         })
+       } else {
+       console.log('[Background] 收到起始页响应:', response)
+         resolve(response)
+       }
+     })
+   })
+  } catch (error) {
+  console.error('[Background] 转发消息异常:', error)
+    return {
+      success: false,
+      error: error.message || '转发消息失败'
+    }
+  }
+}
+
+// ========== 新增：获取网页元数据（当前页面） ==========
+/**
+ * 从当前激活的标签页获取元数据（title/description/icon）
+ */
+async function fetchMetadataFromCurrentTab() {
+  try {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    
+    if (!tab) {
+     throw new Error('未找到当前标签页')
+    }
+    
+    // 注入脚本获取详细信息
+  const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        // 在页面上下文中执行
+      const iconLink = document.querySelector('link[rel="icon"]') || 
+                       document.querySelector('link[rel="shortcut icon"]')
+        
+        let iconUrl = ''
+        if (iconLink && iconLink.href) {
+        iconUrl = new URL(iconLink.href, location.href).href
+        }
+        
+        return {
+          title: document.title,
+          url: location.href,
+        description: document.querySelector('meta[name="description"]')?.content || '',
+        iconUrl
+        }
+      }
+    })
+    
+  const metadata = results[0].result
+    
+    // 获取图标数据（转为 base64）
+   let iconData = null
+    if (metadata.iconUrl) {
+    iconData = await fetchIconAsBase64(metadata.iconUrl)
+    }
+    
+    return {
+      ...metadata,
+    iconData
+    }
+  } catch (error) {
+  console.error('[Background] 获取元数据失败:', error)
+    return null
+  }
+}
+
+// ========== 新增：获取网页元数据（任意 URL） ==========
+/**
+ * 通过 fetch 获取任意 URL 的元数据
+ */
+async function fetchMetadataFromURL(url) {
+  try {
+  const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"'
+      }
+    })
+    
+  const html = await response.text()
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+    
+    // 提取 title
+  const title = doc.querySelector('title')?.textContent?.trim() || ''
+    
+    // 提取 description
+  const description = doc.querySelector('meta[name="description"]')?.content?.trim() || ''
+    
+    // 提取 icon URL
+  const iconLink = doc.querySelector('link[rel="icon"]') || 
+                   doc.querySelector('link[rel="shortcut icon"]')
+   
+   let iconUrl = ''
+    if (iconLink && iconLink.href) {
+    iconUrl = new URL(iconLink.href, url).href
+    } else {
+      // 回退到根路径
+    iconUrl = new URL('/favicon.ico', url).href
+    }
+    
+    // 获取图标数据
+  const iconData = await fetchIconAsBase64(iconUrl)
+    
+    return {
+      title,
+     description,
+    iconUrl,
+    iconData
+    }
+  } catch (error) {
+  console.error(`[Background] 获取元数据失败 (${url}):`, error)
+    return null
+  }
+}
+
+// ========== 新增：获取图标并转为 base64 ==========
+/**
+ * 将图标图片转换为 base64 格式（包含 data:image 前缀）
+ */
+async function fetchIconAsBase64(iconUrl) {
+  try {
+  const response = await fetch(iconUrl)
+  const blob = await response.blob()
+    
+    return new Promise((resolve) => {
+    const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result)
+      reader.readAsDataURL(blob)
+    })
+  } catch (error) {
+  console.error(`[Background] 获取图标失败 (${iconUrl}):`, error)
+    return null
+  }
+}
+
+// ========== 注册为消息处理器 ==========
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Background] 收到消息:', message.action, 'fromCurrentTab:', message.fromCurrentTab, 'url:', message.url)
+  
+  // 处理获取元数据的请求
+  if (message.action === 'FETCH_METADATA') {
+  const handleFetch = async () => {
+     console.log('[Background] 开始处理 FETCH_METADATA 请求')
+     
+    if (message.fromCurrentTab) {
+       console.log('[Background] 从当前标签页获取元数据')
+       return await fetchMetadataFromCurrentTab()
+     } else if (message.url) {
+       console.log('[Background] 从 URL 获取元数据:', message.url)
+       return await fetchMetadataFromURL(message.url)
+     }
+     console.log('[Background] 无效的请求参数')
+     return null
+   }
+    
+   handleFetch().then(result => {
+     console.log('[Background] 获取元数据完成，发送响应:', result ? '有数据' : 'null')
+     sendResponse(result)
+   }).catch(err => {
+     console.error('[Background] 获取元数据出错:', err)
+     sendResponse(null)
+   })
+   
+    return true // 保持通道开启
+  }
+  
+  // 处理获取图标的请求
+  if (message.action === 'FETCH_ICON') {
+   fetchIconAsBase64(message.url).then(sendResponse)
+    return true
+  }
 })
 
 // 插件安装时初始化

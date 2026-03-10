@@ -128,19 +128,37 @@ body {
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
-  transition: background 0.3s;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s;
+  margin-bottom: 10px;
 }
 
 .btn-primary:hover {
   background: #1976D2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
 }
 
-.btn-primary:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+/* ========== 新增：次级按钮样式 ========== */
+.btn-secondary {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  color: #2196F3;
+  border: 1px solid #2196F3;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #e3f2fd;
+  border-color: #1976D2;
+  color: #1976D2;
 }
 
 /* 文件导入样式 */

@@ -234,31 +234,169 @@ async function toggleWebsiteMark(website) {
 // 初始化应用
 onMounted(async () => {
   try {
-    await db.init()
-    await settingStore.init()
+    // ========== 1. 初始化 IndexedDB（基础依赖） ==========
+  await db.init()
+    
+    // ========== 2. 初始化设置（包括主题和搜索引擎，需要从数据库读取） ==========
+  await settingStore.init()
+    
+    // ========== 3. 加载网站数据 ==========
+  const websites = await db.getAllWebsites()
+    websiteStore.setWebsites(websites)
 
-    const websites = await db.getAllWebsites()
-    if (websites.length > 0) {
-      const migratedCount = await db.migrateWebsites()
-      if (migratedCount > 0) {
-        const updatedWebsites = await db.getAllWebsites()
-        websiteStore.setWebsites(updatedWebsites)
-      } else {
-        websiteStore.setWebsites(websites)
-      }
-    } else {
-      const websitesWithIds = []
+    // 如果没有数据，加载默认网站
+  if (websites.length === 0) {
+    const websitesWithIds = []
       for (const website of defaultWebsites) {
-        const id = await db.addWebsite(website)
+      const id = await db.addWebsite(website)
         websitesWithIds.push({ ...website, id })
       }
       websiteStore.setWebsites(websitesWithIds)
     }
 
-    await searchStore.loadEngineIcons()
+    // ========== 4. 加载搜索引擎图标 ==========
+  await searchStore.loadEngineIcons()
     searchStore.init()
+    
+    // ========== 暴露全局 API 给插件调用 ==========
+    window.StartPageAPI = {
+      /**
+       * 添加单个网站
+       * @param {Object} data - 网站数据对象
+       * @returns {Promise<number>} - 返回新网站的 ID
+       */
+      addWebsite: async (data) => {
+      console.log('[StartPageAPI] 添加网站:', data)
+        
+        // 规范化数据（处理默认值等）
+      const normalizedData = normalizeWebsiteForDB(data)
+        
+        // 保存到数据库
+      const id = await db.addWebsite(normalizedData)
+        
+        // 更新 store
+      const newWebsite = { ...normalizedData, id }
+        websiteStore.addWebsite(newWebsite)
+        
+      console.log('[StartPageAPI] 添加成功，ID:', id)
+        return id
+      },
+      
+      /**
+       * 批量导入网站
+       * @param {Array} websites - 网站数组
+       * @returns {Promise<Object>} - 返回导入结果统计
+       */
+      importWebsites: async (websites) => {
+      console.log('[StartPageAPI] 批量导入网站，数量:', websites.length)
+        
+        let successCount = 0
+        let errorCount = 0
+      const errors = []
+        
+        for (let i = 0; i < websites.length; i++) {
+         try {
+          const website = websites[i]
+          const normalizedData = normalizeWebsiteForDB(website)
+            
+          const id= await db.addWebsite(normalizedData)
+          const newWebsite = { ...normalizedData, id }
+            websiteStore.addWebsite(newWebsite)
+            
+            successCount++
+          } catch (error) {
+         console.error(`[StartPageAPI] 导入第 ${i + 1} 个网站失败:`, error)
+            errorCount++
+            errors.push({
+              index: i,
+              url: websites[i]?.url || 'unknown',
+              error: error.message
+            })
+          }
+        }
+        
+      console.log(`[StartPageAPI] 导入完成：成功 ${successCount}, 失败 ${errorCount}`)
+        
+        return {
+          total: websites.length,
+          success: successCount,
+          failed: errorCount,
+          errors
+        }
+      },
+      
+      /**
+       * 获取所有网站
+       * @returns {Promise<Array>} - 返回网站数组
+       */
+      getWebsites: async () => {
+        return await db.getAllWebsites()
+      },
+      
+      /**
+       * 更新网站
+       * @param {number} id - 网站 ID
+       * @param {Object} data - 更新的数据
+       * @returns {Promise<void>}
+       */
+      updateWebsite: async (id, data) => {
+      console.log('[StartPageAPI] 更新网站:', id, data)
+        await db.updateWebsite(id, data)
+        
+        // 更新 store
+        websiteStore.updateWebsite(id, data)
+      }
+    }
+    
+    // ========== 监听来自 Content Script 的 CustomEvent ==========
+    document.addEventListener('StartPageAPI-Call', async (event) => {
+    console.log('[App.vue] 收到 StartPageAPI-Call 事件:', event.detail)
+      
+    const { action, data, requestId } = event.detail
+      
+    try {
+       let result
+       
+      if (action === 'addWebsite') {
+         result = await window.StartPageAPI.addWebsite(data)
+       } else if (action === 'importWebsites') {
+         result = await window.StartPageAPI.importWebsites(data)
+       } else if (action === 'getWebsites') {
+         result = await window.StartPageAPI.getWebsites()
+       } else if (action === 'updateWebsite') {
+         result = await window.StartPageAPI.updateWebsite(data.id, data)
+       } else {
+         throw new Error('未知操作：' + action)
+       }
+       
+       // 发送响应事件
+     const responseEvent = new CustomEvent('StartPageAPI-Response', {
+         detail: {
+           requestId,
+           success: true,
+           result
+         }
+       })
+       document.dispatchEvent(responseEvent)
+     console.log('[App.vue] 已发送响应事件')
+     } catch (error) {
+     console.error('[App.vue] 处理请求失败:', error)
+       
+       // 发送错误响应
+     const responseEvent = new CustomEvent('StartPageAPI-Response', {
+         detail: {
+           requestId,
+           success: false,
+           error: error.message || '操作失败'
+         }
+       })
+       document.dispatchEvent(responseEvent)
+     }
+    })
+    
+  console.log('[StartPageAPI] 全局 API 已就绪，CustomEvent 监听器已添加')
   } catch (error) {
-    console.error('初始化应用失败:', error)
+  console.error('初始化应用失败:', error)
   }
 })
 </script>
