@@ -39,6 +39,12 @@ watchEffect(() => {
 
 // 图片加载失败时的处理
 function onImageError() {
+  // 如果当前正在尝试加载的是 iconData，并且存在 iconGenerateData，则使用 iconGenerateData
+  if (props.website.iconData && props.website.iconGenerateData && currentIcon.value === props.website.iconData) {
+    currentIcon.value = props.website.iconGenerateData
+    return
+  }
+
   // 生成一个基于网站名称的简单 SVG 图标作为后备
   const fallbackIcon = props.website.name ?
     `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="%2342b549"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial, sans-serif" font-size="24" fill="white">${props.website.name.charAt(0)}</text></svg>`)}`

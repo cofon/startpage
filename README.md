@@ -506,50 +506,26 @@ MIT License
 
 
 ## 未完成工作
-1. 主题，打开主题设置面板，所有颜色都是黑色的，没有填充selected theme的颜色
-2. 添加网站逻辑
-    2.1 添加网站表单项：name description url icon tags status
-    2.2 python获取网站信息，如果存在，检测字段是否有空值，填充空值
-    2.3 导入数据，如果存在，则更新数据，不存在则插入数据
-    2.4 对于 hidden inactive 标记的网站不更新数据
-3. 删除设置面板中的搜索结果layout设置项(可能还有其他layout代码残留)
-4. 导入导出设置面板中添加说明信息，以防长时间之后遗忘
-5. 在help面板中添加说明信息，所有的使用说明都添加进去，如果信息太多，可以 --help key 进行搜索
-6. 添加批量管理方案(暂时不考虑，有必要时再添加)
-7. 显示模块显示的是marked list的时候，调整UI显示，让搜索框下移
-8. 点击链接在新的标签页打开，修改为在当前页面打开
-
-###### 当前要做的事情
-- [x] 数据库 数据表 website 添加字段 title
-- [x] 显示模块显示的是search result list的时候, website-description当前显示的是description
-- [x] 如果description不为空，则使用description字段
-- [x] 如果description为空，则使用title字段
-- [x] 如果description和title都为空，则使用name字段
-- [x] 优先级：description > title > name
-- [x] 添加网站时要检测，确保 name title description 至少有一个不为空
-- [x] 导入数据时要检测，确保 name title description 至少有一个不为空
-
-websites 表当前字段：
-  id: number,              // 自增 ID (主键)
-  name: string,            // 网站名称
-  title: string,           // 网站标题（新增）
-  url: string,             // 网站链接
-  description: string,     // 网站描述
-  iconData: string,        // 从网络获取的 icon 的 base64(PNG/ICO/JPG等)
-  iconGenerateData: string, // 本地生成的 SVG 图标
-  tags: Array,             // 标签数组 [tag1, tag2, ...]
-  isMarked: boolean,       // 是否为已标记网站
-  markOrder: number,       // marked 网站排序 (仅当 isMarked 为 true 时有效)
-  visitCount: number,      // 访问次数统计
-  lastVisited: Date,       // 最近访问时间
-  createdAt: Date,         // 创建时间
-  updatedAt: Date,         // 更新时间
-  isActive: boolean,       // 是否激活状态 (正常搜索不显示非激活的网站)
-  isHidden: boolean        // 是否隐藏状态 (正常搜索不显示隐藏的网站)
-
-已删除字段：
-  iconUrl: string,         // 原始 URL (版本 7 已删除)
-  icon: string,            // 图标 URL(版本 7 已删除)
-  iconCanFetch: boolean,   // 是否可以从网络获取 icon(版本 7 已删除)
-  iconFetchAttempts: number, // 尝试从网络获取的次数 (版本 7 已删除)
-  iconLastFetchTime: Date, // 最后一次尝试从网络获取的时间戳 (版本 7 已删除)
+{
+  "websites": [
+    {
+      "url": "https://www.baidu.com",
+      "name": "百度",
+      "title": "百度一下，你就知道",
+      "description": "百度是一个中国最大的中文搜索引擎，也是全球最大的中文信息源。"
+      "iconData": "data:image网站图标的base64编码的图片数据..."
+      其他字段
+    },
+    {
+      "url": "https://www.google.com",
+      "name": "谷歌",
+      "title": "Google",
+      "description": "谷歌是一个全球最大的搜索引擎，提供搜索、翻译、图片、视频、新闻、地图、翻译等功能。"
+      "iconData": "data:image网站图标的base64编码的图片数据..."
+      其他字段
+    }
+  ],
+  "settings": "{},
+  "themes": [],
+  "searchEngines": []
+}
