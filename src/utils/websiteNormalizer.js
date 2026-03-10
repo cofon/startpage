@@ -12,6 +12,7 @@ export function createWebsiteObject(data = {}) {
   return {
     id: data.id || null,
     name: data.name || '',
+    title: data.title || '',
     url: data.url || '',
     description: data.description || '',
     tags: Array.isArray(data.tags) ? [...data.tags] : [],
@@ -46,6 +47,7 @@ export function normalizeWebsiteForDB(website) {
   return {
     id: website.id,
     name: website.name,
+    title: website.title || '',
     url: website.url,
     description: website.description || '',
     tags: Array.isArray(website.tags) ? [...website.tags] : [],

@@ -208,11 +208,14 @@ onMounted(async () => {
 
 <style scoped>
 #app {
-  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  box-sizing: border-box; /* 确保 padding 包含在宽度内 */
+  overflow-x: hidden; /* 防止水平溢出 */
 }
 
 /* 主题样式 */
@@ -222,5 +225,9 @@ onMounted(async () => {
 [class$="-theme"] {
   background: var(--color-bg-page);
   color: var(--color-text-main);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 </style>

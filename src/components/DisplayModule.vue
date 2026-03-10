@@ -4,14 +4,14 @@
  * 包含已标记网站列表、搜索结果、命令面板等
  */
 import { useSearchStore } from '../stores/search'
-import { useSettingStore } from '../stores/setting'
+// import { useSettingStore } from '../stores/setting'
 import MarkedWebsiteList from './MarkedWebsiteList.vue'
 import SearchResultsList from './SearchResultsList.vue'
 import CommandSettings from './CommandSettings.vue'
 import HelpPanel from './HelpPanel.vue'
 
 const searchStore = useSearchStore()
-const settingStore = useSettingStore()
+// const settingStore = useSettingStore()
 
 // 暴露计算属性给父组件使用
 defineExpose({
@@ -25,14 +25,14 @@ defineExpose({
     <MarkedWebsiteList
       v-if="searchStore.displayMode === 'marked'"
       :websites="searchStore.results"
-      @click="$emit('website-click', $event)"
+      @click="(website, event) => $emit('website-click', website, event)"
     />
 
     <!-- 搜索结果 -->
     <SearchResultsList
       v-else-if="searchStore.displayMode === 'search'"
       :websites="searchStore.results"
-      @click="$emit('website-click', $event)"
+      @click="(website, event) => $emit('website-click', website, event)"
       @toggle-mark="$emit('toggle-mark', $event)"
       @edit="$emit('edit', $event)"
       @delete="$emit('delete', $event)"
@@ -69,7 +69,7 @@ defineExpose({
 .display-module {
   width: 100%;
   max-width: 800px;
-  overflow-y: auto;
+  /* 移除 overflow-y: auto，让内容自然撑开高度 */
 }
 
 .empty-state {

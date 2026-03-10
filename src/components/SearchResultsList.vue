@@ -55,7 +55,7 @@ function handleWebsiteClick(website, event) {
     return
   }
 
-  emit('click', website)
+  emit('click', website, event)
 }
 
 /**
