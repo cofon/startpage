@@ -674,16 +674,6 @@ class WebsiteFetcher:
                 timeout=(5, 15),  # 连接超时 5 秒，读取超时 15 秒
                 verify=False
             )
-            
-            # 调试信息：如果是知乎网站，输出详细数据（在检查状态码之前）
-            self.logger.info('DEBUG_ZHIHU_URL: %s', normalized_url)
-            self.logger.info('DEBUG_ZHIHU_STATUS: %s', response.status_code)
-            self.logger.info('DEBUG_ZHIHU_HEADERS: %s', dict(response.headers))
-            self.logger.info('DEBUG_ZHIHU_HTML_LENGTH: %d', len(response.text))
-            self.logger.info('DEBUG_ZHIHU_HTML_PREVIEW: %s', response.text[:2000])
-            self.logger.info('DEBUG_ZHIHU_HTML_LENGTH: %d', len(response.text))
-            self.logger.info('DEBUG_ZHIHU_HTML_PREVIEW: %s', response.text[:2000])
-            
             response.raise_for_status()  # 如果状态码不是 200，抛出异常
             
             # 手动检测和设置响应内容的编码
@@ -695,13 +685,6 @@ class WebsiteFetcher:
                 response.encoding = response.apparent_encoding
             
             soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # 调试信息：如果是知乎网站，输出详细数据
-            domain = self.extract_domain(normalized_url)
-            if 'zhihu.com' in domain:
-             self.logger.info('DEBUG_ZHIHU_URL: %s', normalized_url)
-             self.logger.info('DEBUG_ZHIHU_STATUS: %s', response.status_code)
-             self.logger.info('DEBUG_ZHIHU_HTML: %s', response.text[:3000])
             
             title = self.fetch_title(soup)
             description = self.fetch_description(soup)
