@@ -189,6 +189,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
+      // ========== 新增：调用 StartPageAPI 通用方法 ==========
+      case 'CALL_STARTPAGE_API':
+        console.log(`[Background] #${currentMsgId} ⚡ 转发 CALL_STARTPAGE_API 到起始页 (method: ${message.method})`)
+        // 转发到起始页的 content.js
+        return await forwardToStartPage(message)
+
       // ========== 获取元数据 ==========
       case 'FETCH_METADATA': {
     console.log('[Background] 开始处理 FETCH_METADATA 请求')
@@ -239,7 +245,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // ========== 新增：转发消息到起始页 ==========
 async function forwardToStartPage(message) {
   try {
-    console.log('[Background] 转发消息到起始页:', message.action)
+    console.log('[Background] 转发消息到起始页:', message.action, 'method:', message.method)
 
     // 查找起始页的标签页
     const tabs = await chrome.tabs.query({
@@ -258,9 +264,19 @@ async function forwardToStartPage(message) {
     const targetTab = tabs[0]
     console.log('[Background] 找到起始页标签页 ID:', targetTab.id)
 
+    // 构建要发送的消息
+    const payload = {
+      action: message.action || 'StartPageAPI-Call',
+      method: message.method,
+      data: message.data,
+      requestId: Date.now()
+    }
+
+    console.log('[Background] 发送 payload:', payload)
+
     // 发送到 content.js
     return new Promise((resolve) => {
-      chrome.tabs.sendMessage(targetTab.id, message, (response) => {
+      chrome.tabs.sendMessage(targetTab.id, payload, (response) => {
         if (chrome.runtime.lastError) {
           console.error('[Background] 发送消息失败:', chrome.runtime.lastError.message)
           resolve({

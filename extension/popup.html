@@ -34,6 +34,17 @@
           <input type="url" id="url" required placeholder="https://www.google.com">
         </div>
 
+        <!-- 新增：SVG 图标生成区域 -->
+        <div class="form-group">
+          <label for="iconGenerateData">SVG 图标数据 (自动生成)</label>
+          <textarea id="iconGenerateData" rows="3" placeholder="系统将自动生成 SVG 图标数据，也可手动输入..."></textarea>
+          <!-- SVG 图标预览区域 -->
+          <div id="svg-preview" class="icon-preview">
+            <div class="icon-preview-placeholder">输入 URL 后自动生成 SVG 预览</div>
+            <img id="svg-preview-img" src="" alt="SVG 图标预览" style="display: none;">
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="iconData">图标数据 (iconData)</label>
           <textarea id="iconData" rows="4" placeholder="粘贴 base64 格式的图标数据，例如：data:image/png;base64,iVBOR..."></textarea>

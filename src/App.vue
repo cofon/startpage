@@ -437,6 +437,16 @@ onMounted(async () => {
       normalizeWebsite: async (websiteData) => {
         const { normalizeWebsiteData } = await import('./services/websiteMetadataService')
         return normalizeWebsiteData(websiteData)
+      },
+      
+      /**
+       * 生成默认 SVG 图标（供插件调用）
+       * @param {string} name - 网站名称或 URL
+       * @returns {Promise<string>} SVG 字符串
+       */
+      generateDefaultIcon: async (name) => {
+        const { generateDefaultIcon } = await import('./utils/websiteUtils')
+        return generateDefaultIcon(name)
       }
     }
     
@@ -449,12 +459,13 @@ onMounted(async () => {
       document.addEventListener('StartPageAPI-Call', async (event) => {
      console.log('[App.vue] 收到 StartPageAPI-Call 事件:', event.detail)
         
-     const { action, data, requestId } = event.detail
+     const { action, method, data, requestId } = event.detail
         
      try {
          let result
          
-      if (action === 'addWebsite') {
+         // 处理 action 类型的调用（保持向后兼容）
+         if (action === 'addWebsite') {
            result = await window.StartPageAPI.addWebsite(data)
          } else if (action === 'importWebsites') {
            result = await window.StartPageAPI.importWebsites(data)
@@ -464,8 +475,16 @@ onMounted(async () => {
            result = await window.StartPageAPI.getWebsites()
          } else if (action === 'updateWebsite') {
            result = await window.StartPageAPI.updateWebsite(data.id, data)
+         }
+         // 新增：处理 method 类型的调用（通用 API）
+         else if (method === 'normalizeWebsite') {
+           result = await window.StartPageAPI.normalizeWebsite(data)
+         } else if (method === 'generateDefaultIcon') {
+           result = await window.StartPageAPI.generateDefaultIcon(data)
+         } else if (method === 'validateWebsite') {
+           result = await window.StartPageAPI.validateWebsite(data)
          } else {
-           throw new Error('未知操作：' + action)
+           throw new Error('未知操作：' + (action || method))
          }
          
          // 发送响应事件

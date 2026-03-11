@@ -250,11 +250,98 @@ body {
   text-align: center;
 }
 
+/* 当有图片时隐藏占位符 */
+.icon-preview.has-icon .icon-preview-placeholder,
+#svg-preview.has-icon .icon-preview-placeholder {
+  display: none !important;
+}
+
 #icon-preview-img {
   max-width: 80px;
   max-height: 80px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#svg-preview-img {
+  max-width: 80px;
+  max-height: 80px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== 新增：SVG 图标预览样式 ========== */
+#svg-preview {
+  margin-top: 10px;
+  padding: 15px;
+  background: white;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+#svg-preview.has-icon {
+  border-color: #2196F3;
+  background: #f0f7ff;
+}
+
+#svg-preview .icon-preview-placeholder {
+  color: #999;
+  font-size: 14px;
+  text-align: center;
+}
+
+#svg-preview-content {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#svg-preview-content svg {
+  width: 48px;
+  height: 48px;
+}
+
+/* ========== 新增：SVG 输入框展开/收起样式 ========== */
+#iconGenerateData {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  resize: vertical;
+  transition: border-color 0.3s;
+  background: #f9f9f9;
+  color: #666;
+}
+
+#iconGenerateData:focus {
+  outline: none;
+  border-color: #2196F3;
+  background: #fff;
+}
+
+.icon-input-wrapper.expanded #iconGenerateData {
+  display: block !important;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  resize: vertical;
+}
+
+.icon-input-wrapper.expanded #iconGenerateData:focus {
+  outline: none;
+  border-color: #2196F3;
 }
 
 /* 按钮样式 */

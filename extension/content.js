@@ -13,12 +13,13 @@ if (window.contentScriptLoaded) {
 }
 
 // ========== 方法：通过 CustomEvent 与页面通信 ==========
-function callStartPageAPI(action, data) {
+function callStartPageAPI(action, data, method = null) {
   return new Promise((resolve, reject) => {
     // 创建一个自定义事件
   const event = new CustomEvent('StartPageAPI-Call', {
       detail: {
         action: action,
+        method: method,
         data: data,
         requestId: Date.now() + '-' + Math.random()
       }
@@ -32,10 +33,16 @@ function callStartPageAPI(action, data) {
         // 移除监听器
         document.removeEventListener('StartPageAPI-Response', responseHandler)
 
-     if (e.detail.success) {
-          resolve(e.detail.result)
+     if (e.detail.success !== undefined) {
+          // 新的响应格式（带 success 字段）
+          if (e.detail.success) {
+            resolve(e.detail.result)
+          } else {
+            reject(new Error(e.detail.error || '操作失败'))
+          }
         } else {
-          reject(new Error(e.detail.error || '操作失败'))
+          // 旧的响应格式（直接返回 result）
+          resolve(e.detail.result)
         }
       }
     }
@@ -150,6 +157,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
 
    console.log('[Content Script] 返回 true，表示异步响应')
+      return true
+    }
+
+    // ========== 新增：处理通用 API 调用 ==========
+    if (message.action === 'CALL_STARTPAGE_API') {
+      console.log(`[Content Script] #${currentMsgId} 🎯 处理 CALL_STARTPAGE_API (method: ${message.method})`)
+      
+      callStartPageAPI(null, message.data, message.method)
+        .then(result => {
+          console.log(`[Content Script] #${currentMsgId} ✅ API 调用成功:`, result)
+          sendResponse({ success: true, result })
+        })
+        .catch(error => {
+          console.error(`[Content Script] #${currentMsgId} ❌ API 调用失败:`, error)
+          sendResponse({ 
+            success: false, 
+            error: error.message || 'API 调用失败' 
+          })
+        })
+        .finally(() => {
+          console.log(`[Content Script] #${currentMsgId} 🔓 处理完成，释放锁`)
+          isProcessingMessage = false
+        })
+      
+      console.log('[Content Script] 返回 true，表示异步响应')
       return true
     }
   } catch (error) {
