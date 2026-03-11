@@ -133,6 +133,8 @@ class IndexedDB {
     if (!this.db) {
       throw new Error('数据库未初始化')
     }
+    
+    console.log('[IndexedDB.addWebsite] 准备添加网站:', website.url, website.name)
 
     const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
     const store = transaction.objectStore(STORE_WEBSITES)
@@ -149,15 +151,19 @@ class IndexedDB {
     delete plainWebsite.iconCanFetch
     delete plainWebsite.iconFetchAttempts
     delete plainWebsite.iconLastFetchTime
+    
+    console.log('[IndexedDB.addWebsite] 执行 store.add...')
 
     return new Promise((resolve, reject) => {
       const request = store.add(plainWebsite)
 
       request.onsuccess = () => {
+        console.log('[IndexedDB.addWebsite] 添加成功，ID:', request.result)
         resolve(request.result)
       }
 
       request.onerror = () => {
+        console.error('[IndexedDB.addWebsite] 添加失败:', request.error)
         reject(request.error)
       }
     })

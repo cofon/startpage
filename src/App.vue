@@ -259,6 +259,13 @@ onMounted(async () => {
     searchStore.init()
     
     // ========== 暴露全局 API 给插件调用 ==========
+  console.log('[App.vue] 准备设置 window.StartPageAPI')
+   
+   // 检查是否已存在
+  if (window.StartPageAPI) {
+    console.warn('[App.vue] ⚠️ window.StartPageAPI 已存在，将被覆盖！')
+   }
+   
     window.StartPageAPI = {
       /**
        * 添加单个网站
@@ -266,20 +273,28 @@ onMounted(async () => {
        * @returns {Promise<number>} - 返回新网站的 ID
        */
       addWebsite: async (data) => {
-      console.log('[StartPageAPI] 添加网站:', data)
+   console.log('[StartPageAPI] 添加网站:', data)
         
         // 规范化数据（处理默认值等）
-      const normalizedData = normalizeWebsiteForDB(data)
+   const normalizedData = normalizeWebsiteForDB(data)
         
-        // 保存到数据库
-      const id = await db.addWebsite(normalizedData)
+        // 更新 store（store 内部会保存到数据库）
+   const newWebsite = await websiteStore.addWebsite(normalizedData)
         
-        // 更新 store
-      const newWebsite = { ...normalizedData, id }
-        websiteStore.addWebsite(newWebsite)
-        
-      console.log('[StartPageAPI] 添加成功，ID:', id)
-        return id
+   console.log('[StartPageAPI] 添加成功，ID:', newWebsite.id)
+     
+     // 验证：立即查询数据库，看是否有重复
+   const allWebsites = await db.getAllWebsites()
+   const duplicates = allWebsites.filter(w => 
+       w.url === data.url && w.id !== newWebsite.id
+     )
+   if (duplicates.length > 0) {
+     console.error('[StartPageAPI] ⚠️ 检测到重复网站:', duplicates)
+     } else {
+     console.log('[StartPageAPI] ✓ 无重复网站')
+     }
+     
+        return newWebsite.id
       },
       
       /**
@@ -288,24 +303,23 @@ onMounted(async () => {
        * @returns {Promise<Object>} - 返回导入结果统计
        */
       importWebsites: async (websites) => {
-      console.log('[StartPageAPI] 批量导入网站，数量:', websites.length)
+    console.log('[StartPageAPI] 批量导入网站，数量:', websites.length)
         
         let successCount = 0
         let errorCount = 0
-      const errors = []
+    const errors = []
         
         for (let i = 0; i < websites.length; i++) {
-         try {
-          const website = websites[i]
-          const normalizedData = normalizeWebsiteForDB(website)
+      try {
+        const website = websites[i]
+        const normalizedData = normalizeWebsiteForDB(website)
             
-          const id= await db.addWebsite(normalizedData)
-          const newWebsite = { ...normalizedData, id }
-            websiteStore.addWebsite(newWebsite)
+         // 使用 websiteStore.addWebsite 统一处理保存逻辑
+         await websiteStore.addWebsite(normalizedData)
             
-            successCount++
-          } catch (error) {
-         console.error(`[StartPageAPI] 导入第 ${i + 1} 个网站失败:`, error)
+         successCount++
+         } catch (error) {
+      console.error(`[StartPageAPI] 导入第 ${i + 1} 个网站失败:`, error)
             errorCount++
             errors.push({
               index: i,
@@ -315,7 +329,7 @@ onMounted(async () => {
           }
         }
         
-      console.log(`[StartPageAPI] 导入完成：成功 ${successCount}, 失败 ${errorCount}`)
+    console.log(`[StartPageAPI] 导入完成：成功 ${successCount}, 失败 ${errorCount}`)
         
         return {
           total: websites.length,
@@ -349,52 +363,61 @@ onMounted(async () => {
     }
     
     // ========== 监听来自 Content Script 的 CustomEvent ==========
-    document.addEventListener('StartPageAPI-Call', async (event) => {
-    console.log('[App.vue] 收到 StartPageAPI-Call 事件:', event.detail)
+    // 防止重复注册监听器
+   if (!window.startPageAPIListenerRegistered) {
+      window.startPageAPIListenerRegistered = true
+     console.log('[App.vue] 注册 StartPageAPI-Call 监听器')
       
-    const { action, data, requestId } = event.detail
-      
-    try {
-       let result
-       
+      document.addEventListener('StartPageAPI-Call', async (event) => {
+     console.log('[App.vue] 收到 StartPageAPI-Call 事件:', event.detail)
+        
+     const { action, data, requestId } = event.detail
+        
+     try {
+         let result
+         
       if (action === 'addWebsite') {
-         result = await window.StartPageAPI.addWebsite(data)
-       } else if (action === 'importWebsites') {
-         result = await window.StartPageAPI.importWebsites(data)
-       } else if (action === 'getWebsites') {
-         result = await window.StartPageAPI.getWebsites()
-       } else if (action === 'updateWebsite') {
-         result = await window.StartPageAPI.updateWebsite(data.id, data)
-       } else {
-         throw new Error('未知操作：' + action)
-       }
-       
-       // 发送响应事件
-     const responseEvent = new CustomEvent('StartPageAPI-Response', {
-         detail: {
-           requestId,
-           success: true,
-           result
+           result = await window.StartPageAPI.addWebsite(data)
+         } else if (action === 'importWebsites') {
+           result = await window.StartPageAPI.importWebsites(data)
+         } else if (action === 'getWebsites') {
+           result = await window.StartPageAPI.getWebsites()
+         } else if (action === 'updateWebsite') {
+           result = await window.StartPageAPI.updateWebsite(data.id, data)
+         } else {
+           throw new Error('未知操作：' + action)
          }
-       })
-       document.dispatchEvent(responseEvent)
+         
+         // 发送响应事件
+     const responseEvent = new CustomEvent('StartPageAPI-Response', {
+           detail: {
+             requestId,
+             success: true,
+             result
+           }
+         })
+         document.dispatchEvent(responseEvent)
      console.log('[App.vue] 已发送响应事件')
-     } catch (error) {
+       } catch (error) {
      console.error('[App.vue] 处理请求失败:', error)
-       
-       // 发送错误响应
+         
+         // 发送错误响应
      const responseEvent = new CustomEvent('StartPageAPI-Response', {
-         detail: {
-           requestId,
-           success: false,
-           error: error.message || '操作失败'
-         }
-       })
-       document.dispatchEvent(responseEvent)
-     }
-    })
-    
-  console.log('[StartPageAPI] 全局 API 已就绪，CustomEvent 监听器已添加')
+           detail: {
+             requestId,
+             success: false,
+             error: error.message || '操作失败'
+           }
+         })
+         document.dispatchEvent(responseEvent)
+       }
+      })
+
+     console.log('[StartPageAPI] 全局 API 已就绪，CustomEvent 监听器已添加')
+    } else {
+     console.log('[App.vue] StartPageAPI-Call 监听器已注册过，跳过')
+    }
+
   } catch (error) {
   console.error('初始化应用失败:', error)
   }

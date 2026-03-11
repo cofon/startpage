@@ -1,3 +1,5 @@
+/* global chrome */
+
 // IndexedDB 数据库配置
 const DB_NAME = 'StartPageDB'
 const DB_VERSION = 7
@@ -7,26 +9,26 @@ const STORE_WEBSITES = 'websites'
 function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
-    
+
     request.onerror = () => {
       reject(new Error('无法打开数据库'))
     }
-    
+
     request.onsuccess = () => {
       resolve(request.result)
     }
-    
+
     request.onupgradeneeded = (event) => {
       const db = event.target.result
       const oldVersion = event.oldVersion || 0
-      
+
       // 创建 websites 表
       if (!db.objectStoreNames.contains(STORE_WEBSITES)) {
         const websiteStore = db.createObjectStore(STORE_WEBSITES, {
           keyPath: 'id',
-          autoIncrement: true
+          autoIncrement: true,
         })
-        
+
         // 创建索引
         websiteStore.createIndex('isMarked', 'isMarked', { unique: false })
         websiteStore.createIndex('markOrder', 'markOrder', { unique: false })
@@ -36,7 +38,7 @@ function openDatabase() {
         websiteStore.createIndex('url', 'url', { unique: false })
         websiteStore.createIndex('title', 'title', { unique: false })
       }
-      
+
       // 版本升级处理（如果需要）
       if (oldVersion < 6) {
         const transaction = event.target.transaction
@@ -53,30 +55,30 @@ function openDatabase() {
 async function addWebsite(websiteData) {
   try {
     const db = await openDatabase()
-    
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_WEBSITES], 'readwrite')
       const store = transaction.objectStore(STORE_WEBSITES)
-      
+
       // 清理数据
       const cleanData = { ...websiteData }
-     delete cleanData.id // 让 IndexedDB 自动生成
-      
+      delete cleanData.id // 让 IndexedDB 自动生成
+
       // 删除已废弃的字段
-     delete cleanData.iconUrl
-     delete cleanData.iconCanFetch
-     delete cleanData.iconFetchAttempts
-     delete cleanData.iconLastFetchTime
-      
+      delete cleanData.iconUrl
+      delete cleanData.iconCanFetch
+      delete cleanData.iconFetchAttempts
+      delete cleanData.iconLastFetchTime
+
       const request = store.add(cleanData)
-      
+
       request.onsuccess = () => {
         resolve({
           success: true,
-          id: request.result
+          id: request.result,
         })
       }
-      
+
       request.onerror = () => {
         reject(new Error('添加失败：' + request.error.message))
       }
@@ -84,7 +86,7 @@ async function addWebsite(websiteData) {
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -92,71 +94,26 @@ async function addWebsite(websiteData) {
 // 批量导入网站
 async function importWebsites(websites) {
   try {
-    const db = await openDatabase()
+   console.log('[Background] 📥 开始导入网站，数量:', websites.length)
     
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORE_WEBSITES], 'readwrite')
-      const store = transaction.objectStore(STORE_WEBSITES)
-      
-      let count = 0
-      let errors = []
-      
-      websites.forEach((website, index) => {
-        const cleanData = { ...website }
-        
-        
-        // 删除 id 字段，让 IndexedDB 自动生成
-       delete cleanData.id
-        
-        // 删除已废弃的字段
-       delete cleanData.iconUrl
-       delete cleanData.iconCanFetch
-       delete cleanData.iconFetchAttempts
-       delete cleanData.iconLastFetchTime
-        
-        const request = store.add(cleanData)
-        
-        request.onsuccess = () => {
-          count++
-          if (count === websites.length) {
-            resolve({
-              success: true,
-              count: count,
-              errors: errors
-            })
-          }
-        }
-        
-        request.onerror = () => {
-          errors.push({
-            index: index,
-            name: website.name || website.title || '未知',
-            error: request.error.message
-          })
-          
-          // 即使有错误也继续
-          if (count + errors.length === websites.length) {
-            resolve({
-              success: true,
-              count: count,
-              errors: errors
-            })
-          }
-        }
-      })
-      
-      // 如果数组为空
-      if (websites.length === 0) {
-        resolve({
-          success: true,
-          count: 0
-        })
-      }
+    // 转发到起始页，调用 window.StartPageAPI.importWebsites
+   const response = await forwardToStartPage({
+      action: 'IMPORT_WEBSITES',
+      data: websites
     })
+    
+   if (response.success) {
+     console.log('[Background] ✅ 导入成功:', response)
+    } else {
+     console.error('[Background] ❌ 导入失败:', response.error)
+    }
+    
+    return response
   } catch (error) {
+   console.error('[Background] 导入失败:', error)
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
@@ -165,23 +122,23 @@ async function importWebsites(websites) {
 async function exportWebsites() {
   try {
     const db = await openDatabase()
-    
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_WEBSITES], 'readonly')
       const store = transaction.objectStore(STORE_WEBSITES)
-      
+
       const request = store.getAll()
-      
+
       request.onsuccess = () => {
         resolve({
           success: true,
           data: {
-            websites: request.result
+            websites: request.result,
           },
-          count: request.result.length
+          count: request.result.length,
         })
       }
-      
+
       request.onerror = () => {
         reject(new Error('导出失败：' + request.error.message))
       }
@@ -189,119 +146,133 @@ async function exportWebsites() {
   } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error.message,
     }
   }
 }
 
 // ========== 统一消息处理器 ==========
+let bgMessageCounter = 0
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[Background] 收到消息:', message.action, 'fromCurrentTab:', message.fromCurrentTab, 'url:', message.url)
-  
+  const currentMsgId = ++bgMessageCounter
+  console.log(
+    `[Background] ====== 收到消息 #${currentMsgId} ======`,
+  )
+  console.log('[Background] Action:', message.action)
+  console.log('[Background] fromCurrentTab:', message.fromCurrentTab)
+  console.log('[Background] url:', message.url)
+  console.log('[Background] sender:', sender)
+
   const handleAsync = async () => {
-    switch (message.action) {
+   switch (message.action) {
       case 'addWebsite':
+      console.log(`[Background] #${currentMsgId} 处理 addWebsite`)
         return await addWebsite(message.data)
-      
+
       case 'importWebsites':
+      console.log(`[Background] #${currentMsgId} 处理 importWebsites`)
         return await importWebsites(message.data)
-      
+
       case 'exportWebsites':
+      console.log(`[Background] #${currentMsgId} 处理 exportWebsites`)
         return await exportWebsites()
-      
+
       // ========== 转发给起始页的消息 ==========
       case 'ADD_WEBSITE':
+    console.log(`[Background] #${currentMsgId} ⚡ 转发 ADD_WEBSITE 到起始页`)
+    console.log('[Background] 数据:', message.data)
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
-      
+
       // ========== 获取元数据 ==========
       case 'FETCH_METADATA': {
-      console.log('[Background] 开始处理 FETCH_METADATA 请求')
-       
-      if (message.fromCurrentTab) {
-        console.log('[Background] 从当前标签页获取元数据')
-         return await fetchMetadataFromCurrentTab()
-       } else if (message.url) {
+    console.log('[Background] 开始处理 FETCH_METADATA 请求')
+
+    if (message.fromCurrentTab) {
+      console.log('[Background] 从当前标签页获取元数据')
+          return await fetchMetadataFromCurrentTab()
+        } else if (message.url) {
         console.log('[Background] 从 URL 获取元数据:', message.url)
-         return await fetchMetadataFromURL(message.url)
-       }
-      console.log('[Background] 无效的请求参数')
-       return null
+          return await fetchMetadataFromURL(message.url)
+        }
+    console.log('[Background] 无效的请求参数')
+        return null
       }
-      
+
       // ========== 获取图标 ==========
       case 'FETCH_ICON': {
-       return await fetchIconAsBase64(message.url)
+        return await fetchIconAsBase64(message.url)
       }
-      
-     default:
+
+      default:
+      console.log(`[Background] #${currentMsgId} 未知操作：`, message.action)
         return {
           success: false,
-          error: '未知操作：' + message.action
+          error: '未知操作：' + message.action,
         }
     }
   }
-  
-  handleAsync().then(result => {
-  console.log('[Background] 发送响应:', message.action, result ? '有数据' : 'null')
-    sendResponse(result)
-  }).catch(err => {
-  console.error('[Background] 处理消息出错:', err)
-    sendResponse({ 
-      success: false, 
-      error: err.message || '处理失败' 
+
+  handleAsync()
+    .then((result) => {
+   console.log(`[Background] #${currentMsgId} ✅ 发送响应:`, message.action, result ? '有数据' : 'null')
+      sendResponse(result)
     })
-  })
-  
+    .catch((err) => {
+   console.error(`[Background] #${currentMsgId} ❌ 处理消息出错:`, err)
+      sendResponse({
+        success: false,
+        error: err.message || '处理失败',
+      })
+    })
+
   // 返回 true 表示异步响应
+  console.log('[Background] 返回 true，表示异步响应')
   return true
 })
 
 // ========== 新增：转发消息到起始页 ==========
 async function forwardToStartPage(message) {
   try {
-  console.log('[Background] 转发消息到起始页:', message.action)
-    
+    console.log('[Background] 转发消息到起始页:', message.action)
+
     // 查找起始页的标签页
-  const tabs = await chrome.tabs.query({ 
-      url: [
-        'file:///*/startpage/dist/index.html',
-        'http://localhost/*'
-      ] 
+    const tabs = await chrome.tabs.query({
+      url: ['file:///*/startpage/dist/index.html', 'http://localhost/*'],
     })
-    
+
     if (tabs.length === 0) {
-    console.error('[Background] 未找到起始页标签页')
+      console.error('[Background] 未找到起始页标签页')
       return {
         success: false,
-        error: '起始页未打开，请先打开起始页后再试'
+        error: '起始页未打开，请先打开起始页后再试',
       }
     }
-    
+
     // 使用第一个匹配的标签页
-  const targetTab = tabs[0]
-  console.log('[Background] 找到起始页标签页 ID:', targetTab.id)
-    
+    const targetTab = tabs[0]
+    console.log('[Background] 找到起始页标签页 ID:', targetTab.id)
+
     // 发送到 content.js
-   return new Promise((resolve) => {
-     chrome.tabs.sendMessage(targetTab.id, message, (response) => {
-       if (chrome.runtime.lastError) {
-       console.error('[Background] 发送消息失败:', chrome.runtime.lastError.message)
-         resolve({
-           success: false,
-           error: '无法连接到起始页，请刷新起始页后重试'
-         })
-       } else {
-       console.log('[Background] 收到起始页响应:', response)
-         resolve(response)
-       }
-     })
-   })
+    return new Promise((resolve) => {
+      chrome.tabs.sendMessage(targetTab.id, message, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('[Background] 发送消息失败:', chrome.runtime.lastError.message)
+          resolve({
+            success: false,
+            error: '无法连接到起始页，请刷新起始页后重试',
+          })
+        } else {
+          console.log('[Background] 收到起始页响应:', response)
+          resolve(response)
+        }
+      })
+    })
   } catch (error) {
-  console.error('[Background] 转发消息异常:', error)
+    console.error('[Background] 转发消息异常:', error)
     return {
       success: false,
-      error: error.message || '转发消息失败'
+      error: error.message || '转发消息失败',
     }
   }
 }
@@ -312,48 +283,49 @@ async function forwardToStartPage(message) {
  */
 async function fetchMetadataFromCurrentTab() {
   try {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+
     if (!tab) {
-     throw new Error('未找到当前标签页')
+      throw new Error('未找到当前标签页')
     }
-    
+
     // 注入脚本获取详细信息
-  const results = await chrome.scripting.executeScript({
+    const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
         // 在页面上下文中执行
-      const iconLink = document.querySelector('link[rel="icon"]') || 
-                       document.querySelector('link[rel="shortcut icon"]')
-        
+        const iconLink =
+          document.querySelector('link[rel="icon"]') ||
+          document.querySelector('link[rel="shortcut icon"]')
+
         let iconUrl = ''
         if (iconLink && iconLink.href) {
-        iconUrl = new URL(iconLink.href, location.href).href
+          iconUrl = new URL(iconLink.href, location.href).href
         }
-        
+
         return {
           title: document.title,
           url: location.href,
-        description: document.querySelector('meta[name="description"]')?.content || '',
-        iconUrl
+          description: document.querySelector('meta[name="description"]')?.content || '',
+          iconUrl,
         }
-      }
+      },
     })
-    
-  const metadata = results[0].result
-    
+
+    const metadata = results[0].result
+
     // 获取图标数据（转为 base64）
-   let iconData = null
+    let iconData = null
     if (metadata.iconUrl) {
-    iconData = await fetchIconAsBase64(metadata.iconUrl)
+      iconData = await fetchIconAsBase64(metadata.iconUrl)
     }
-    
+
     return {
       ...metadata,
-    iconData
+      iconData,
     }
   } catch (error) {
-  console.error('[Background] 获取元数据失败:', error)
+    console.error('[Background] 获取元数据失败:', error)
     return null
   }
 }
@@ -364,54 +336,56 @@ async function fetchMetadataFromCurrentTab() {
  */
 async function fetchMetadataFromURL(url) {
   try {
-  const response = await fetch(url, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
         'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
         'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"'
-      }
+        'Sec-Ch-Ua-Platform': '"Windows"',
+      },
     })
-    
-  const html = await response.text()
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-    
+
+    const html = await response.text()
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+
     // 提取 title
-  const title = doc.querySelector('title')?.textContent?.trim() || ''
-    
+    const title = doc.querySelector('title')?.textContent?.trim() || ''
+
     // 提取 description
-  const description = doc.querySelector('meta[name="description"]')?.content?.trim() || ''
-    
+    const description = doc.querySelector('meta[name="description"]')?.content?.trim() || ''
+
     // 提取 icon URL
-  const iconLink = doc.querySelector('link[rel="icon"]') || 
-                   doc.querySelector('link[rel="shortcut icon"]')
-   
-   let iconUrl = ''
+    const iconLink =
+      doc.querySelector('link[rel="icon"]') || doc.querySelector('link[rel="shortcut icon"]')
+
+    let iconUrl = ''
     if (iconLink && iconLink.href) {
-    iconUrl = new URL(iconLink.href, url).href
+      iconUrl = new URL(iconLink.href, url).href
     } else {
       // 回退到根路径
-    iconUrl = new URL('/favicon.ico', url).href
+      iconUrl = new URL('/favicon.ico', url).href
     }
-    
+
     // 获取图标数据
-  const iconData = await fetchIconAsBase64(iconUrl)
-    
+    const iconData = await fetchIconAsBase64(iconUrl)
+
     return {
       title,
-     description,
-    iconUrl,
-    iconData
+      description,
+      iconUrl,
+      iconData,
     }
   } catch (error) {
-  console.error(`[Background] 获取元数据失败 (${url}):`, error)
+    console.error(`[Background] 获取元数据失败 (${url}):`, error)
     return null
   }
 }
@@ -422,16 +396,16 @@ async function fetchMetadataFromURL(url) {
  */
 async function fetchIconAsBase64(iconUrl) {
   try {
-  const response = await fetch(iconUrl)
-  const blob = await response.blob()
-    
+    const response = await fetch(iconUrl)
+    const blob = await response.blob()
+
     return new Promise((resolve) => {
-    const reader = new FileReader()
+      const reader = new FileReader()
       reader.onloadend = () => resolve(reader.result)
       reader.readAsDataURL(blob)
     })
   } catch (error) {
-  console.error(`[Background] 获取图标失败 (${iconUrl}):`, error)
+    console.error(`[Background] 获取图标失败 (${iconUrl}):`, error)
     return null
   }
 }
@@ -439,9 +413,11 @@ async function fetchIconAsBase64(iconUrl) {
 // 插件安装时初始化
 chrome.runtime.onInstalled.addListener(() => {
   console.log('StartPage 插件已安装')
-  openDatabase().then(() => {
-    console.log('数据库初始化完成')
-  }).catch(err => {
-    console.error('数据库初始化失败:', err)
-  })
+  openDatabase()
+    .then(() => {
+      console.log('数据库初始化完成')
+    })
+    .catch((err) => {
+      console.error('数据库初始化失败:', err)
+    })
 })

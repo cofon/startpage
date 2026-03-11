@@ -41,7 +41,10 @@ export const useWebsiteStore = defineStore('website', () => {
   }
 
   async function addWebsite(website) {
-    const websiteWithDefaults = createWebsiteObject({
+  console.log('[websiteStore.addWebsite] 准备添加网站:', website)
+  console.log('[websiteStore.addWebsite] 当前 websites 数量:', websites.value.length)
+    
+   const websiteWithDefaults = createWebsiteObject({
       ...website,
       visitCount: 0,
       createdAt: new Date(),
@@ -50,20 +53,24 @@ export const useWebsiteStore = defineStore('website', () => {
       isHidden: false
     })
 
-    // 先保存到数据库，获取ID
+    // 先保存到数据库，获取 ID
     let dbId
-    try {
+   try {
+    console.log('[websiteStore.addWebsite] 准备保存到数据库...')
       dbId = await db.addWebsite(websiteWithDefaults)
+    console.log('[websiteStore.addWebsite] 数据库返回 ID:', dbId)
     } catch (error) {
-      console.error('保存网站到数据库失败:', error)
+     console.error('保存网站到数据库失败:', error)
       throw error
     }
 
-    // 使用数据库返回的ID
+    // 使用数据库返回的 ID
     websiteWithDefaults.id = dbId
 
-    // 添加到store
+    // 添加到 store
+  console.log('[websiteStore.addWebsite] 准备添加到 store:', websiteWithDefaults)
     websites.value.push(websiteWithDefaults)
+  console.log('[websiteStore.addWebsite] 完成，当前 websites 数量:', websites.value.length)
 
     return websiteWithDefaults
   }

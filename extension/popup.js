@@ -80,49 +80,101 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ========== 表单提交逻辑 ==========
+  let submitCounter = 0
+  let isSubmitting = false // 防止重复提交
+  
   if (addForm) {
     addForm.addEventListener('submit', async (e) => {
-      e.preventDefault()
+   const currentSubmitId = ++submitCounter
+     e.preventDefault()
+     
+  console.log(`[Popup] ====== 表单提交 #${currentSubmitId} 开始 ======`)
+  console.log('[Popup] 当前 isSubmitting:', isSubmitting)
       
+      // 防止重复提交
+    if (isSubmitting) {
+     console.log('[Popup] ⚠️ 正在提交中，忽略本次请求')
+        return
+      }
+      isSubmitting = true
+      
+      // 禁用保存按钮
+   const submitBtn = addForm.querySelector('button[type="submit"]')
+   if (submitBtn) {
+        submitBtn.disabled = true
+        submitBtn.textContent = '保存中...'
+      }
+      
+  try {
      const websiteData = {
-        name: document.getElementById('name').value.trim(),
-        title: document.getElementById('title').value.trim(),
-        url: document.getElementById('url').value.trim(),
-        description: document.getElementById('description').value.trim(),
-        tags: document.getElementById('tags').value
-          .split(/[,,]/)
-          .map(tag => tag.trim())
-          .filter(tag => tag.length > 0),
-        isMarked: document.getElementById('isMarked').checked,
-        isActive: true,
-        isHidden: false,
-        visitCount: 0,
-        markOrder: 0
-      }
-      
-      // 如果有临时存储的 iconData，添加到数据中
+          name: document.getElementById('name').value.trim(),
+          title: document.getElementById('title').value.trim(),
+          url: document.getElementById('url').value.trim(),
+          description: document.getElementById('description').value.trim(),
+          tags: document.getElementById('tags').value
+            .split(/[,,]/)
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0),
+          isMarked: document.getElementById('isMarked').checked,
+          isActive: true,
+          isHidden: false,
+          visitCount: 0,
+          markOrder: 0
+        }
+        
+        // 如果有临时存储的 iconData，添加到数据中
      if (window.tempIconData) {
-        websiteData.iconData = window.tempIconData
+          websiteData.iconData = window.tempIconData
+       console.log('[Popup] 包含图标数据')
+        }
+        
+     console.log(`[Popup] #${currentSubmitId} 准备发送 ADD_WEBSITE 消息`)
+     console.log('[Popup] 网站数据:', websiteData)
+      
+      // 发送前再次检查
+     if (!websiteData.url) {
+       console.error('[Popup] ❌ URL 为空，拒绝发送')
+        throw new Error('URL 不能为空')
       }
       
-     try {
         // 发送到起始页保存（通过 content.js 转发）
-       const response = await chrome.runtime.sendMessage({
+     console.log('[Popup] 调用 chrome.runtime.sendMessage...')
+     const response = await chrome.runtime.sendMessage({
           action: 'ADD_WEBSITE',
           data: websiteData
         })
         
-       if (response.success) {
+     console.log(`[Popup] #${currentSubmitId} ✅ 收到响应:`, response)
+        
+     if (response.success) {
           showMessage(messageEl, '✓ 添加成功！', 'success')
           addForm.reset()
           window.tempIconData = null // 清除临时数据
+         console.log('[Popup] 表单已重置，临时数据已清理')
         } else {
           showMessage(messageEl, '✗ 添加失败：' + response.error, 'error')
+         console.error('[Popup] ❌ 添加失败:', response.error)
         }
       } catch (error) {
         showMessage(messageEl, '✗ 错误：' + error.message, 'error')
+       console.error('[Popup] ❌ 捕获异常:', error)
+      } finally {
+        // 恢复提交状态
+        isSubmitting = false
+       console.log('[Popup] 已释放提交锁，isSubmitting = false')
+        
+        // 恢复保存按钮
+     if (submitBtn) {
+          submitBtn.disabled = false
+          submitBtn.textContent = '保存'
+         console.log('[Popup] 保存按钮已恢复')
+        }
+        
+     console.log(`[Popup] ====== 表单提交 #${currentSubmitId} 结束 ======`)
       }
     })
+    
+   console.log('[Popup] ✅ 表单提交事件监听器已注册')
   }
 
   // ========== 导入功能 ==========
