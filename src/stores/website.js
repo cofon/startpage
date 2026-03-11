@@ -147,6 +147,7 @@ export const useWebsiteStore = defineStore('website', () => {
       // 检查是否匹配所有关键词
       const matchesAllKeywords = parsed.keywords.every(kw => {
         return (w.name && w.name.toLowerCase().includes(kw)) ||
+               (w.title && w.title.toLowerCase().includes(kw)) ||
                (w.url && w.url.toLowerCase().includes(kw)) ||
                (w.description && w.description.toLowerCase().includes(kw)) ||
                (w.tags && w.tags.some(tag => tag.toLowerCase().includes(kw)))

@@ -322,7 +322,7 @@ function validateIcon(iconData) {
 
 /**
  * 创建默认的网站数据
- * @param {string} url - 网站 URL
+ * @param {string} url - 网站URL
  * @returns {Object} 默认网站数据
  */
 export function createDefaultWebsiteData(url) {
@@ -346,22 +346,4 @@ export function createDefaultWebsiteData(url) {
       siteName: siteName
     }
   }
-}
-
-/**
- * 从主机名中提取根域名
- * 例如：www.baidu.com -> baidu.com, mail.google.com -> google.com
- * 注意：对于 .co.uk 等复合后缀，简化处理为最后两部分
- * @param {string} hostname - 主机名（如：www.baidu.com）
- * @returns {string|null} 根域名，如果无法提取则返回 null
- */
-export function extractRootDomain(hostname) {
-  if (!hostname) return null
-  
-  const parts = hostname.split('.')
-  if (parts.length < 2) return null
-  
-  // 取最后两部分作为根域名
-  const rootParts = parts.slice(-2)
-  return rootParts.join('.')
 }

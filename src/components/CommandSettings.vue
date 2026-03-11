@@ -66,6 +66,45 @@ async function handleImport(event) {
     reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result)
+
+        // 如果有 websites 数组，验证和标准化数据
+        if (data.websites && Array.isArray(data.websites)) {
+          const { validateWebsite } = await import('../services/websiteMetadataService')
+
+          // 验证每个网站数据
+          const invalidWebsites = []
+          data.websites.forEach((website, index) => {
+            const validation = validateWebsite(website)
+            if (!validation.valid) {
+              invalidWebsites.push({
+                index,
+                url: website.url,
+                errors: validation.errors
+              })
+            }
+          })
+
+          // 如果有无效数据，提示用户但继续导入
+          if (invalidWebsites.length > 0) {
+            console.warn('检测到无效的网站数据:', invalidWebsites)
+            notificationStore.warning(`检测到 ${invalidWebsites.length} 个无效的网站数据，将尝试自动修复`)
+          }
+
+          console.log('[CommandSettings] 调用 window.StartPageAPI.importWebsites...')
+          
+          const result = await window.StartPageAPI.importWebsites(data.websites)
+          
+          console.log('[CommandSettings] 导入结果:', result)
+          
+          notificationStore.success(`导入成功！共 ${result.total} 个网站，成功 ${result.success} 个，失败 ${result.failed} 个`)
+          
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+          return
+        }
+
+        // 如果没有 websites 数组，导入其他数据（设置、主题等）
         await db.importData(data)
         notificationStore.success('导入成功！页面即将刷新...')
         setTimeout(() => {

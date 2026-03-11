@@ -306,8 +306,35 @@ class IndexedDB {
     const themes = await this.getAllThemes()
     const searchEngines = await this.getAllSearchEngines()
 
+    // ========== 新增：按照重构方案规范过滤网站数据字段 ==========
+    const exportWebsites = websites.map(site => ({
+      // 用户可输入字段（全部导出）
+      name: site.name,
+      title: site.title,
+      url: site.url,
+      description: site.description,
+      iconData: site.iconData,
+      iconGenerateData: site.iconGenerateData,
+      tags: site.tags,
+      isMarked: site.isMarked,
+      isActive: site.isActive,
+      isHidden: site.isHidden,
+      
+      // 排序字段（保留）
+      markOrder: site.markOrder,
+      visitCount: site.visitCount,
+      lastVisited: site.lastVisited,
+      
+      // 系统字段（不导出，让导入时重新生成）
+      // id: site.id,
+      // createdAt: site.createdAt,
+      // updatedAt: site.updatedAt
+    }))
+
     return {
-      websites,
+      version: 1,
+      exportDate: new Date().toISOString(),
+      websites: exportWebsites,
       settings: settings || {},
       themes: themes || [],
       searchEngines: searchEngines || []

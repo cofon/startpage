@@ -506,29 +506,83 @@ MIT License
 
 
 ## 未完成工作
-数据表websites添加了title字段，但是搜索模块没有添加对title字段的搜索功能
+
 
 ###### 数据结构
 {
-  "websites": [
-    {
-      "url": "https://www.baidu.com",
-      "name": "百度",
-      "title": "百度一下，你就知道",
-      "description": "百度是一个中国最大的中文搜索引擎，也是全球最大的中文信息源。"
-      "iconData": "data:image网站图标的base64编码的图片数据..."
-      其他字段
-    },
-    {
-      "url": "https://www.google.com",
-      "name": "谷歌",
-      "title": "Google",
-      "description": "谷歌是一个全球最大的搜索引擎，提供搜索、翻译、图片、视频、新闻、地图、翻译等功能。"
-      "iconData": "data:image网站图标的base64编码的图片数据..."
-      其他字段
-    }
-  ],
+  "websites": [ {site1}, {site2}, {site3} ... ],
   "settings": "{},
   "themes": [],
   "searchEngines": []
 }
+
+
+
+###### 添加网站 大修/重构
+
+websites 表结构：
+{
+  id: number,              // 自增 ID (主键)
+  name: string,            // 网站名称（用户自定义，用于 Marked List Grid 模式）
+  title: string,           // 网站标题（网页原始标题，用于 Search Results List 模式）
+  url: string,             // 网站链接（必填字段）
+  description: string,     // 网站描述
+  iconData: string,        // 网络获取的 icon base64（包含 data:image 前缀）
+  iconGenerateData: string, // 本地生成的 SVG 图标 base64（包含 data:image 前缀）
+  tags: Array,             // 标签数组 [tag1, tag2, ...]
+  isMarked: boolean,       // 是否为已标记网站
+  markOrder: number,       // marked 网站排序（仅当 isMarked 为 true 时有效）
+  visitCount: number,      // 访问次数统计
+  lastVisited: Date,       // 最近访问时间
+  createdAt: Date,         // 创建时间
+  updatedAt: Date,         // 更新时间
+  isActive: boolean,       // 是否激活状态（正常搜索不显示非激活的网站）
+  isHidden: boolean        // 是否隐藏状态（正常搜索不显示隐藏的网站）
+}
+
+
+现在起始页的添加网站和逻辑需要进行一次大的调整：
+1. 统计添加网站入口
+    - 起始页搜索模块输入框输入 --add 可以打开添加网站面板，添加单个网站，表单中可以输入的websites字段有：name、url、title、description、iconData、iconGenerateData、tags、isMarked、isActive、isHidden
+    - 起始页搜索模块输入框输入 --import 可以打开批量导入面板，批量导入网站，具体处理逻辑需要你自己查看
+    - alt+shift+d打开插件面板，添加网站界面，添加单个网站，表单中可以输入的websites字段有：name、url、title、description、iconData、tags、isMarked、isActive、isHidden(没有iconGenerateData)
+    - alt+shift+i打开插件面板，批量导入界面，批量导入网站，具体处理逻辑需要你自己查看
+2. 需要用户处理的字段：
+    - name、url、title、description、iconData、iconGenerateData、tags、isMarked、isActive、isHidden
+3. 需要用户处理的字段的获取方式：
+    - name：用户手动输入，或者程序提取域名主体，比如：https://www.baidu.com/ 提取 baidu
+    - url：用户手动输入, 插件可以自动获取当前激活标签页的 url
+    - title：用户手动输入，插件可以自动获取当前激活标签页的 title，插件可以根据输入的网址自动获取网页的 title
+    - description：用户手动输入，插件可以自动获取当前激活标签页的 description，插件可以根据输入的网址自动获取网页的 description
+    - iconData：用户手动输入，插件可以自动获取当前激活标签页的 icon，插件可以根据输入的网址自动获取网页的 icon
+    - iconGenerateData：用户手动输入，函数生成(函数是起始页管理还是 起始页和插件各自有一个同样的函数，生成svg的时机，添加网站时生成，还是提交后生成)
+    - tags：用户手动输入，起始页可以获取tags列表，用户点击或者手动输入，插件是否也可以调用起始页的tags列表
+    - isMarked：用户手动输入(复选框)，默认值为false
+    - isActive：用户手动输入(复选框)，默认值为true
+    - isHidden：用户手动输入(复选框)，默认值为false
+4. 需要自动处理的字段：
+    - id、createdAt、updatedAt、visitCount、lastVisited、markOrder
+5. 需要自动处理的字段的获取方式：
+    - id：自增
+    - createdAt：当前时间
+    - updatedAt：当前时间
+    - visitCount：默认值 0
+    - lastVisited：当前时间
+    - markOrder：忘记处理逻辑，需要你自己查看
+6. 字段验证
+    - url，必须输入，可以https://www.baidu.com http://www.baidu.com www.baidu.com baidu.com, 添加单个网站时如果没有url无法提交，批量导入时如果没有url打印，不添加
+    - name title descriprion 三者必须有一个不为空，添加单个网站时如果没有三者都为空无法提交，批量导入时如果没有三者都为空继续添加，但是要打印信息
+    - iconData iconGenerateData 二者必须有一个不为空，添加单个网站时如果没有二者都为空无法提交，批量导入时如果没有二者都为空继续添加，但是要打印信息
+    - tags，可以不输入，如果tags为空，自动添加一个标签： new，以便之后可以通过搜索模块的输入框 输入--tag new 进行检索
+7. 字段补全的时机
+    - name：添加单个网站时，提交之前手动输入，程序填充，提交之后程序自动补全？批量导入时如果name为空要不要自动补全
+    - title：起始页--add面板手动输入，还是之后导出数据再使用插件的导入数据补全，插件能不能添加功能遍历数据库自动补全title
+    - description：起始页--add面板手动输入，还是之后导出数据再使用插件的导入数据补全，插件能不能添加功能遍历数据库自动补全description
+    - iconData：起始页--add面板手动输入，还是之后导出数据再使用插件的导入数据补全，插件能不能添加功能遍历数据库自动补全iconData
+    - iconGenerateData：起始页--add面板手动输入，还是自动填充，还是提交之后自动补全，插件是否可以复用起始页的生成SVG的函数
+    - tags：起始页--add面板手动输入，如果tags为空，自动添加一个标签： new，以便之后可以通过搜索模块的输入框 输入--tag new 进行检索，插件是否可以复用起始页的tags列表
+8. 需要整体分析所有添加网站入口的处理逻辑，尽量的复用代码，尽量把处理逻辑的函数放在起始页项目中
+9. 重点：插件可以复用起始页的哪些代码，插件不可以复用起始页的哪些代码
+10. 导出数据时要导出具体哪些数据，比如：id有没有必要导出，如果导出数据没有ID，导入时是不是不需要处理ID了，如果有ID是不是直接忽略
+
+根据以上帮我整理出一个大修/重构添加网站流程的方案

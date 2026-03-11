@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 发送补全后的数据到起始页
            const response = await chrome.runtime.sendMessage({
-              action: 'importWebsites',
+              action: 'IMPORT_WEBSITES',
               data: enrichedWebsites
             })
             
@@ -342,8 +342,8 @@ document.addEventListener('DOMContentLoaded', function() {
             progressBar.style.width = '100%'
             
            if (response.success) {
-              progressText.textContent = `✓ 成功导入 ${response.count} 个网站！`
-              showMessage(document.getElementById('import-message'), `✓ 成功导入 ${response.count} 个网站！`, 'success')
+              progressText.textContent = `✓ 成功导入 ${response.total} 个网站，成功 ${response.success} 个！`
+              showMessage(document.getElementById('import-message'), `✓ 成功导入 ${response.success}/${response.total} 个网站！`, 'success')
             } else {
               throw new Error(response.error || '导入失败')
             }

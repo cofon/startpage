@@ -2,35 +2,14 @@
 import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
-import {
-  isValidUrl,
-  extractSiteNameFromUrl,
-  generateDefaultIcon,
-  // fetchWebsiteInfo,
-  // fetchWebsiteIcon
-} from '../utils/websiteUtils'
+import websiteMetadataService from '../services/websiteMetadataService'
+
+// ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
 
 const emit = defineEmits(['close'])
 
 const websiteStore = useWebsiteStore()
 const notificationStore = useNotificationStore()
-
-// 编码SVG为Base64
-function encodeSvg(svg) {
-  if (!svg) return ''
-  // 如果已经是Base64格式，直接返回
-  if (svg.startsWith('data:image/svg+xml;base64,') || svg.startsWith('data:image/svg+xml;utf8,')) {
-    return svg
-  }
-  // 否则进行Base64编码
-  // 使用encodeURIComponent处理Unicode字符
-  const encodedSvg = encodeURIComponent(svg)
-    .replace(/%([0-9A-F]{2})/g,
-      function toSolidBytes(match, p1) {
-        return String.fromCharCode('0x' + p1)
-      })
-  return `data:image/svg+xml;base64,${btoa(encodedSvg)}`
-}
 
 // 表单数据
 const formData = ref({
@@ -46,11 +25,6 @@ const formData = ref({
   iconGenerateData: ''
 })
 
-// URL验证状态
-const urlValidation = ref({
-  isValid: false,
-  message: ''
-})
 
 // 加载状态
 // const isLoading = ref(false)
@@ -95,96 +69,172 @@ function toggleTag(tag) {
   formData.value.tags = tags.join(', ')
 }
 
-// 处理URL变化（包括从浏览器历史记录选择URL）
-function processUrlChange(url) {
+// ========== 实时监听 URL 输入框的输入，自动填充 name 和生成SVG ==========
+watch(() => formData.value.url, (newUrl) => {
+  // 只在用户正在输入时实时处理，不需要等待失去焦点
+  processUrlChange(newUrl)
+})
+
+// URL 变化时自动填充网站名称和图标（不再进行验证）
+async function processUrlChange(url) {
+  console.log('[processUrlChange] ========== URL 变化处理 ==========')
+  console.log('[processUrlChange] 输入 URL:', url)
+  
   if (!url) {
-    urlValidation.value = {
-      isValid: false,
-      message: ''
-    }
+    console.log('[processUrlChange] URL 为空，清空表单')
     formData.value.iconData = ''
     formData.value.iconGenerateData = ''
     return
   }
 
-  // 验证URL
-  if (isValidUrl(url)) {
-    urlValidation.value = {
-      isValid: true,
-      message: ''
-    }
-
-    // 提取网站名并自动填充
-    const siteName = extractSiteNameFromUrl(url)
-    formData.value.name = siteName
-
-    // 生成SVG图标并转换为Base64编码
-    const iconSvg = generateDefaultIcon(siteName)
-    formData.value.iconGenerateData = encodeSvg(iconSvg)
-
-    // 图标输入框保持为空
-    formData.value.iconData = ''
-  } else {
-    urlValidation.value = {
-      isValid: false,
-      message: '请输入有效的URL（如：https://www.example.com）'
-    }
-    formData.value.iconData = ''
-    formData.value.iconGenerateData = ''
+  // ========== 更严格的域名完整性检查 ==========
+  // 提取主机名部分（去掉协议和路径）
+  let hostname = ''
+  try {
+    // 尝试解析 URL，如果格式不正确会抛出异常
+    const urlObj = new URL(url.startsWith('http') ? url : 'http://' + url)
+    hostname = urlObj.hostname
+    console.log('[processUrlChange] 解析的主机名:', hostname)
+  } catch (_e) {
+    // URL 格式不正确，不进行验证
+    console.log('[processUrlChange] URL 格式不正确，跳过处理')
+    return
   }
+  
+  // 检查域名是否完整：必须包含至少一个点，且不是以点开头或结尾
+  const hasValidDomain = hostname.includes('.') && 
+                         !hostname.startsWith('.') && 
+                         !hostname.endsWith('.') &&
+                         hostname.length > 4 // 至少像 a.b 这样
+  
+  if (!hasValidDomain) {
+    // URL 还不完整，不进行后续处理
+    console.log('[processUrlChange] 域名不完整，跳过处理')
+    return
+  }
+
+  console.log('[processUrlChange] ✓ 域名完整，开始智能填充...')
+
+  // ========== 智能填充策略：只填充空值，不覆盖已有数据 ==========
+  
+  // 1. 网站名称：只有在 name 为空时才从 URL 提取
+  if (!formData.value.name || formData.value.name.trim() === '') {
+    const siteName = websiteMetadataService.extractSiteNameFromUrl(url)
+    formData.value.name = siteName
+    console.log('[processUrlChange] ✓ name 为空，已自动填充:', siteName)
+  } else {
+    console.log('[processUrlChange] - name 已有值，跳过填充:', formData.value.name)
+  }
+
+  // 2. SVG图标：优先复用已有网站的 SVG，没有才生成新的
+  // ========== 先查找数据库中是否有相同根域名的网站 ==========
+  const rootDomain = websiteMetadataService.extractRootDomain(hostname)
+  console.log('[processUrlChange] 提取的根域名:', rootDomain)
+  
+  if (rootDomain) {
+    // 在现有网站中查找是否有相同根域名的
+    const existingWebsite = websiteStore.websites.find(website => {
+      try {
+        const websiteHostname = new URL(website.url).hostname
+        const websiteRootDomain = websiteMetadataService.extractRootDomain(websiteHostname)
+        return websiteRootDomain === rootDomain
+      } catch (_e) {
+        return false
+      }
+    })
+    
+    if (existingWebsite && existingWebsite.iconGenerateData) {
+      // 找到相同根域名的网站，复用它的 SVG
+      formData.value.iconGenerateData = existingWebsite.iconGenerateData
+      console.log('[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:', existingWebsite.name)
+      console.log('[processUrlChange]   根域名:', rootDomain)
+      console.log('[processUrlChange]   来源网站:', existingWebsite.url)
+    } else {
+      // 没有找到，生成新的 SVG
+      console.log('[processUrlChange] - 未找到相同根域名的网站，将生成新 SVG')
+      
+      const normalizedData = websiteMetadataService.normalizeWebsiteData({
+        url: url,
+        name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url)
+      })
+      
+      formData.value.iconGenerateData = normalizedData.iconGenerateData
+      formData.value.tags = Array.isArray(normalizedData.tags) ? normalizedData.tags.join(', ') : ''
+      
+      console.log('[processUrlChange] ✓ SVG图标已重新生成，长度:', normalizedData.iconGenerateData?.length)
+      console.log('[processUrlChange] ✓ tags 已设置为:', formData.value.tags)
+    }
+  } else {
+    // 无法提取根域名，直接生成SVG
+    const normalizedData = websiteMetadataService.normalizeWebsiteData({
+      url: url,
+      name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url)
+    })
+    
+    formData.value.iconGenerateData = normalizedData.iconGenerateData
+    formData.value.tags = Array.isArray(normalizedData.tags) ? normalizedData.tags.join(', ') : ''
+    
+    console.log('[processUrlChange] ✓ 无法提取根域名，已生成新 SVG')
+  }
+  
+  // 3. 图标输入框保持为空（这个总是清空）
+  formData.value.iconData = ''
+  
+  console.log('[processUrlChange] ========== URL 变化处理完成 ==========')
 }
 
-// 处理URL变化（包括从浏览器历史记录选择URL）
-function handleUrlChange() {
-  processUrlChange(formData.value.url)
-}
-
-// 监听URL变化，自动填充网站名称和图标
+// 监听 URL 输入框的输入，实时自动填充
 watch(() => formData.value.url, (newUrl) => {
   processUrlChange(newUrl)
 })
 
+// 处理 URL 输入事件（包括浏览器自动填充）
+function handleUrlInput(event) {
+  console.log('[handleUrlInput] 检测到输入事件:', event.target.value)
+  // 使用 nextTick 确保 v-model 已更新
+  setTimeout(() => {
+    processUrlChange(formData.value.url)
+  }, 0)
+}
+
+// 处理 URL 变化事件（失去焦点时）
+function handleUrlChange(event) {
+  console.log('[handleUrlChange] 检测到 change 事件:', event.target.value)
+  processUrlChange(formData.value.url)
+}
+
 // 提交表单
 async function handleSubmit() {
   try {
-    // 验证URL格式
-    if (!isValidUrl(formData.value.url)) {
-      notificationStore.warning('请输入有效的URL')
-      return
-    }
-
-    // 验证name、title、description至少有一个不为空
-    const hasName = formData.value.name && formData.value.name.trim() !== ''
-    const hasTitle = formData.value.title && formData.value.title.trim() !== ''
-    const hasDescription = formData.value.description && formData.value.description.trim() !== ''
-
-    if (!hasName && !hasTitle && !hasDescription) {
-      notificationStore.warning('请填写网站名称、标题或描述中的至少一项')
-      return
-    }
-
-    // 处理标签
-    const tags = formData.value.tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t)
-
-    // 添加网站
-    await websiteStore.addWebsite({
+    // 准备数据
+    const websiteData = {
       name: formData.value.name,
       title: formData.value.title,
       url: formData.value.url,
       description: formData.value.description,
-      tags: tags,
+      tags: formData.value.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t),
       isMarked: formData.value.isMarked,
-      markOrder: 0,
-      visitCount: 0,
       isActive: formData.value.isActive,
       isHidden: formData.value.isHidden,
-      iconData: '', // 图标输入框保持为空
-      iconGenerateData: formData.value.iconGenerateData // 使用Base64格式的SVG
+      iconData: formData.value.iconData,
+      iconGenerateData: formData.value.iconGenerateData
+    }
 
-    })
+    // 验证数据
+    const validation = websiteMetadataService.validateWebsite(websiteData)
+    if (!validation.valid) {
+      notificationStore.warning(validation.errors.join('、'))
+      return
+    }
+
+    // 标准化数据
+    const normalizedData = websiteMetadataService.normalizeWebsiteData(websiteData)
+
+    // 添加到 store（store 内部会保存到数据库）
+    await websiteStore.addWebsite(normalizedData)
 
     // 等待一小段时间，确保数据库保存完成
     await new Promise(resolve => setTimeout(resolve, 100))
@@ -201,6 +251,7 @@ async function handleSubmit() {
 function handleCancel() {
   emit('close')
 }
+
 </script>
 
 <template>
@@ -213,14 +264,11 @@ function handleCancel() {
         v-model="formData.url"
         type="url"
         class="form-input"
-        :class="{ 'error': !urlValidation.isValid && formData.url }"
         placeholder="https://example.com"
         maxlength="500"
+        @input="handleUrlInput"
         @change="handleUrlChange"
       >
-      <div v-if="!urlValidation.isValid && formData.url" class="error-message">
-        {{ urlValidation.message }}
-      </div>
     </div>
 
     <div class="form-group">

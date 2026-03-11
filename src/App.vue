@@ -273,27 +273,39 @@ onMounted(async () => {
        * @returns {Promise<number>} - 返回新网站的 ID
        */
       addWebsite: async (data) => {
-   console.log('[StartPageAPI] 添加网站:', data)
+        console.log('[StartPageAPI] 添加网站:', data)
         
-        // 规范化数据（处理默认值等）
-   const normalizedData = normalizeWebsiteForDB(data)
+        // ========== 新增：先验证数据 ==========
+        const { validateWebsite } = await import('./services/websiteMetadataService')
+        const validation = validateWebsite(data)
         
-        // 更新 store（store 内部会保存到数据库）
-   const newWebsite = await websiteStore.addWebsite(normalizedData)
+        if (!validation.valid) {
+          console.error('[StartPageAPI] ❌ 验证失败:', validation.errors)
+          throw new Error(validation.errors.join('、'))
+        }
         
-   console.log('[StartPageAPI] 添加成功，ID:', newWebsite.id)
-     
-     // 验证：立即查询数据库，看是否有重复
-   const allWebsites = await db.getAllWebsites()
-   const duplicates = allWebsites.filter(w => 
-       w.url === data.url && w.id !== newWebsite.id
-     )
-   if (duplicates.length > 0) {
-     console.error('[StartPageAPI] ⚠️ 检测到重复网站:', duplicates)
-     } else {
-     console.log('[StartPageAPI] ✓ 无重复网站')
-     }
-     
+        // ========== 新增：标准化数据 ==========
+        const { normalizeWebsiteData } = await import('./services/websiteMetadataService')
+        const normalizedData = normalizeWebsiteData(data)
+        
+        console.log('[StartPageAPI] 验证通过，标准化后的数据:', normalizedData)
+        
+        // 使用标准化后的数据更新 store（store 内部会保存到数据库）
+        const newWebsite = await websiteStore.addWebsite(normalizedData)
+        
+        console.log('[StartPageAPI] 添加成功，ID:', newWebsite.id)
+        
+        // 验证：立即查询数据库，看是否有重复
+        const allWebsites = await db.getAllWebsites()
+        const duplicates = allWebsites.filter(w => 
+          w.url === data.url && w.id !== newWebsite.id
+        )
+        if (duplicates.length > 0) {
+          console.error('[StartPageAPI] ⚠️ 检测到重复网站:', duplicates)
+        } else {
+          console.log('[StartPageAPI] ✓ 无重复网站')
+        }
+        
         return newWebsite.id
       },
       
@@ -303,23 +315,38 @@ onMounted(async () => {
        * @returns {Promise<Object>} - 返回导入结果统计
        */
       importWebsites: async (websites) => {
-    console.log('[StartPageAPI] 批量导入网站，数量:', websites.length)
+        console.log('[StartPageAPI] 批量导入网站，数量:', websites.length)
         
         let successCount = 0
         let errorCount = 0
-    const errors = []
+        const errors = []
         
         for (let i = 0; i < websites.length; i++) {
-      try {
-        const website = websites[i]
-        const normalizedData = normalizeWebsiteForDB(website)
+          try {
+            const website = websites[i]
             
-         // 使用 websiteStore.addWebsite 统一处理保存逻辑
-         await websiteStore.addWebsite(normalizedData)
+            // ========== 修改：使用新的 websiteMetadataService ==========
+            // 1. 验证数据（宽松验证）
+            const { validateWebsite } = await import('./services/websiteMetadataService')
+            const validation = validateWebsite(website)
             
-         successCount++
-         } catch (error) {
-      console.error(`[StartPageAPI] 导入第 ${i + 1} 个网站失败:`, error)
+            if (!validation.valid) {
+              console.warn(`[StartPageAPI] ⚠️ 第 ${i + 1} 个网站验证失败:`, validation.errors)
+              // 继续尝试标准化和保存
+            }
+            
+            // 2. 标准化数据（会自动生成缺失的字段）
+            const { normalizeWebsiteData } = await import('./services/websiteMetadataService')
+            const normalizedData = normalizeWebsiteData(website)
+            
+            console.log(`[StartPageAPI] 标准化后的数据 (${i + 1}):`, normalizedData)
+            
+            // 3. 使用 websiteStore.addWebsite 统一处理保存逻辑
+            await websiteStore.addWebsite(normalizedData)
+            
+            successCount++
+          } catch (error) {
+            console.error(`[StartPageAPI] 导入第 ${i + 1} 个网站失败:`, error)
             errorCount++
             errors.push({
               index: i,
@@ -329,7 +356,7 @@ onMounted(async () => {
           }
         }
         
-    console.log(`[StartPageAPI] 导入完成：成功 ${successCount}, 失败 ${errorCount}`)
+        console.log(`[StartPageAPI] 导入完成：成功 ${successCount}, 失败 ${errorCount}`)
         
         return {
           total: websites.length,
@@ -372,6 +399,44 @@ onMounted(async () => {
           websites,
           count: websites.length
         }
+      },
+
+      // ========== 新增方法（重构方案 Phase 2） ==========
+      
+      /**
+       * 批量补全网站元数据（供插件调用）
+       * @param {Array} websites - 网站数组
+       * @param {Function} progressCallback - 进度回调函数 (processed, total)
+       * @returns {Promise<Array>} 补全后的网站数组
+       */
+      enrichWebsites: async (websites, progressCallback) => {
+        console.log('[StartPageAPI] 补全网站元数据，数量:', websites.length)
+        
+        // 动态导入 service（避免循环依赖）
+        const { batchEnrichMetadata } = await import('./services/websiteMetadataService')
+        
+        // 调用 service 进行批量补全
+        return await batchEnrichMetadata(websites, progressCallback)
+      },
+      
+      /**
+       * 验证网站数据（供插件调用）
+       * @param {Object} websiteData - 网站数据
+       * @returns {Object} { valid: boolean, errors: string[] }
+       */
+      validateWebsite: async (websiteData) => {
+        const { validateWebsite } = await import('./services/websiteMetadataService')
+        return validateWebsite(websiteData)
+      },
+      
+      /**
+       * 标准化网站数据（供插件调用）
+       * @param {Object} websiteData - 网站数据
+       * @returns {Object} 标准化的网站对象
+       */
+      normalizeWebsite: async (websiteData) => {
+        const { normalizeWebsiteData } = await import('./services/websiteMetadataService')
+        return normalizeWebsiteData(websiteData)
       }
     }
     
