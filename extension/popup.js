@@ -16,6 +16,9 @@ function showMessage(element, text, type) {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('[Popup] DOM 加载完成')
   
+  // 防止重复提交的状态标志
+  let isSubmitting = false
+  
   // 标签页切换
   const tabBtns = document.querySelectorAll('.tab-btn')
   const panels = document.querySelectorAll('.panel')
@@ -60,13 +63,26 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         
        if (metadata) {
-          // 填充表单
-          document.getElementById('title').value = metadata.title || ''
-          document.getElementById('description').value = metadata.description || ''
+          // 填充表单字段（带空值检查）
+          const titleEl = document.getElementById('title')
+          const descEl = document.getElementById('description')
+          const iconDataEl = document.getElementById('iconData')
           
-          // 保存 iconData 到临时变量
+          if (titleEl) titleEl.value = metadata.title || ''
+          if (descEl) descEl.value = metadata.description || ''
+          
+          // 保存 iconData 到临时变量并填充到输入框
          if (metadata.iconData) {
             window.tempIconData = metadata.iconData
+            // 填充到 iconData 输入框（完整显示）
+            if (iconDataEl) {
+              iconDataEl.value = metadata.iconData
+              // 更新预览
+              updateIconPreview(metadata.iconData)
+              console.log('[Popup] 已填充 iconData 到输入框')
+            } else {
+              console.warn('[Popup] 未找到 iconData 输入框元素')
+            }
           }
           
           showMessage(messageEl, '✓ 获取成功！', 'success')
@@ -79,34 +95,31 @@ document.addEventListener('DOMContentLoaded', function() {
     })
   }
 
-  // ========== 表单提交逻辑 ==========
-  let submitCounter = 0
-  let isSubmitting = false // 防止重复提交
-  
+  // ========== 表单提交处理 ==========
   if (addForm) {
     addForm.addEventListener('submit', async (e) => {
-   const currentSubmitId = ++submitCounter
-     e.preventDefault()
-     
-  console.log(`[Popup] ====== 表单提交 #${currentSubmitId} 开始 ======`)
-  console.log('[Popup] 当前 isSubmitting:', isSubmitting)
+      e.preventDefault()
+      
+      const currentSubmitId = Date.now()
+      console.log(`[Popup] ====== 表单提交 #${currentSubmitId} 开始 ======`)
+      console.log('[Popup] 当前 isSubmitting:', isSubmitting)
       
       // 防止重复提交
-    if (isSubmitting) {
-     console.log('[Popup] ⚠️ 正在提交中，忽略本次请求')
+      if (isSubmitting) {
+        console.log('[Popup] ⚠️ 正在提交中，忽略本次请求')
         return
       }
       isSubmitting = true
       
       // 禁用保存按钮
-   const submitBtn = addForm.querySelector('button[type="submit"]')
-   if (submitBtn) {
+      const submitBtn = addForm.querySelector('button[type="submit"]')
+      if (submitBtn) {
         submitBtn.disabled = true
         submitBtn.textContent = '保存中...'
       }
       
-  try {
-     const websiteData = {
+      try {
+        const websiteData = {
           name: document.getElementById('name').value.trim(),
           title: document.getElementById('title').value.trim(),
           url: document.getElementById('url').value.trim(),
@@ -115,66 +128,78 @@ document.addEventListener('DOMContentLoaded', function() {
             .split(/[,,]/)
             .map(tag => tag.trim())
             .filter(tag => tag.length > 0),
+          // 状态字段
           isMarked: document.getElementById('isMarked').checked,
-          isActive: true,
-          isHidden: false,
+          isActive: document.getElementById('isActive').checked,
+          isHidden: document.getElementById('isHidden').checked,
           visitCount: 0,
           markOrder: 0
         }
         
-        // 如果有临时存储的 iconData，添加到数据中
-     if (window.tempIconData) {
+        // 添加 iconData 字段（从输入框或临时存储获取）
+        const iconDataInput = document.getElementById('iconData').value.trim()
+        
+        // 使用完整输入框的数据或临时存储
+        if (iconDataInput) {
+          websiteData.iconData = iconDataInput
+          console.log('[Popup] 使用输入框的 iconData')
+        } else if (window.tempIconData) {
           websiteData.iconData = window.tempIconData
-       console.log('[Popup] 包含图标数据')
+          console.log('[Popup] 使用临时存储的 iconData')
         }
         
-     console.log(`[Popup] #${currentSubmitId} 准备发送 ADD_WEBSITE 消息`)
-     console.log('[Popup] 网站数据:', websiteData)
+        if (websiteData.iconData) {
+          console.log('[Popup] 包含图标数据，长度:', websiteData.iconData.length)
+        }
+        
+        console.log(`[Popup] #${currentSubmitId} 准备发送 ADD_WEBSITE 消息`)
+        console.log('[Popup] 网站数据:', websiteData)
       
-      // 发送前再次检查
-     if (!websiteData.url) {
-       console.error('[Popup] ❌ URL 为空，拒绝发送')
-        throw new Error('URL 不能为空')
-      }
-      
+        // 发送前再次检查
+        if (!websiteData.url) {
+          console.error('[Popup] ❌ URL 为空，拒绝发送')
+          throw new Error('URL 不能为空')
+        }
+        
         // 发送到起始页保存（通过 content.js 转发）
-     console.log('[Popup] 调用 chrome.runtime.sendMessage...')
-     const response = await chrome.runtime.sendMessage({
+        console.log('[Popup] 调用 chrome.runtime.sendMessage...')
+        const response = await chrome.runtime.sendMessage({
           action: 'ADD_WEBSITE',
           data: websiteData
         })
         
-     console.log(`[Popup] #${currentSubmitId} ✅ 收到响应:`, response)
+        console.log(`[Popup] #${currentSubmitId} ✅ 收到响应:`, response)
         
-     if (response.success) {
+        if (response.success) {
           showMessage(messageEl, '✓ 添加成功！', 'success')
           addForm.reset()
           window.tempIconData = null // 清除临时数据
-         console.log('[Popup] 表单已重置，临时数据已清理')
+          updateIconPreview(null) // 清除预览
+          console.log('[Popup] 表单已重置，临时数据已清理')
         } else {
           showMessage(messageEl, '✗ 添加失败：' + response.error, 'error')
-         console.error('[Popup] ❌ 添加失败:', response.error)
+          console.error('[Popup] ❌ 添加失败:', response.error)
         }
       } catch (error) {
         showMessage(messageEl, '✗ 错误：' + error.message, 'error')
-       console.error('[Popup] ❌ 捕获异常:', error)
+        console.error('[Popup] ❌ 捕获异常:', error)
       } finally {
         // 恢复提交状态
         isSubmitting = false
-       console.log('[Popup] 已释放提交锁，isSubmitting = false')
+        console.log('[Popup] 已释放提交锁，isSubmitting = false')
         
         // 恢复保存按钮
-     if (submitBtn) {
+        if (submitBtn) {
           submitBtn.disabled = false
           submitBtn.textContent = '保存'
-         console.log('[Popup] 保存按钮已恢复')
+          console.log('[Popup] 保存按钮已恢复')
         }
         
-     console.log(`[Popup] ====== 表单提交 #${currentSubmitId} 结束 ======`)
+        console.log(`[Popup] ====== 表单提交 #${currentSubmitId} 结束 ======`)
       }
     })
     
-   console.log('[Popup] ✅ 表单提交事件监听器已注册')
+    console.log('[Popup] ✅ 表单提交事件监听器已注册')
   }
 
   // ========== 导入功能 ==========
@@ -308,37 +333,111 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ========== 页面加载时自动获取当前页面元数据 ==========
   (async function autoFillCurrentTabMetadata() {
-  try {
-    console.log('[Popup] 尝试获取当前页面元数据...')
+    try {
+      console.log('[Popup] 尝试获取当前页面元数据...')
       
-   const metadata = await chrome.runtime.sendMessage({
+      const metadata = await chrome.runtime.sendMessage({
         action: 'FETCH_METADATA',
         fromCurrentTab: true
       })
       
-    console.log('[Popup] 收到元数据响应:', metadata)
+      console.log('[Popup] 收到元数据响应:', metadata)
       
-    if (metadata && metadata.url) {
-      console.log('[Popup] 获取到元数据:', metadata)
+      if (metadata && metadata.url) {
+        console.log('[Popup] 获取到元数据:', metadata)
         
-        // 填充表单字段
-        document.getElementById('title').value = metadata.title || ''
-        document.getElementById('url').value = metadata.url || ''
-        document.getElementById('description').value = metadata.description || ''
+        // 填充表单字段（带空值检查）
+        const titleEl = document.getElementById('title')
+        const urlEl = document.getElementById('url')
+        const descEl = document.getElementById('description')
+        const iconDataEl = document.getElementById('iconData')
         
-        // 保存 iconData 到临时变量
-     if (metadata.iconData) {
+        if (titleEl) titleEl.value = metadata.title || ''
+        if (urlEl) urlEl.value = metadata.url || ''
+        if (descEl) descEl.value = metadata.description || ''
+        
+        // 保存 iconData 到临时变量并填充到输入框
+        if (metadata.iconData) {
           window.tempIconData = metadata.iconData
-        console.log('[Popup] 已保存图标数据')
+          // 填充到 iconData 输入框（完整显示）
+          if (iconDataEl) {
+            iconDataEl.value = metadata.iconData
+            // 更新预览
+            updateIconPreview(metadata.iconData)
+            console.log('[Popup] 已填充 iconData 到输入框')
+          } else {
+            console.warn('[Popup] 未找到 iconData 输入框元素')
+          }
         }
-        
-      console.log('[Popup] 表单已自动填充')
-      } else {
-      console.log('[Popup] 未获取到元数据（返回 null 或没有 URL）')
       }
     } catch (error) {
-    console.error('[Popup] 获取元数据失败:', error)
-      // 失败时不显示错误提示，避免干扰用户
+      console.warn('[Popup] 获取元数据失败（可能不在网页上下文中）:', error)
     }
   })()
-})
+
+  // ========== 新增：iconData 输入框切换功能 ==========
+  const toggleIconDataBtn = document.getElementById('toggle-iconData-btn')
+  const iconDataWrapper = document.querySelector('.icon-input-wrapper')
+  
+  if (toggleIconDataBtn && iconDataWrapper) {
+    toggleIconDataBtn.addEventListener('click', () => {
+      const isExpanded = iconDataWrapper.classList.toggle('expanded')
+      toggleIconDataBtn.textContent = isExpanded ? '⬆️' : '⬇️'
+      toggleIconDataBtn.title = isExpanded ? '收起' : '展开'
+      console.log('[Popup] iconData 输入框已', isExpanded ? '展开' : '收起')
+    })
+  }
+
+  // ========== 新增：图标预览功能 ==========
+  function updateIconPreview(iconData) {
+    const previewContainer = document.getElementById('icon-preview')
+    const previewPlaceholder = document.querySelector('.icon-preview-placeholder')
+    const previewImg = document.getElementById('icon-preview-img')
+    
+    if (!previewContainer || !previewImg) return
+    
+    if (iconData && iconData.startsWith('data:image/')) {
+      // 有有效的 iconData，显示图片
+      previewImg.src = iconData
+      previewImg.style.display = 'block'
+      if (previewPlaceholder) previewPlaceholder.style.display = 'none'
+      previewContainer.classList.add('has-icon')
+      console.log('[Popup] 图标预览已更新')
+    } else {
+      // 无 iconData，显示占位符
+      previewImg.src = ''
+      previewImg.style.display = 'none'
+      if (previewPlaceholder) previewPlaceholder.style.display = 'block'
+      previewContainer.classList.remove('has-icon')
+      console.log('[Popup] 清除图标预览')
+    }
+  }
+
+  // 监听 iconData 输入框变化，实时更新预览
+  const iconDataInput = document.getElementById('iconData')
+  
+  if (iconDataInput) {
+    iconDataInput.addEventListener('input', (e) => {
+      const value = e.target.value.trim()
+      // 如果是有效的 base64 数据，更新预览
+      if (value && value.startsWith('data:image/')) {
+        updateIconPreview(value)
+      } else if (value && value.length > 0) {
+        // 用户正在输入，但还未完成
+        console.log('[Popup] 正在输入 iconData...')
+      } else {
+        // 输入框为空
+        updateIconPreview(null)
+      }
+    })
+    
+    // 失去焦点时，如果有值但不是完整 base64，尝试使用
+    iconDataInput.addEventListener('blur', () => {
+      const value = iconDataInput.value.trim()
+      if (value && !value.startsWith('data:image/')) {
+        console.warn('[Popup] iconData 格式不正确，应以 data:image/ 开头')
+      }
+    })
+  }
+
+}) // ← DOMContentLoaded 结束

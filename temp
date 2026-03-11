@@ -1,21 +1,21 @@
-OK，导出数据OK了，接下来测试插件面板中 自动获取信息按钮的功能是否正常,
-alt+shift+d 打开插件面板，在添加面板界面输入一个url：https://www.baidu.com,
-点击 “自动获取信息” 按钮，提示：✗ 获取失败
+websites表的字段
+  id: number,              // 自增 ID (主键)
+  name: string,            // 网站名称（用户自定义，用于 Marked List Grid 模式）
+  title: string,           // 网站标题（网页原始标题，用于 Search Results List 模式）
+  url: string,             // 网站链接（必填字段）
+  description: string,     // 网站描述
+  iconData: string,        // 网络获取的 icon base64（包含 data:image 前缀）
+  iconGenerateData: string, // 本地生成的 SVG 图标 base64（包含 data:image 前缀）
+  tags: Array,             // 标签数组 [tag1, tag2, ...]
+  isMarked: boolean,       // 是否为已标记网站
+  markOrder: number,       // marked 网站排序（仅当 isMarked 为 true 时有效）
+  visitCount: number,      // 访问次数统计
+  lastVisited: Date,       // 最近访问时间
+  createdAt: Date,         // 创建时间
+  updatedAt: Date,         // 更新时间
+  isActive: boolean,       // 是否激活状态（正常搜索不显示非激活的网站）
+  isHidden: boolean        // 是否隐藏状态（正常搜索不显示隐藏的网站）
 
-插件控制台打印：
-background.js:158 [Background] ====== 收到消息 #4 ======
-background.js:161 [Background] Action: FETCH_METADATA
-background.js:162 [Background] fromCurrentTab: false
-background.js:163 [Background] url: https://www.baidu.com
-background.js:164 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:194 [Background] 开始处理 FETCH_METADATA 请求
-background.js:200 [Background] 从 URL 获取元数据: https://www.baidu.com
-background.js:235 [Background] 返回 true，表示异步响应
-background.js:393  [Background] 获取元数据失败 (https://www.baidu.com): ReferenceError: DOMParser is not defined
-    at fetchMetadataFromURL (background.js:362:20)
-    at async handleAsync (background.js:201:18)
-fetchMetadataFromURL @ background.js:393
-await in fetchMetadataFromURL
-handleAsync @ background.js:201
-(匿名) @ background.js:221
-background.js:223 [Background] #4 ✅ 发送响应: FETCH_METADATA null
+在插件添加网站界面，可以获取到websites表的哪些字段数据？
+
+

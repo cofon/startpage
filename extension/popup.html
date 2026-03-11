@@ -35,6 +35,16 @@
         </div>
 
         <div class="form-group">
+          <label for="iconData">图标数据 (iconData)</label>
+          <textarea id="iconData" rows="4" placeholder="粘贴 base64 格式的图标数据，例如：data:image/png;base64,iVBOR..."></textarea>
+          <!-- 图标预览区域 -->
+          <div id="icon-preview" class="icon-preview">
+            <div class="icon-preview-placeholder">暂无图标预览</div>
+            <img id="icon-preview-img" src="" alt="图标预览" style="display: none;">
+          </div>
+        </div>
+
+        <div class="form-group">
           <label for="description">描述</label>
           <textarea id="description" rows="3" placeholder="网站描述（可选）"></textarea>
         </div>
@@ -45,10 +55,21 @@
         </div>
 
         <div class="form-group">
-          <label>
-            <input type="checkbox" id="isMarked">
-            标记为常用（显示在起始页，默认不勾选）
-          </label>
+          <label>状态设置：</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="isMarked">
+              <span>标记为常用（显示在起始页）</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="isActive" checked>
+              <span>激活状态（正常搜索可见）</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="isHidden">
+              <span>隐藏状态（正常搜索不显示）</span>
+            </label>
+          </div>
         </div>
 
         <button type="submit" class="btn-primary">保存</button>
