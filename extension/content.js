@@ -128,6 +128,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    console.log('[Content Script] 返回 true，表示异步响应')
       return true
     }
+
+    // 处理导出数据请求
+  if (message.action === 'EXPORT_WEBSITES') {
+  console.log(`[Content Script] #${currentMsgId} 处理 EXPORT_WEBSITES`)
+      callStartPageAPI('exportWebsites')
+        .then(result => {
+   console.log(`[Content Script] #${currentMsgId} 导出完成:`, result)
+          sendResponse({ success: true, ...result })
+        })
+        .catch(error => {
+   console.error(`[Content Script] #${currentMsgId} 导出失败:`, error)
+          sendResponse({
+            success: false,
+            error: error.message || '导出数据失败'
+          })
+        })
+        .finally(() => {
+     console.log(`[Content Script] #${currentMsgId} 🔓 处理完成，释放锁`)
+          isProcessingMessage = false
+        })
+
+   console.log('[Content Script] 返回 true，表示异步响应')
+      return true
+    }
   } catch (error) {
   console.error(`[Content Script] #${currentMsgId} ❌ 处理消息异常:`, error)
     isProcessingMessage = false

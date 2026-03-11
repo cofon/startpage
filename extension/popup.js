@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
         exportBtn.disabled = true
         
        const response = await chrome.runtime.sendMessage({
-          action: 'exportWebsites'
+          action: 'EXPORT_WEBSITES'
         })
         
        if (response.success) {
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
          const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5)
          const filename = `startpage-backup-${timestamp}.json`
           
-         const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' })
+         const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' })
          const url = URL.createObjectURL(blob)
          const a = document.createElement('a')
           a.href = url

@@ -359,6 +359,19 @@ onMounted(async () => {
         
         // 更新 store
         websiteStore.updateWebsite(id, data)
+      },
+
+      /**
+       * 导出所有网站
+       * @returns {Promise<Object>} - 返回导出数据
+       */
+      exportWebsites: async () => {
+        console.log('[StartPageAPI] 导出所有网站')
+        const websites = await db.getAllWebsites()
+        return {
+          websites,
+          count: websites.length
+        }
       }
     }
     
@@ -380,6 +393,8 @@ onMounted(async () => {
            result = await window.StartPageAPI.addWebsite(data)
          } else if (action === 'importWebsites') {
            result = await window.StartPageAPI.importWebsites(data)
+          } else if (action === 'exportWebsites') {
+            result = await window.StartPageAPI.exportWebsites()
          } else if (action === 'getWebsites') {
            result = await window.StartPageAPI.getWebsites()
          } else if (action === 'updateWebsite') {

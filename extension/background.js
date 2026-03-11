@@ -184,6 +184,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
+      case 'EXPORT_WEBSITES':
+    console.log(`[Background] #${currentMsgId} ⚡ 转发 EXPORT_WEBSITES 到起始页`)
+        // 转发到起始页的 content.js
+        return await forwardToStartPage(message)
+
       // ========== 获取元数据 ==========
       case 'FETCH_METADATA': {
     console.log('[Background] 开始处理 FETCH_METADATA 请求')
@@ -330,54 +335,56 @@ async function fetchMetadataFromCurrentTab() {
   }
 }
 
-// ========== 新增：获取网页元数据（任意 URL） ==========
+// ========== 从 URL 获取网页元数据 ==========
 /**
- * 通过 fetch 获取任意 URL 的元数据
+ * 通过 fetch 获取目标页面的 title/description/icon（Service Worker 环境）
+ * 注意：Service Worker 没有 DOMParser，需要使用正则或注入脚本到页面解析
  */
 async function fetchMetadataFromURL(url) {
   try {
+    console.log('[Background] 从 URL 获取元数据:', url)
+    
+    // 方案：注入脚本到目标页面进行解析（需要目标页面可访问）
+    // 但由于跨域限制，我们改用正则表达式解析 HTML
+    
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept:
-          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
-        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
+        'User-Agent': navigator.userAgent,
       },
     })
 
     const html = await response.text()
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
-
-    // 提取 title
-    const title = doc.querySelector('title')?.textContent?.trim() || ''
-
-    // 提取 description
-    const description = doc.querySelector('meta[name="description"]')?.content?.trim() || ''
-
-    // 提取 icon URL
-    const iconLink =
-      doc.querySelector('link[rel="icon"]') || doc.querySelector('link[rel="shortcut icon"]')
-
+    
+    // 使用正则表达式提取 title
+    const titleMatch = html.match(/<title>([^<]*)<\/title>/i)
+    const title = titleMatch ? titleMatch[1].trim() : ''
+    
+    // 使用正则表达式提取 description
+    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i)
+    const description = descMatch ? descMatch[1].trim() : ''
+    
+    // 使用正则表达式提取 icon URL
+    const iconLinkMatch = html.match(/<link[^>]*rel=["'](icon|shortcut icon)[^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                          html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](icon|shortcut icon)[^>]*>/i)
+    
     let iconUrl = ''
-    if (iconLink && iconLink.href) {
-      iconUrl = new URL(iconLink.href, url).href
+    if (iconLinkMatch && iconLinkMatch[2]) {
+      iconUrl = new URL(iconLinkMatch[2], url).href
     } else {
       // 回退到根路径
       iconUrl = new URL('/favicon.ico', url).href
     }
-
+    
     // 获取图标数据
     const iconData = await fetchIconAsBase64(iconUrl)
-
+    
     return {
       title,
       description,
