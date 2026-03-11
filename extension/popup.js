@@ -207,6 +207,73 @@ document.addEventListener('DOMContentLoaded', function() {
   const fileNameEl = document.getElementById('file-name')
   const importBtn = document.getElementById('import-btn')
   let selectedFile = null
+  
+  // ========== 新增：补全网站元数据函数 ==========
+  async function enrichWebsiteMetadata(website) {
+    const needsEnrichment = !website.title || !website.description || !website.iconData
+    
+    if (!needsEnrichment) {
+      return website
+    }
+    
+    console.log('[Popup] 检测到大失字段，尝试补全:', website.url)
+    
+    try {
+      // 使用插件的 background.js 获取元数据（无跨域限制）
+      const metadata = await chrome.runtime.sendMessage({
+        action: 'FETCH_METADATA',
+        url: website.url,
+        fromCurrentTab: false
+      })
+      
+      if (metadata) {
+        // 只补全缺失的字段
+        if (!website.title && metadata.title) {
+          website.title = metadata.title
+          console.log(`[Popup] ✓ 已补全 title: ${metadata.title}`)
+        }
+        
+        if (!website.description && metadata.description) {
+          website.description = metadata.description
+          console.log(`[Popup] ✓ 已补全 description`)
+        }
+        
+        if (!website.iconData && metadata.iconData) {
+          website.iconData = metadata.iconData
+          console.log(`[Popup] ✓ 已补全 iconData (长度：${metadata.iconData.length})`)
+        }
+      } else {
+        console.warn(`[Popup] ⚠ 无法获取元数据：${website.url}`)
+      }
+    } catch (error) {
+      // 网络错误、SSL 问题等不处理，只记录日志
+      console.warn(`[Popup] ⚠ 获取元数据失败 (${website.url}): ${error.message}`)
+    }
+    
+    return website
+  }
+  
+  // ========== 批量补全元数据 ==========
+  async function batchEnrichMetadata(websites, progressCallback) {
+    const total = websites.length
+    let processed = 0
+    
+    for (let i = 0; i < websites.length; i++) {
+      const website = websites[i]
+      
+      // 检查是否需要补全
+      if (!website.title || !website.description || !website.iconData) {
+        await enrichWebsiteMetadata(website)
+      }
+      
+      processed++
+      if (progressCallback) {
+        progressCallback(processed, total)
+      }
+    }
+    
+    return websites
+  }
 
   if (importFileInput) {
     importFileInput.addEventListener('change', (e) => {
@@ -247,11 +314,28 @@ document.addEventListener('DOMContentLoaded', function() {
               throw new Error('无效的数据格式：缺少 websites 数组')
             }
             
-            progressText.textContent = `准备导入 ${data.websites.length} 个网站...`
+            progressText.textContent = `准备处理 ${data.websites.length} 个网站...`
             
+            // ========== 新增：批量补全缺失的元数据 ==========
+            console.log('[Popup] 📋 开始检测并补全缺失的字段...')
+            
+            const enrichedWebsites = await batchEnrichMetadata(
+              data.websites,
+              (processed, total) => {
+                const percent = Math.round((processed / total) * 100)
+                progressText.textContent = `正在补全数据... ${processed}/${total} (${percent}%)`
+                progressBar.style.width = `${percent}%`
+              }
+            )
+            
+            console.log('[Popup] ✅ 数据补全完成，开始导入...')
+            progressText.textContent = `正在导入 ${enrichedWebsites.length} 个网站...`
+            progressBar.classList.add('loading')
+            
+            // 发送补全后的数据到起始页
            const response = await chrome.runtime.sendMessage({
               action: 'importWebsites',
-              data: data.websites
+              data: enrichedWebsites
             })
             
             progressBar.classList.remove('loading')
