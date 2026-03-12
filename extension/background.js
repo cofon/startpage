@@ -95,19 +95,19 @@ async function addWebsite(websiteData) {
 async function importWebsites(websites) {
   try {
    console.log('[Background] 📥 开始导入网站，数量:', websites.length)
-    
+
     // 转发到起始页，调用 window.StartPageAPI.importWebsites
    const response = await forwardToStartPage({
       action: 'IMPORT_WEBSITES',
       data: websites
     })
-    
+
    if (response.success) {
      console.log('[Background] ✅ 导入成功:', response)
     } else {
      console.error('[Background] ❌ 导入失败:', response.error)
     }
-    
+
     return response
   } catch (error) {
    console.error('[Background] 导入失败:', error)
@@ -151,6 +151,31 @@ async function exportWebsites() {
   }
 }
 
+// 获取所有网站
+async function getAllWebsites() {
+  try {
+    const db = await openDatabase()
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_WEBSITES], 'readonly')
+      const store = transaction.objectStore(STORE_WEBSITES)
+
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        resolve(request.result || [])
+      }
+
+      request.onerror = () => {
+        reject(new Error('查询失败：' + request.error.message))
+      }
+    })
+  } catch (error) {
+    console.error('[Background] 查询所有网站失败:', error)
+    return []
+  }
+}
+
 // ========== 统一消息处理器 ==========
 let bgMessageCounter = 0
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -191,9 +216,71 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       // ========== 新增：调用 StartPageAPI 通用方法 ==========
       case 'CALL_STARTPAGE_API':
-        console.log(`[Background] #${currentMsgId} ⚡ 转发 CALL_STARTPAGE_API 到起始页 (method: ${message.method})`)
-        // 转发到起始页的 content.js
-        return await forwardToStartPage(message)
+        console.log(`[Background] #${currentMsgId} ⚡ 处理 CALL_STARTPAGE_API (method: ${message.method})`)
+        try {
+          // 所有方法都转发到起始页处理，确保使用统一的业务逻辑
+          
+          // 1. normalizeWebsite - 标准化网站数据（包含 SVG 图标生成）
+          if (message.method === 'normalizeWebsite') {
+            console.log('[Background] 🎨 收到 normalizeWebsite 请求，准备转发到起始页:', message.data)
+            const response = await forwardToStartPage({
+              action: 'CALL_STARTPAGE_API',
+              method: 'normalizeWebsite',
+              data: message.data
+            })
+            console.log('[Background] 收到起始页返回的 normalizeWebsite 结果:', response)
+            return response
+          }
+
+          // 2. checkUrlExists - 检查 URL 是否存在
+          else if (message.method === 'checkUrlExists') {
+            console.log('[Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页:', message.data)
+            const response = await forwardToStartPage({
+              action: 'CALL_STARTPAGE_API',
+              method: 'checkUrlExists',
+              data: message.data
+            })
+            console.log('[Background] 收到起始页返回的 checkUrlExists 结果:', response)
+            return response
+          }
+          
+          // 3. validateWebsite - 验证网站数据
+          else if (message.method === 'validateWebsite') {
+            console.log('[Background] ✅ 收到 validateWebsite 请求，准备转发到起始页:', message.data)
+            const response = await forwardToStartPage({
+              action: 'CALL_STARTPAGE_API',
+              method: 'validateWebsite',
+              data: message.data
+            })
+            console.log('[Background] 收到起始页返回的 validateWebsite 结果:', response)
+            return response
+          }
+          
+          // 4. generateDefaultIcon - 生成默认图标
+          else if (message.method === 'generateDefaultIcon') {
+            console.log('[Background] 🎨 收到 generateDefaultIcon 请求，准备转发到起始页:', message.data)
+            const response = await forwardToStartPage({
+              action: 'CALL_STARTPAGE_API',
+              method: 'generateDefaultIcon',
+              data: message.data
+            })
+            console.log('[Background] 收到起始页返回的 generateDefaultIcon 结果:', response)
+            return response
+          }
+          
+          // 其他未识别的方法，尝试直接转发
+          else {
+            console.warn('[Background] ⚠️ 未知方法:', message.method, '尝试直接转发')
+            const response = await forwardToStartPage(message)
+            return response
+          }
+        } catch (error) {
+          console.error(`[Background] #${currentMsgId} 处理 CALL_STARTPAGE_API 失败:`, error)
+          return {
+            success: false,
+            error: error.message || 'API 调用失败'
+          }
+        }
 
       // ========== 获取元数据 ==========
       case 'FETCH_METADATA': {
@@ -263,6 +350,16 @@ async function forwardToStartPage(message) {
     // 使用第一个匹配的标签页
     const targetTab = tabs[0]
     console.log('[Background] 找到起始页标签页 ID:', targetTab.id)
+    console.log('[Background] 标签页状态:', targetTab.status)
+
+    // 检查标签页状态
+    if (targetTab.status !== 'complete') {
+      console.warn('[Background] 起始页标签页尚未完全加载，状态:', targetTab.status)
+      return {
+        success: false,
+        error: '起始页正在加载中，请稍后再试',
+      }
+    }
 
     // 构建要发送的消息
     const payload = {
@@ -274,20 +371,33 @@ async function forwardToStartPage(message) {
 
     console.log('[Background] 发送 payload:', payload)
 
-    // 发送到 content.js
+    // 发送到 content.js，添加重试机制
     return new Promise((resolve) => {
-      chrome.tabs.sendMessage(targetTab.id, payload, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('[Background] 发送消息失败:', chrome.runtime.lastError.message)
-          resolve({
-            success: false,
-            error: '无法连接到起始页，请刷新起始页后重试',
-          })
-        } else {
-          console.log('[Background] 收到起始页响应:', response)
-          resolve(response)
-        }
-      })
+      const maxRetries = 3
+      let retryCount = 0
+
+      function sendMessage() {
+        chrome.tabs.sendMessage(targetTab.id, payload, (response) => {
+          if (chrome.runtime.lastError) {
+            retryCount++
+            if (retryCount < maxRetries) {
+              console.warn(`[Background] 发送消息失败，第 ${retryCount} 次重试...`)
+              setTimeout(sendMessage, 300)
+            } else {
+              console.error('[Background] 发送消息失败，已达最大重试次数:', chrome.runtime.lastError.message)
+              resolve({
+                success: false,
+                error: '无法连接到起始页，请刷新起始页后重试',
+              })
+            }
+          } else {
+            console.log('[Background] 收到起始页响应:', response)
+            resolve(response)
+          }
+        })
+      }
+
+      sendMessage()
     })
   } catch (error) {
     console.error('[Background] 转发消息异常:', error)
@@ -359,10 +469,10 @@ async function fetchMetadataFromCurrentTab() {
 async function fetchMetadataFromURL(url) {
   try {
     console.log('[Background] 从 URL 获取元数据:', url)
-    
+
     // 方案：注入脚本到目标页面进行解析（需要目标页面可访问）
     // 但由于跨域限制，我们改用正则表达式解析 HTML
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -376,20 +486,20 @@ async function fetchMetadataFromURL(url) {
     })
 
     const html = await response.text()
-    
+
     // 使用正则表达式提取 title
     const titleMatch = html.match(/<title>([^<]*)<\/title>/i)
     const title = titleMatch ? titleMatch[1].trim() : ''
-    
+
     // 使用正则表达式提取 description
     const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
                       html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i)
     const description = descMatch ? descMatch[1].trim() : ''
-    
+
     // 使用正则表达式提取 icon URL
     const iconLinkMatch = html.match(/<link[^>]*rel=["'](icon|shortcut icon)[^>]*href=["']([^"']*)["'][^>]*>/i) ||
                           html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](icon|shortcut icon)[^>]*>/i)
-    
+
     let iconUrl = ''
     if (iconLinkMatch && iconLinkMatch[2]) {
       iconUrl = new URL(iconLinkMatch[2], url).href
@@ -397,10 +507,10 @@ async function fetchMetadataFromURL(url) {
       // 回退到根路径
       iconUrl = new URL('/favicon.ico', url).href
     }
-    
+
     // 获取图标数据
     const iconData = await fetchIconAsBase64(iconUrl)
-    
+
     return {
       title,
       description,
@@ -444,3 +554,98 @@ chrome.runtime.onInstalled.addListener(() => {
       console.error('数据库初始化失败:', err)
     })
 })
+
+// ========== 新增：工具函数（避免使用 import） ==========
+
+/**
+ * 提取根域名
+ * @param {string} hostname - 主机名（如 www.baidu.com）
+ * @returns {string} 根域名（如 baidu.com）
+ */
+function extractRootDomain(hostname) {
+  if (!hostname) return ''
+
+  const parts = hostname.split('.')
+  if (parts.length < 2) return ''
+
+  // 处理常见顶级域名
+  const commonTlds = ['com', 'cn', 'net', 'org', 'edu', 'gov', 'mil', 'int', 'io', 'co', 'jp', 'uk', 'de', 'fr']
+
+  // 如果倒数第二部分是常见顶级域名，则返回最后两部分
+  const secondLastPart = parts[parts.length - 2]
+  if (commonTlds.includes(secondLastPart)) {
+    return parts.slice(-2).join('.')
+  }
+
+  // 否则返回最后两部分（简单处理）
+  return parts.slice(-2).join('.')
+}
+
+/**
+ * 从 URL 提取网站名称
+ * @param {string} url - URL
+ * @returns {string} 网站名称
+ */
+function extractSiteNameFromUrl(url) {
+  try {
+    const urlObj = new URL(url.startsWith('http') ? url : 'http://' + url)
+    const hostname = urlObj.hostname
+
+    // 移除 www. 前缀
+    const name = hostname.replace(/^www\./i, '')
+
+    // 移除端口号
+    const withoutPort = name.split(':')[0]
+
+    // 移除根域名之前的部分（如 news.cn → cn，但保留主要部分）
+    const parts = withoutPort.split('.')
+    if (parts.length > 2) {
+      // 取第一个子域名作为名称（如 news.baidu.com → news）
+      return parts[0].toUpperCase()
+    } else {
+      // 如果是根域名（如 baidu.com），返回大写
+      return withoutPort.toUpperCase()
+    }
+  } catch (_e) {
+    return 'Unknown'
+  }
+}
+
+/**
+ * 标准化网站数据
+ * @param {Object} data - 原始网站数据
+ * @returns {Object} 标准化的网站对象
+ */
+function normalizeWebsiteData(data) {
+  const normalized = { ...data }
+
+  // 确保 URL 有协议前缀
+  if (!normalized.url.startsWith('http://') && !normalized.url.startsWith('https://')) {
+    normalized.url = 'https://' + normalized.url
+  }
+
+  // 如果名称为空，从 URL 提取
+  if (!normalized.name || normalized.name.trim() === '') {
+    normalized.name = extractSiteNameFromUrl(normalized.url)
+  }
+
+  // 确保 tags 是数组
+  if (typeof normalized.tags === 'string') {
+    normalized.tags = normalized.tags.split(',').map(t => t.trim()).filter(t => t)
+  } else if (!Array.isArray(normalized.tags)) {
+    normalized.tags = []
+  }
+
+  // 设置默认值
+  normalized.isMarked = normalized.isMarked ?? false
+  normalized.isActive = normalized.isActive ?? true
+  normalized.isHidden = normalized.isHidden ?? false
+
+  // 删除可能存在的废弃字段
+  delete normalized.iconUrl
+  delete normalized.iconCanFetch
+  delete normalized.iconFetchAttempts
+  delete normalized.iconLastFetchTime
+
+  return normalized
+}

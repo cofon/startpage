@@ -111,6 +111,22 @@ body {
   border-color: #2196F3;
 }
 
+/* URL 已存在样式 */
+.form-group input.url-exists {
+  border-color: #ff9800;
+  background-color: #fff5f5;
+}
+
+.url-exists-message {
+  color: #ff9800;
+  font-size: 13px;
+  margin-top: 5px;
+  padding: 8px;
+  background-color: #fff5f5;
+  border-radius: 4px;
+  border-left: 3px solid #ff9800;
+}
+
 .form-group textarea {
   resize: vertical;
   font-family: inherit;

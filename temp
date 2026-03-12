@@ -1,8 +1,277 @@
-data:image/svg+xml;base64,CiAgICA8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDQ4IDQ4Ij4KICAgICAgPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjOTZDRUI0Ii8+CiAgICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIAogICAgICAgICAgICB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICAgICAgZm9udC1zaXplPSIyOCIgCiAgICAgICAgICAgIGZvbnQtd2VpZ2h0PSJib2xkIiAKICAgICAgICAgICAgZmlsbD0id2hpdGUiPkI8L3RleHQ+CiAgICA8L3N2Zz4KICA=
+插件控制台打印：
+background.js:548 StartPage 插件已安装
+background.js:551 数据库初始化完成
+background.js:183 [Background] ====== 收到消息 #1 ======
+background.js:186 [Background] Action: FETCH_METADATA
+background.js:187 [Background] fromCurrentTab: true
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:287 [Background] 开始处理 FETCH_METADATA 请求
+background.js:290 [Background] 从当前标签页获取元数据
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:316 [Background] #1 ✅ 发送响应: FETCH_METADATA 有数据
+background.js:183 [Background] ====== 收到消息 #2 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #2 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'h'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278215658}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #2 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #3 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #3 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'htt'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278215993}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #3 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #4 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #4 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278217650}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #4 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #5 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #5 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.bai'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278218207}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #5 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #6 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #6 ⚡ 处理 CALL_STARTPAGE_API (method: normalizeWebsite)
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:316 [Background] #6 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #7 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #7 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.baidu'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278218858}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #7 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #8 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #8 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.baidu.'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278219156}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #8 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #9 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #9 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.baidu.com'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278219589}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #9 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #10 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #10 ⚡ 处理 CALL_STARTPAGE_API (method: normalizeWebsite)
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:316 [Background] #10 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #11 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #11 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+background.js:230 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.baidu.com'}
+background.js:335 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:183 [Background] ====== 收到消息 #12 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #12 ⚡ 处理 CALL_STARTPAGE_API (method: normalizeWebsite)
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:316 [Background] #12 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:183 [Background] ====== 收到消息 #13 ======
+background.js:186 [Background] Action: CALL_STARTPAGE_API
+background.js:187 [Background] fromCurrentTab: undefined
+background.js:188 [Background] url: undefined
+background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+background.js:219 [Background] #13 ⚡ 处理 CALL_STARTPAGE_API (method: normalizeWebsite)
+background.js:328 [Background] 返回 true，表示异步响应
+background.js:316 [Background] #13 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+background.js:352 [Background] 找到起始页标签页 ID: 2143331757
+background.js:353 [Background] 标签页状态: complete
+background.js:372 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773278226092}
+background.js:394 [Background] 收到起始页响应: {success: true, result: {…}}
+background.js:236 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}
+background.js:316 [Background] #11 ✅ 发送响应: CALL_STARTPAGE_API 有数据
 
 
-
-data:image/svg+xml;base64,CiAgICA8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDQ4IDQ4Ij4KICAgICAgPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjOTZDRUI0Ii8+CiAgICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIAogICAgICAgICAgICB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICAgICAgZm9udC1zaXplPSIyOCIgCiAgICAgICAgICAgIGZvbnQtd2VpZ2h0PSJib2xkIiAKICAgICAgICAgICAgZmlsbD0id2hpdGUiPkI8L3RleHQ+CiAgICA8L3N2Zz4KICA=
-
-
-data:image/svg+xml;base64,CiAgICA8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDQ4IDQ4Ij4KICAgICAgPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjOTZDRUI0Ii8+CiAgICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIAogICAgICAgICAgICB0ZXh0LWFuY2hvcj0ibWlkZGxlIiAKICAgICAgICAgICAgZm9udC1zaXplPSIyOCIgCiAgICAgICAgICAgIGZvbnQtd2VpZ2h0PSJib2xkIiAKICAgICAgICAgICAgZmlsbD0id2hpdGUiPkI8L3RleHQ+CiAgICA8L3N2Zz4KICA=
+浏览器控制台打印：
+content.js:12 [Content Script] StartPage Content Script 已加载
+content.js:64 [Content Script] 准备注册消息监听器
+content.js:69 [Content Script] 首次注册消息监听器
+App.vue:262 [App.vue] 准备设置 window.StartPageAPI
+App.vue:502 [App.vue] 注册 StartPageAPI-Call 监听器
+App.vue:562 [StartPageAPI] 全局 API 已就绪，CustomEvent 监听器已添加
+content.js:75 [Content Script] ====== 收到消息 #1 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #1 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278215660-0.708303425477469'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278215660-0.708303425477469'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:216 [URLChecker] - URL 不存在
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278215660-0.708303425477469', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #1 ✅ API 调用成功: {exists: false}
+content.js:180 [Content Script] #1 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #2 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #2 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278215995-0.7221090794431884'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278215995-0.7221090794431884'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:216 [URLChecker] - URL 不存在
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278215995-0.7221090794431884', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #2 ✅ API 调用成功: {exists: false}
+content.js:180 [Content Script] #2 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #3 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #3 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278217651-0.38785197015114625'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278217651-0.38785197015114625'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:216 [URLChecker] - URL 不存在
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278217651-0.38785197015114625', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #3 ✅ API 调用成功: {exists: false}
+content.js:180 [Content Script] #3 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #4 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #4 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278218208-0.24433477414490434'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278218208-0.24433477414490434'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:216 [URLChecker] - URL 不存在
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278218208-0.24433477414490434', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #4 ✅ API 调用成功: {exists: false}
+content.js:180 [Content Script] #4 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #5 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #5 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278218860-0.05079678131824861'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278218860-0.05079678131824861'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:216 [URLChecker] - URL 不存在
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278218860-0.05079678131824861', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #5 ✅ API 调用成功: {exists: false}
+content.js:180 [Content Script] #5 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #6 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #6 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278219158-0.4642849674407171'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278219158-0.4642849674407171'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:216 [URLChecker] - URL 不存在
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278219158-0.4642849674407171', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #6 ✅ API 调用成功: {exists: false}
+content.js:180 [Content Script] #6 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #7 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #7 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278219594-0.5368603312872308'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278219594-0.5368603312872308'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:209 [URLChecker] ✓ URL 已存在，ID: 278
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278219594-0.5368603312872308', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #7 ✅ API 调用成功: {exists: true, websiteId: 278, websiteName: '百度'}
+content.js:180 [Content Script] #7 🔓 处理完成，释放锁
+content.js:75 [Content Script] ====== 收到消息 #8 ======
+content.js:76 [Content Script] Action: CALL_STARTPAGE_API
+content.js:77 [Content Script] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/background.js', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:78 [Content Script] 当前 isProcessingMessage: false
+content.js:165 [Content Script] #8 🎯 处理 CALL_STARTPAGE_API (method: checkUrlExists)
+content.js:54 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278226094-0.2965097207556787'}
+App.vue:505 [App.vue] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773278226094-0.2965097207556787'}
+content.js:184 [Content Script] 返回 true，表示异步响应
+websiteMetadataService.js:209 [URLChecker] ✓ URL 已存在，ID: 278
+App.vue:545 [Content Script] 收到页面响应: {requestId: '1773278226094-0.2965097207556787', success: true, result: {…}}
+App.vue:546 [App.vue] 已发送响应事件
+content.js:169 [Content Script] #8 ✅ API 调用成功: {exists: true, websiteId: 278, websiteName: '百度'}
+content.js:180 [Content Script] #8 🔓 处理完成，释放锁

@@ -42,6 +42,214 @@ document.addEventListener('DOMContentLoaded', function() {
   const addForm = document.getElementById('add-form')
   const messageEl = document.getElementById('message')
   const fetchMetadataBtn = document.getElementById('fetch-metadata-btn')
+  const urlInput = document.getElementById('url')
+  const urlExistsMessage = document.getElementById('url-exists-message')
+
+  // ========== URL 输入框实时检查 ==========
+  let urlCheckTimeout = null
+  let lastCheckedUrl = ''
+  let svgDebounceTimer = null
+
+  async function checkUrlExists(url) {
+    console.log('[Popup] checkUrlExists 被调用，URL:', url)
+    try {
+      console.log('[Popup] 准备发送消息...')
+      const checkResponse = await chrome.runtime.sendMessage({
+        action: 'CALL_STARTPAGE_API',
+        method: 'checkUrlExists',
+        data: { url: url }
+      })
+
+      console.log('[Popup] ✅ 收到响应:', checkResponse)
+
+      if (checkResponse && checkResponse.success && checkResponse.result && checkResponse.result.exists) {
+        console.log('[Popup] 🔴 URL 已存在:', url, 'ID:', checkResponse.result.websiteId)
+        urlExistsMessage.style.display = 'block'
+        urlInput.classList.add('url-exists')
+      } else {
+        console.log('[Popup] 🟢 URL 不存在:', url)
+        urlExistsMessage.style.display = 'none'
+        urlInput.classList.remove('url-exists')
+      }
+    } catch (error) {
+      console.error('[Popup] ❌ 检查 URL 是否存在失败:', error)
+      // 失败时隐藏提示，不影响用户操作
+      urlExistsMessage.style.display = 'none'
+      urlInput.classList.remove('url-exists')
+    }
+  }
+
+  // ========== SVG 图标预览功能 ==========
+  async function previewSVG(url) {
+    const iconGenerateInput = document.getElementById('iconGenerateData')
+    const placeholder = document.querySelector('#svg-preview .icon-preview-placeholder')
+    const previewImg = document.getElementById('svg-preview-img')
+    const previewBox = document.getElementById('svg-preview')
+    
+    console.log('[Popup] 🎨 previewSVG 被调用，URL:', url)
+    
+    if (!url || url.length < 10) {
+      console.log('[Popup] URL 太短，清除预览')
+      // URL 太短，清除预览
+      clearSVGPReview()
+      return
+    }
+    
+    try {
+      // 显示加载状态
+      if (placeholder) {
+        placeholder.style.display = 'block'
+        placeholder.textContent = '正在生成预览...'
+      }
+      if (previewImg) {
+        previewImg.style.display = 'none'
+        previewImg.src = ''
+      }
+      if (previewBox) previewBox.classList.remove('has-icon')
+      
+      // 调用起始页 API 生成 SVG
+      console.log('[Popup] 📡 准备发送 normalizeWebsite 请求...')
+      const response = await chrome.runtime.sendMessage({
+        action: 'CALL_STARTPAGE_API',
+        method: 'normalizeWebsite',
+        data: { url: url }
+      })
+      
+      console.log('[Popup] ✅ 收到 CALL_STARTPAGE_API 响应:', response)
+      
+      // 解析响应：content.js 返回 { success: true, result }
+      const normalizedData = response && response.success ? response.result : response
+      
+      console.log('[Popup] 🔍 解析后的数据:', JSON.stringify(normalizedData, null, 2))
+      console.log('[Popup] - name:', normalizedData?.name)
+      console.log('[Popup] - iconData:', normalizedData?.iconData?.substring(0, 50))
+      console.log('[Popup] - iconGenerateData:', normalizedData?.iconGenerateData?.substring(0, 50))
+      console.log('[Popup] - 是否有 iconGenerateData:', !!normalizedData?.iconGenerateData)
+      
+      if (normalizedData && normalizedData.iconGenerateData) {
+        // 填充到输入框
+        if (iconGenerateInput) {
+          iconGenerateInput.value = normalizedData.iconGenerateData
+          console.log('[Popup] ✅ 已填充 iconGenerateData 到输入框，长度:', normalizedData.iconGenerateData.length)
+        }
+        
+        // 显示 SVG 预览（使用 img 标签）
+        displaySVG(normalizedData.iconGenerateData)
+        
+        // 同时填充名称字段（如果为空）
+        const nameInput = document.getElementById('name')
+        if (nameInput && !nameInput.value.trim()) {
+          nameInput.value = normalizedData.name || ''
+          console.log('[Popup] 🏷️ 已自动填充 name:', normalizedData.name)
+        }
+        
+        console.log('[Popup] ✓ SVG 预览已生成')
+      } else {
+        console.warn('[Popup] ⚠️ 没有 iconGenerateData:', normalizedData)
+        if (placeholder) {
+          placeholder.textContent = '⚠️ 无法生成 SVG 预览'
+          placeholder.style.display = 'block'
+        }
+      }
+    } catch (error) {
+      console.error('[Popup] ❌ SVG 预览失败:', error)
+      console.error('[Popup] 错误堆栈:', error.stack)
+      if (placeholder) {
+        placeholder.textContent = '✗ 预览失败：' + error.message
+        placeholder.style.display = 'block'
+      }
+      
+      // 如果是 "Cannot access member" 或 "Context invalidated" 错误，提示用户刷新起始页
+      if (error.message.includes('Context') || error.message.includes('closed context')) {
+        alert('⚠️ 插件与起始页的连接已断开，请刷新起始页后重试！')
+      }
+    }
+  }
+
+  if (urlInput && urlExistsMessage) {
+    // 监听 input 事件 - 实时检测 URL 重复和生成 SVG
+    urlInput.addEventListener('input', () => {
+      const url = urlInput.value.trim()
+      console.log('[Popup] 📝 input 事件触发，当前 URL:', url)
+
+      // 如果 URL 为空，隐藏提示
+      if (!url) {
+        console.log('[Popup] URL 为空，清除状态')
+        urlExistsMessage.style.display = 'none'
+        urlInput.classList.remove('url-exists')
+        lastCheckedUrl = ''
+        clearSVGPReview()
+        return
+      }
+
+      // 验证 URL 格式
+      try {
+        new URL(url.startsWith('http') ? url : 'http://' + url)
+      } catch (_e) { // eslint-disable-line no-unused-vars
+        // URL 格式不正确，不进行检查
+        console.log('[Popup] URL 格式不正确，跳过检测')
+        urlExistsMessage.style.display = 'none'
+        urlInput.classList.remove('url-exists')
+        return
+      }
+
+      // 只有当 URL 发生变化时才重新检查
+      if (url !== lastCheckedUrl) {
+        lastCheckedUrl = url
+        console.log('[Popup] URL 发生变化，准备检测...')
+        
+        // 清除之前的定时器
+        if (urlCheckTimeout) {
+          clearTimeout(urlCheckTimeout)
+        }
+        if (svgDebounceTimer) {
+          clearTimeout(svgDebounceTimer)
+        }
+        
+        console.log('[Popup] ⏰ 设置双定时器，200ms 后同时触发')
+        
+        // 同时触发 URL 检测和 SVG 生成（都使用 200ms 延迟）
+        urlCheckTimeout = setTimeout(() => {
+          console.log('[Popup] ⏰ URL 检测定时器触发，调用 checkUrlExists')
+          checkUrlExists(url)
+        }, 200)
+        
+        svgDebounceTimer = setTimeout(() => {
+          console.log('[Popup] 🎨 SVG 生成定时器触发，调用 previewSVG')
+          previewSVG(url)
+        }, 200)
+      } else {
+        console.log('[Popup] URL 未变化，跳过检测')
+      }
+    })
+
+    // 监听 blur 事件 - 失焦时立即检测（双重保障）
+    urlInput.addEventListener('blur', () => {
+      const url = urlInput.value.trim()
+      console.log('[Popup] 👁️ blur 事件触发，当前 URL:', url)
+      
+      if (!url) {
+        urlExistsMessage.style.display = 'none'
+        urlInput.classList.remove('url-exists')
+        return
+      }
+
+      // 验证 URL 格式
+      try {
+        new URL(url.startsWith('http') ? url : 'http://' + url)
+        // 立即检查，不使用延迟
+        console.log('[Popup] 🔍 Blur 时立即检查 URL 重复')
+        checkUrlExists(url)
+        console.log('[Popup] 🎨 Blur 时立即生成 SVG')
+        previewSVG(url)
+      } catch (_e) { // eslint-disable-line no-unused-vars
+        urlExistsMessage.style.display = 'none'
+        urlInput.classList.remove('url-exists')
+      }
+    })
+
+    console.log('[Popup] ✅ URL 实时检测 + SVG 生成功能已初始化')
+  }
 
   // ========== 自动获取元数据按钮 ==========
   if (fetchMetadataBtn) {
@@ -161,6 +369,26 @@ document.addEventListener('DOMContentLoaded', function() {
           throw new Error('URL 不能为空')
         }
 
+        // 检查 URL 是否已存在
+        console.log('[Popup] 检查 URL 是否已存在:', websiteData.url)
+        const checkResponse = await chrome.runtime.sendMessage({
+          action: 'CALL_STARTPAGE_API',
+          method: 'checkUrlExists',
+          data: { url: websiteData.url }
+        })
+
+        console.log('[Popup] URL 检查响应:', checkResponse)
+
+        if (checkResponse && checkResponse.success && checkResponse.result && checkResponse.result.exists) {
+          console.error('[Popup] ❌ URL 已存在:', checkResponse.result)
+          // 设置 URL 输入框样式为错误状态
+          urlInput.classList.add('url-exists')
+          if (urlExistsMessage) {
+            urlExistsMessage.style.display = 'block'
+          }
+          throw new Error('该网站已存在，请勿重复添加')
+        }
+
         // 发送到起始页保存（通过 content.js 转发）
         console.log('[Popup] 调用 chrome.runtime.sendMessage...')
         const response = await chrome.runtime.sendMessage({
@@ -175,6 +403,11 @@ document.addEventListener('DOMContentLoaded', function() {
           addForm.reset()
           window.tempIconData = null // 清除临时数据
           updateIconPreview(null) // 清除预览
+          // 清除 URL 已存在状态
+          urlInput.classList.remove('url-exists')
+          if (urlExistsMessage) {
+            urlExistsMessage.style.display = 'none'
+          }
           console.log('[Popup] 表单已重置，临时数据已清理')
         } else {
           showMessage(messageEl, '✗ 添加失败：' + response.error, 'error')
@@ -525,72 +758,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ========== 新增：SVG 图标预览功能 ==========
-  let svgDebounceTimer = null
-
-  async function previewSVG(url) {
-    const iconGenerateInput = document.getElementById('iconGenerateData')
-    const placeholder = document.querySelector('#svg-preview .icon-preview-placeholder')
-    const previewImg = document.getElementById('svg-preview-img')
-    const previewBox = document.getElementById('svg-preview')
-    
-    if (!url || url.length < 10) {
-      // URL 太短，清除预览
-      clearSVGPReview()
-      return
-    }
-    
-    try {
-      // 显示加载状态
-      if (placeholder) {
-        placeholder.style.display = 'block'
-        placeholder.textContent = '正在生成预览...'
-      }
-      if (previewImg) {
-        previewImg.style.display = 'none'
-        previewImg.src = ''
-      }
-      if (previewBox) previewBox.classList.remove('has-icon')
-      
-      // 调用起始页 API 生成 SVG
-      const response = await chrome.runtime.sendMessage({
-        action: 'CALL_STARTPAGE_API',
-        method: 'normalizeWebsite',
-        data: { url: url }
-      })
-      
-      console.log('[Popup] 收到 CALL_STARTPAGE_API 响应:', response)
-      
-      // 解析响应：content.js 返回 { success: true, result }
-      const normalizedData = response && response.success ? response.result : response
-      
-      console.log('[Popup] 解析后的数据:', normalizedData)
-      
-      if (normalizedData && normalizedData.iconGenerateData) {
-        // 填充到输入框
-        if (iconGenerateInput) {
-          iconGenerateInput.value = normalizedData.iconGenerateData
-          console.log('[Popup] 已填充 iconGenerateData 到输入框')
-        }
-        
-        // 显示 SVG 预览（使用 img 标签）
-        displaySVG(normalizedData.iconGenerateData)
-        
-        // 同时填充名称字段（如果为空）
-        const nameInput = document.getElementById('name')
-        if (nameInput && !nameInput.value.trim()) {
-          nameInput.value = normalizedData.name || ''
-          console.log('[Popup] 已自动填充 name:', normalizedData.name)
-        }
-        
-        console.log('[Popup] ✓ 预览已生成')
-      } else {
-        console.warn('[Popup] 没有 iconGenerateData:', normalizedData)
-      }
-    } catch (error) {
-      console.error('[Popup] SVG 预览失败:', error)
-    }
-  }
-
   function displaySVG(svgString) {
     const placeholder = document.querySelector('#svg-preview .icon-preview-placeholder')
     const previewImg = document.getElementById('svg-preview-img')
@@ -706,7 +873,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // 监听 URL 输入变化，实时预览 SVG
-  const urlInput = document.getElementById('url')
   if (urlInput) {
     urlInput.addEventListener('input', (e) => {
       const url = e.target.value.trim()
@@ -761,17 +927,5 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('[Popup] ✅ SVG 手动输入监听器已初始化')
   }
 
-  // 初始化 SVG 输入框切换功能
-  const toggleSvgBtn = document.getElementById('toggle-svg-btn')
-  const svgIconWrapper = document.querySelector('#iconGenerateData').parentElement
-  
-  if (toggleSvgBtn && svgIconWrapper) {
-    toggleSvgBtn.addEventListener('click', () => {
-      const isExpanded = svgIconWrapper.classList.toggle('expanded')
-      toggleSvgBtn.textContent = isExpanded ? '⬆️' : '⬇️'
-      toggleSvgBtn.title = isExpanded ? '收起' : '展开'
-      console.log('[Popup] SVG 输入框已', isExpanded ? '展开' : '收起')
-    })
-  }
-
-}) // ← DOMContentLoaded 结束
+  console.log('[Popup] ✅ 所有功能初始化完成')
+}) // 结束 DOMContentLoaded

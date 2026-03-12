@@ -29,6 +29,9 @@ const formData = ref({
 // 加载状态
 // const isLoading = ref(false)
 
+// URL存在性检查
+const urlExists = ref(false)
+
 // 获取所有标签
 const allTags = computed(() => {
   const tags = new Set()
@@ -69,7 +72,7 @@ function toggleTag(tag) {
   formData.value.tags = tags.join(', ')
 }
 
-// ========== 实时监听 URL 输入框的输入，自动填充 name 和生成SVG ==========
+// ========== 实时监听 URL 输入框的输入，自动填充 name 和生成 SVG ==========
 watch(() => formData.value.url, (newUrl) => {
   // 只在用户正在输入时实时处理，不需要等待失去焦点
   processUrlChange(newUrl)
@@ -115,6 +118,16 @@ async function processUrlChange(url) {
 
   console.log('[processUrlChange] ✓ 域名完整，开始智能填充...')
 
+  // ========== 新增：检查 URL 是否已存在 ==========
+  const existingWebsite = websiteStore.websites.find(w => w.url === url && w.isActive)
+  if (existingWebsite) {
+    console.warn('[processUrlChange] ⚠️ URL 已存在，现有网站:', existingWebsite.name, 'ID:', existingWebsite.id)
+    urlExists.value = true
+    // 可以添加 UI 提示，这里先记录日志
+  } else {
+    urlExists.value = false
+  }
+
   // ========== 智能填充策略：只填充空值，不覆盖已有数据 ==========
   
   // 1. 网站名称：只有在 name 为空时才从 URL 提取
@@ -126,29 +139,29 @@ async function processUrlChange(url) {
     console.log('[processUrlChange] - name 已有值，跳过填充:', formData.value.name)
   }
 
-  // 2. SVG图标：优先复用已有网站的 SVG，没有才生成新的
+  // 2. SVG 图标：优先复用已有网站的 SVG，没有才生成新的
   // ========== 先查找数据库中是否有相同根域名的网站 ==========
   const rootDomain = websiteMetadataService.extractRootDomain(hostname)
   console.log('[processUrlChange] 提取的根域名:', rootDomain)
   
   if (rootDomain) {
     // 在现有网站中查找是否有相同根域名的
-    const existingWebsite = websiteStore.websites.find(website => {
+    const existingWebsiteWithSameRoot = websiteStore.websites.find(website => {
       try {
         const websiteHostname = new URL(website.url).hostname
         const websiteRootDomain = websiteMetadataService.extractRootDomain(websiteHostname)
-        return websiteRootDomain === rootDomain
+        return websiteRootDomain === rootDomain && website.iconGenerateData
       } catch (_e) {
         return false
       }
     })
     
-    if (existingWebsite && existingWebsite.iconGenerateData) {
+    if (existingWebsiteWithSameRoot && existingWebsiteWithSameRoot.iconGenerateData) {
       // 找到相同根域名的网站，复用它的 SVG
-      formData.value.iconGenerateData = existingWebsite.iconGenerateData
-      console.log('[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:', existingWebsite.name)
+      formData.value.iconGenerateData = existingWebsiteWithSameRoot.iconGenerateData
+      console.log('[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:', existingWebsiteWithSameRoot.name)
       console.log('[processUrlChange]   根域名:', rootDomain)
-      console.log('[processUrlChange]   来源网站:', existingWebsite.url)
+      console.log('[processUrlChange]   来源网站:', existingWebsiteWithSameRoot.url)
     } else {
       // 没有找到，生成新的 SVG
       console.log('[processUrlChange] - 未找到相同根域名的网站，将生成新 SVG')
@@ -161,11 +174,11 @@ async function processUrlChange(url) {
       formData.value.iconGenerateData = normalizedData.iconGenerateData
       formData.value.tags = Array.isArray(normalizedData.tags) ? normalizedData.tags.join(', ') : ''
       
-      console.log('[processUrlChange] ✓ SVG图标已重新生成，长度:', normalizedData.iconGenerateData?.length)
+      console.log('[processUrlChange] ✓ SVG 图标已重新生成，长度:', normalizedData.iconGenerateData?.length)
       console.log('[processUrlChange] ✓ tags 已设置为:', formData.value.tags)
     }
   } else {
-    // 无法提取根域名，直接生成SVG
+    // 无法提取根域名，直接生成 SVG
     const normalizedData = websiteMetadataService.normalizeWebsiteData({
       url: url,
       name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url)
@@ -206,6 +219,16 @@ function handleUrlChange(event) {
 // 提交表单
 async function handleSubmit() {
   try {
+    // 检查URL是否已存在
+    const existingWebsite = websiteStore.websites.find(
+      w => w.url === formData.value.url && w.isActive
+    )
+
+    if (existingWebsite) {
+      notificationStore.error('该网站已存在，请勿重复添加')
+      return
+    }
+
     // 准备数据
     const websiteData = {
       name: formData.value.name,
@@ -264,11 +287,15 @@ function handleCancel() {
         v-model="formData.url"
         type="url"
         class="form-input"
+        :class="{ 'url-exists': urlExists }"
         placeholder="https://example.com"
         maxlength="500"
         @input="handleUrlInput"
         @change="handleUrlChange"
       >
+      <div v-if="urlExists" class="error-message url-exists-message">
+        ⚠️ 该网站已存在，请勿重复添加
+      </div>
     </div>
 
     <div class="form-group">
@@ -639,6 +666,17 @@ function handleCancel() {
   margin-top: 4px;
   font-size: 12px;
   color: var(--color-text-disabled);
+}
+
+/* URL 已存在样式 */
+.form-input.url-exists {
+  border-color: #ff9800;
+  background-color: #fff5f5;
+}
+
+.error-message.url-exists-message {
+  color: #ff9800;
+  font-weight: 500;
 }
 
 .checkbox-group {

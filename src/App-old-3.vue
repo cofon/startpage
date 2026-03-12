@@ -275,7 +275,7 @@ onMounted(async () => {
       addWebsite: async (data) => {
         console.log('[StartPageAPI] 添加网站:', data)
         
-        // ========== 验证数据 ==========
+        // ========== 新增：先验证数据 ==========
         const { validateWebsite } = await import('./services/websiteMetadataService')
         const validation = validateWebsite(data)
         
@@ -284,52 +284,7 @@ onMounted(async () => {
           throw new Error(validation.errors.join('、'))
         }
         
-        // ========== 检查 URL 是否已存在（双重保护） ==========
-        const allWebsites = await db.getAllWebsites()
-        const { checkUrlExists } = await import('./services/websiteMetadataService')
-        const urlCheckResult = checkUrlExists(data.url, allWebsites)
-        
-        if (urlCheckResult.exists) {
-          console.error('[StartPageAPI] ❌ URL 已存在:', data.url, '现有网站 ID:', urlCheckResult.websiteId)
-          throw new Error(`该网址已存在（ID: ${urlCheckResult.websiteId}），请勿重复添加`)
-        }
-        
-        // ========== 根域名复用策略 ==========
-        const { extractRootDomain } = await import('./utils/websiteUtils')
-        
-        try {
-          const urlObj = new URL(data.url.startsWith('http') ? data.url : 'http://' + data.url)
-          const hostname = urlObj.hostname
-          const rootDomain = extractRootDomain(hostname)
-          
-          console.log('[StartPageAPI] 提取的根域名:', rootDomain)
-          
-          if (rootDomain) {
-            // 在现有网站中查找是否有相同根域名的
-            const websiteWithSameRoot = allWebsites.find(w => {
-              try {
-                const wUrlObj = new URL(w.url)
-                const wRootDomain = extractRootDomain(wUrlObj.hostname)
-                return wRootDomain === rootDomain && w.iconGenerateData
-              } catch {
-                return false
-              }
-            })
-            
-            if (websiteWithSameRoot) {
-              // 找到相同根域名的网站，复用它的 SVG
-              data.iconGenerateData = websiteWithSameRoot.iconGenerateData
-              console.log('[StartPageAPI] ✓ 找到相同根域名的网站，已复用 SVG:', websiteWithSameRoot.name)
-              console.log('[StartPageAPI]   来源网站:', websiteWithSameRoot.url)
-            } else {
-              console.log('[StartPageAPI] - 未找到相同根域名的网站，将生成新 SVG')
-            }
-          }
-        } catch (error) {
-          console.warn('[StartPageAPI] 无法提取根域名，将生成新 SVG:', error.message)
-        }
-        
-        // ========== 标准化数据 ==========
+        // ========== 新增：标准化数据 ==========
         const { normalizeWebsiteData } = await import('./services/websiteMetadataService')
         const normalizedData = normalizeWebsiteData(data)
         
@@ -339,6 +294,17 @@ onMounted(async () => {
         const newWebsite = await websiteStore.addWebsite(normalizedData)
         
         console.log('[StartPageAPI] 添加成功，ID:', newWebsite.id)
+        
+        // 验证：立即查询数据库，看是否有重复
+        const allWebsites = await db.getAllWebsites()
+        const duplicates = allWebsites.filter(w => 
+          w.url === data.url && w.id !== newWebsite.id
+        )
+        if (duplicates.length > 0) {
+          console.error('[StartPageAPI] ⚠️ 检测到重复网站:', duplicates)
+        } else {
+          console.log('[StartPageAPI] ✓ 无重复网站')
+        }
         
         return newWebsite.id
       },
@@ -481,18 +447,7 @@ onMounted(async () => {
       generateDefaultIcon: async (name) => {
         const { generateDefaultIcon } = await import('./utils/websiteUtils')
         return generateDefaultIcon(name)
-      },
-      
-      /**
-       * 检查 URL 是否已存在（供插件调用）
-       * @param {Object} data - { url: string }
-       * @returns {Promise<{exists: boolean, websiteId?: number, websiteName?: string}>}
-       */
-      checkUrlExists: async (data) => {
-        const allWebsites = await db.getAllWebsites()
-        const { checkUrlExists } = await import('./services/websiteMetadataService')
-        return checkUrlExists(data.url, allWebsites)
-      },
+      }
     }
     
     // ========== 监听来自 Content Script 的 CustomEvent ==========
@@ -528,8 +483,6 @@ onMounted(async () => {
            result = await window.StartPageAPI.generateDefaultIcon(data)
          } else if (method === 'validateWebsite') {
            result = await window.StartPageAPI.validateWebsite(data)
-         } else if (method === 'checkUrlExists') {
-           result = await window.StartPageAPI.checkUrlExists(data)
          } else {
            throw new Error('未知操作：' + (action || method))
          }

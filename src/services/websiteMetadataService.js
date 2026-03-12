@@ -191,14 +191,44 @@ export async function batchEnrichMetadata(websites, progressCallback) {
   return websites
 }
 
+/**
+ * 检查 URL 是否已存在于数据库中
+ * @param {string} url - 要检查的 URL
+ * @param {Array} allWebsites - 所有网站数组（从数据库查询）
+ * @returns {{exists: boolean, websiteId?: number, websiteName?: string}}
+ */
+function checkUrlExists(url, allWebsites) {
+  if (!allWebsites || !Array.isArray(allWebsites)) {
+    console.error('[URLChecker] 网站数组无效')
+    return { exists: false }
+  }
+  
+  const existingWebsite = allWebsites.find(w => w.url === url && w.isActive)
+  
+  if (existingWebsite) {
+    console.log('[URLChecker] ✓ URL 已存在，ID:', existingWebsite.id)
+    return {
+      exists: true,
+      websiteId: existingWebsite.id,
+      websiteName: existingWebsite.name
+    }
+  } else {
+    console.log('[URLChecker] - URL 不存在')
+    return {
+      exists: false
+    }
+  }
+}
+
 export default {
   validateWebsite,
   normalizeWebsiteData,
   batchEnrichMetadata,
+  checkUrlExists,
   // 导出工具函数供组件直接使用
   extractSiteNameFromUrl,
   extractRootDomain
 }
 
 // 同时提供命名导出，方便组件按需导入
-export { extractSiteNameFromUrl, extractRootDomain }
+export { extractSiteNameFromUrl, extractRootDomain, checkUrlExists }
