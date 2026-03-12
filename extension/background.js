@@ -214,6 +214,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
+      case 'IMPORT_WEBSITES':
+    console.log(`[Background] #${currentMsgId} 📥 转发 IMPORT_WEBSITES 到起始页`)
+    console.log('[Background] 导入数据:', message.data?.length, '个网站')
+        // 转发到起始页的 content.js
+        return await forwardToStartPage(message)
+
       // ========== 新增：调用 StartPageAPI 通用方法 ==========
       case 'CALL_STARTPAGE_API':
         console.log(`[Background] #${currentMsgId} ⚡ 处理 CALL_STARTPAGE_API (method: ${message.method})`)
