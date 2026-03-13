@@ -585,44 +585,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // ========== 新增：工具函数（避免使用 import） ==========
 
-/**
- * 提取根域名
- * @param {string} hostname - 主机名（如 www.baidu.com）
- * @returns {string} 根域名（如 baidu.com）
- */
-function extractRootDomain(hostname) {
-  if (!hostname) return ''
-
-  const parts = hostname.split('.')
-  if (parts.length < 2) return ''
-
-  // 处理常见顶级域名
-  const commonTlds = [
-    'com',
-    'cn',
-    'net',
-    'org',
-    'edu',
-    'gov',
-    'mil',
-    'int',
-    'io',
-    'co',
-    'jp',
-    'uk',
-    'de',
-    'fr',
-  ]
-
-  // 如果倒数第二部分是常见顶级域名，则返回最后两部分
-  const secondLastPart = parts[parts.length - 2]
-  if (commonTlds.includes(secondLastPart)) {
-    return parts.slice(-2).join('.')
-  }
-
-  // 否则返回最后两部分（简单处理）
-  return parts.slice(-2).join('.')
-}
 
 /**
  * 从 URL 提取网站名称

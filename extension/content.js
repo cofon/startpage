@@ -248,3 +248,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   log('非处理的消息，返回 false')
   return false
 })
+
+// ========== 监听来自起始页的获取元数据请求 ==========
+document.addEventListener('StartPageAPI-FetchMetadata', async (event) => {
+  const { url, requestId } = event.detail
+  log(`收到获取元数据请求: ${url}`, { requestId })
+
+  try {
+    // 调用 background.js 的 FETCH_METADATA action
+    const metadata = await chrome.runtime.sendMessage({
+      action: 'FETCH_METADATA',
+      url: url,
+      fromCurrentTab: false
+    })
+
+    // 发送响应回起始页
+    const responseEvent = new CustomEvent('StartPageAPI-MetadataResponse', {
+      detail: {
+        requestId: requestId,
+        success: !!metadata,
+        result: metadata || null
+      }
+    })
+
+    log(`发送元数据响应: ${url}`, { requestId, success: !!metadata })
+    document.dispatchEvent(responseEvent)
+  } catch (error) {
+    logError(`获取元数据失败: ${url}`, { requestId, error: error.message })
+
+    // 发送错误响应
+    const responseEvent = new CustomEvent('StartPageAPI-MetadataResponse', {
+      detail: {
+        requestId: requestId,
+        success: false,
+        result: null
+      }
+    })
+
+    document.dispatchEvent(responseEvent)
+  }
+})

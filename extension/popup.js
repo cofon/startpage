@@ -13,7 +13,7 @@ function showMessage(element, text, type) {
 }
 
 // ========== 等待 DOM 加载完成 ==========
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   console.log('[Popup] DOM 加载完成')
 
   // 防止重复提交的状态标志
@@ -24,15 +24,15 @@ document.addEventListener('DOMContentLoaded', function() {
   const panels = document.querySelectorAll('.panel')
 
   if (tabBtns.length > 0 && panels.length > 0) {
-    tabBtns.forEach(btn => {
+    tabBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         // 移除所有激活状态
-        tabBtns.forEach(b => b.classList.remove('active'))
-        panels.forEach(p => p.classList.remove('active'))
+        tabBtns.forEach((b) => b.classList.remove('active'))
+        panels.forEach((p) => p.classList.remove('active'))
 
         // 添加当前激活状态
         btn.classList.add('active')
-       const panelId = btn.dataset.tab + '-panel'
+        const panelId = btn.dataset.tab + '-panel'
         document.getElementById(panelId).classList.add('active')
       })
     })
@@ -57,12 +57,17 @@ document.addEventListener('DOMContentLoaded', function() {
       const checkResponse = await chrome.runtime.sendMessage({
         action: 'CALL_STARTPAGE_API',
         method: 'checkUrlExists',
-        data: { url: url }
+        data: { url: url },
       })
 
       console.log('[Popup] ✅ 收到响应:', checkResponse)
 
-      if (checkResponse && checkResponse.success && checkResponse.result && checkResponse.result.exists) {
+      if (
+        checkResponse &&
+        checkResponse.success &&
+        checkResponse.result &&
+        checkResponse.result.exists
+      ) {
         console.log('[Popup] 🔴 URL 已存在:', url, 'ID:', checkResponse.result.websiteId)
         urlExistsMessage.style.display = 'block'
         urlInput.classList.add('url-exists')
@@ -85,16 +90,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const placeholder = document.querySelector('#svg-preview .icon-preview-placeholder')
     const previewImg = document.getElementById('svg-preview-img')
     const previewBox = document.getElementById('svg-preview')
-    
+
     console.log('[Popup] 🎨 previewSVG 被调用，URL:', url)
-    
+
     if (!url || url.length < 10) {
       console.log('[Popup] URL 太短，清除预览')
       // URL 太短，清除预览
       clearSVGPReview()
       return
     }
-    
+
     try {
       // 显示加载状态
       if (placeholder) {
@@ -106,43 +111,46 @@ document.addEventListener('DOMContentLoaded', function() {
         previewImg.src = ''
       }
       if (previewBox) previewBox.classList.remove('has-icon')
-      
+
       // 调用起始页 API 生成 SVG
       console.log('[Popup] 📡 准备发送 normalizeWebsite 请求...')
       const response = await chrome.runtime.sendMessage({
         action: 'CALL_STARTPAGE_API',
         method: 'normalizeWebsite',
-        data: { url: url }
+        data: { url: url },
       })
-      
+
       console.log('[Popup] ✅ 收到 CALL_STARTPAGE_API 响应:', response)
-      
+
       // 解析响应：content.js 返回 { success: true, result }
       const normalizedData = response && response.success ? response.result : response
-      
+
       console.log('[Popup] 🔍 解析后的数据:', JSON.stringify(normalizedData, null, 2))
       console.log('[Popup] - name:', normalizedData?.name)
       console.log('[Popup] - iconData:', normalizedData?.iconData?.substring(0, 50))
       console.log('[Popup] - iconGenerateData:', normalizedData?.iconGenerateData?.substring(0, 50))
       console.log('[Popup] - 是否有 iconGenerateData:', !!normalizedData?.iconGenerateData)
-      
+
       if (normalizedData && normalizedData.iconGenerateData) {
         // 填充到输入框
         if (iconGenerateInput) {
           iconGenerateInput.value = normalizedData.iconGenerateData
-          console.log('[Popup] ✅ 已填充 iconGenerateData 到输入框，长度:', normalizedData.iconGenerateData.length)
+          console.log(
+            '[Popup] ✅ 已填充 iconGenerateData 到输入框，长度:',
+            normalizedData.iconGenerateData.length,
+          )
         }
-        
+
         // 显示 SVG 预览（使用 img 标签）
         displaySVG(normalizedData.iconGenerateData)
-        
+
         // 同时填充名称字段（如果为空）
         const nameInput = document.getElementById('name')
         if (nameInput && !nameInput.value.trim()) {
           nameInput.value = normalizedData.name || ''
           console.log('[Popup] 🏷️ 已自动填充 name:', normalizedData.name)
         }
-        
+
         console.log('[Popup] ✓ SVG 预览已生成')
       } else {
         console.warn('[Popup] ⚠️ 没有 iconGenerateData:', normalizedData)
@@ -158,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
         placeholder.textContent = '✗ 预览失败：' + error.message
         placeholder.style.display = 'block'
       }
-      
+
       // 如果是 "Cannot access member" 或 "Context invalidated" 错误，提示用户刷新起始页
       if (error.message.includes('Context') || error.message.includes('closed context')) {
         alert('⚠️ 插件与起始页的连接已断开，请刷新起始页后重试！')
@@ -185,7 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
       // 验证 URL 格式
       try {
         new URL(url.startsWith('http') ? url : 'http://' + url)
-      } catch (_e) { // eslint-disable-line no-unused-vars
+      } catch (_e) {
+        // eslint-disable-line no-unused-vars
         // URL 格式不正确，不进行检查
         console.log('[Popup] URL 格式不正确，跳过检测')
         urlExistsMessage.style.display = 'none'
@@ -197,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (url !== lastCheckedUrl) {
         lastCheckedUrl = url
         console.log('[Popup] URL 发生变化，准备检测...')
-        
+
         // 清除之前的定时器
         if (urlCheckTimeout) {
           clearTimeout(urlCheckTimeout)
@@ -205,15 +214,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (svgDebounceTimer) {
           clearTimeout(svgDebounceTimer)
         }
-        
+
         console.log('[Popup] ⏰ 设置双定时器，200ms 后同时触发')
-        
+
         // 同时触发 URL 检测和 SVG 生成（都使用 200ms 延迟）
         urlCheckTimeout = setTimeout(() => {
           console.log('[Popup] ⏰ URL 检测定时器触发，调用 checkUrlExists')
           checkUrlExists(url)
         }, 200)
-        
+
         svgDebounceTimer = setTimeout(() => {
           console.log('[Popup] 🎨 SVG 生成定时器触发，调用 previewSVG')
           previewSVG(url)
@@ -227,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
     urlInput.addEventListener('blur', () => {
       const url = urlInput.value.trim()
       console.log('[Popup] 👁️ blur 事件触发，当前 URL:', url)
-      
+
       if (!url) {
         urlExistsMessage.style.display = 'none'
         urlInput.classList.remove('url-exists')
@@ -242,7 +251,8 @@ document.addEventListener('DOMContentLoaded', function() {
         checkUrlExists(url)
         console.log('[Popup] 🎨 Blur 时立即生成 SVG')
         previewSVG(url)
-      } catch (_e) { // eslint-disable-line no-unused-vars
+      } catch (_e) {
+        // eslint-disable-line no-unused-vars
         urlExistsMessage.style.display = 'none'
         urlInput.classList.remove('url-exists')
       }
@@ -254,23 +264,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // ========== 自动获取元数据按钮 ==========
   if (fetchMetadataBtn) {
     fetchMetadataBtn.addEventListener('click', async () => {
-     const url = document.getElementById('url').value.trim()
-     if (!url) {
+      const url = document.getElementById('url').value.trim()
+      if (!url) {
         showMessage(messageEl, '请先输入 URL', 'error')
         return
       }
 
       showMessage(messageEl, '正在获取信息...', 'loading')
 
-     try {
+      try {
         // 请求 background.js 获取元数据
-       const metadata = await chrome.runtime.sendMessage({
+        const metadata = await chrome.runtime.sendMessage({
           action: 'FETCH_METADATA',
           url: url,
-          fromCurrentTab: false
+          fromCurrentTab: false,
         })
 
-       if (metadata) {
+        if (metadata) {
           // 填充表单字段（带空值检查）
           const titleEl = document.getElementById('title')
           const descEl = document.getElementById('description')
@@ -280,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (descEl) descEl.value = metadata.description || ''
 
           // 保存 iconData 到临时变量并填充到输入框
-         if (metadata.iconData) {
+          if (metadata.iconData) {
             window.tempIconData = metadata.iconData
             // 填充到 iconData 输入框（完整显示）
             if (iconDataEl) {
@@ -332,16 +342,17 @@ document.addEventListener('DOMContentLoaded', function() {
           title: document.getElementById('title').value.trim(),
           url: document.getElementById('url').value.trim(),
           description: document.getElementById('description').value.trim(),
-          tags: document.getElementById('tags').value
-            .split(/[,,]/)
-            .map(tag => tag.trim())
-            .filter(tag => tag.length > 0),
+          tags: document
+            .getElementById('tags')
+            .value.split(/[,,]/)
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0),
           // 状态字段
           isMarked: document.getElementById('isMarked').checked,
           isActive: document.getElementById('isActive').checked,
           isHidden: document.getElementById('isHidden').checked,
           visitCount: 0,
-          markOrder: 0
+          markOrder: 0,
         }
 
         // 添加 iconData 字段（从输入框或临时存储获取）
@@ -374,12 +385,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const checkResponse = await chrome.runtime.sendMessage({
           action: 'CALL_STARTPAGE_API',
           method: 'checkUrlExists',
-          data: { url: websiteData.url }
+          data: { url: websiteData.url },
         })
 
         console.log('[Popup] URL 检查响应:', checkResponse)
 
-        if (checkResponse && checkResponse.success && checkResponse.result && checkResponse.result.exists) {
+        if (
+          checkResponse &&
+          checkResponse.success &&
+          checkResponse.result &&
+          checkResponse.result.exists
+        ) {
           console.error('[Popup] ❌ URL 已存在:', checkResponse.result)
           // 设置 URL 输入框样式为错误状态
           urlInput.classList.add('url-exists')
@@ -393,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('[Popup] 调用 chrome.runtime.sendMessage...')
         const response = await chrome.runtime.sendMessage({
           action: 'ADD_WEBSITE',
-          data: websiteData
+          data: websiteData,
         })
 
         console.log(`[Popup] #${currentSubmitId} ✅ 收到响应:`, response)
@@ -456,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const metadata = await chrome.runtime.sendMessage({
         action: 'FETCH_METADATA',
         url: website.url,
-        fromCurrentTab: false
+        fromCurrentTab: false,
       })
 
       if (metadata) {
@@ -510,8 +526,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (importFileInput) {
     importFileInput.addEventListener('change', (e) => {
-     const file = e.target.files[0]
-     if (file) {
+      const file = e.target.files[0]
+      if (file) {
         selectedFile = file
         fileNameEl.textContent = `已选择：${file.name}`
         importBtn.disabled = false
@@ -525,25 +541,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (importBtn) {
     importBtn.addEventListener('click', async () => {
-     if (!selectedFile) return
+      if (!selectedFile) return
 
-     try {
+      try {
         importBtn.disabled = true
-       const importProgress = document.getElementById('import-progress')
-       const progressBar = importProgress.querySelector('.progress-bar')
-       const progressText = importProgress.querySelector('.progress-text')
+        const importProgress = document.getElementById('import-progress')
+        const progressBar = importProgress.querySelector('.progress-bar')
+        const progressText = importProgress.querySelector('.progress-text')
 
         importProgress.style.display = 'block'
         progressBar.classList.add('loading')
         progressText.textContent = '正在读取文件...'
 
-       const reader = new FileReader()
+        const reader = new FileReader()
 
         reader.onload = async (event) => {
-         try {
-           const data = JSON.parse(event.target.result)
+          try {
+            const data = JSON.parse(event.target.result)
 
-           if (!data.websites || !Array.isArray(data.websites)) {
+            if (!data.websites || !Array.isArray(data.websites)) {
               throw new Error('无效的数据格式：缺少 websites 数组')
             }
 
@@ -558,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const percent = Math.round((processed / total) * 100)
                 progressText.textContent = `正在补全数据... ${processed}/${total} (${percent}%)`
                 progressBar.style.width = `${percent}%`
-              }
+              },
             )
 
             console.log('[Popup] ✅ 数据补全完成，开始导入...')
@@ -566,24 +582,32 @@ document.addEventListener('DOMContentLoaded', function() {
             progressBar.classList.add('loading')
 
             // 发送补全后的数据到起始页
-           const response = await chrome.runtime.sendMessage({
+            const response = await chrome.runtime.sendMessage({
               action: 'IMPORT_WEBSITES',
-              data: enrichedWebsites
+              data: enrichedWebsites,
             })
 
             progressBar.classList.remove('loading')
             progressBar.style.width = '100%'
 
-           if (response.success) {
+            if (response.success) {
               progressText.textContent = `✓ 成功导入 ${response.total} 个网站，成功 ${response.success} 个！`
-              showMessage(document.getElementById('import-message'), `✓ 成功导入 ${response.success}/${response.total} 个网站！`, 'success')
+              showMessage(
+                document.getElementById('import-message'),
+                `✓ 成功导入 ${response.success}/${response.total} 个网站！`,
+                'success',
+              )
             } else {
               throw new Error(response.error || '导入失败')
             }
           } catch (error) {
             progressBar.classList.remove('loading')
             progressText.textContent = '导入失败'
-            showMessage(document.getElementById('import-message'), '✗ 导入失败：' + error.message, 'error')
+            showMessage(
+              document.getElementById('import-message'),
+              '✗ 导入失败：' + error.message,
+              'error',
+            )
           } finally {
             setTimeout(() => {
               importProgress.style.display = 'none'
@@ -613,21 +637,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (exportBtn) {
     exportBtn.addEventListener('click', async () => {
-     try {
+      try {
         exportBtn.disabled = true
 
-       const response = await chrome.runtime.sendMessage({
-          action: 'EXPORT_WEBSITES'
+        const response = await chrome.runtime.sendMessage({
+          action: 'EXPORT_WEBSITES',
         })
 
-       if (response.success) {
-         const now = new Date()
-         const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5)
-         const filename = `startpage-backup-${timestamp}.json`
+        if (response.success) {
+          const now = new Date()
+          const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5)
+          const filename = `startpage-backup-${timestamp}.json`
 
-         const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' })
-         const url = URL.createObjectURL(blob)
-         const a = document.createElement('a')
+          const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
           a.href = url
           a.download = filename
 
@@ -636,7 +660,11 @@ document.addEventListener('DOMContentLoaded', function() {
           document.body.removeChild(a)
           URL.revokeObjectURL(url)
 
-          showMessage(exportMessageEl, `✓ 成功导出 ${response.count} 个网站到 ${filename}`, 'success')
+          showMessage(
+            exportMessageEl,
+            `✓ 成功导出 ${response.count} 个网站到 ${filename}`,
+            'success',
+          )
         } else {
           showMessage(exportMessageEl, '✗ 导出失败：' + response.error, 'error')
         }
@@ -649,13 +677,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ========== 页面加载时自动获取当前页面元数据 ==========
-  (async function autoFillCurrentTabMetadata() {
+  ;(async function autoFillCurrentTabMetadata() {
     try {
       console.log('[Popup] 尝试获取当前页面元数据...')
 
       const metadata = await chrome.runtime.sendMessage({
         action: 'FETCH_METADATA',
-        fromCurrentTab: true
+        fromCurrentTab: true,
       })
 
       console.log('[Popup] 收到元数据响应:', metadata)
@@ -772,17 +800,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const placeholder = document.querySelector('#svg-preview .icon-preview-placeholder')
     const previewImg = document.getElementById('svg-preview-img')
     const previewBox = document.getElementById('svg-preview')
-    
+
     if (!previewImg) return
-    
+
     console.log('[Popup] 准备显示 SVG，原始 SVG 长度:', svgString?.length)
     console.log('[Popup] SVG 前 100 字符:', svgString?.substring(0, 100))
-    
+
     try {
       // 将 SVG 字符串转换为 base64 Data URL
       // 方法 1: 直接使用 btoa（适用于 ASCII）
       let svgBase64
-      
+
       // 检查是否已经是 data URL 格式
       if (svgString.startsWith('data:image/svg+xml;base64,')) {
         // 已经是完整格式，直接使用
@@ -793,28 +821,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // 使用更可靠的方法：Blob + FileReader
         const blob = new Blob([svgString], { type: 'image/svg+xml' })
         const reader = new FileReader()
-        
+
         reader.onloadend = () => {
           svgBase64 = reader.result
           console.log('[Popup] FileReader 转换成功:', svgBase64.substring(0, 100))
-          
+
           if (placeholder) placeholder.style.display = 'none'
           previewImg.src = svgBase64
           previewImg.style.display = 'block'
-          
+
           if (previewBox) {
             previewBox.classList.add('has-icon')
           }
-          
+
           console.log('[Popup] SVG 预览已更新')
         }
-        
+
         reader.onerror = () => {
           console.error('[Popup] FileReader 失败，尝试备用方案')
           // 备用方案：直接 URL 编码
           fallbackDisplay(svgString, placeholder, previewImg, previewBox)
         }
-        
+
         reader.readAsDataURL(blob)
         return // 提前返回，等待异步完成
       } else {
@@ -822,16 +850,16 @@ document.addEventListener('DOMContentLoaded', function() {
         fallbackDisplay(svgString, placeholder, previewImg, previewBox)
         return
       }
-      
+
       // 同步路径（当已经是 data URL 时）
       if (placeholder) placeholder.style.display = 'none'
       previewImg.src = svgBase64
       previewImg.style.display = 'block'
-      
+
       if (previewBox) {
         previewBox.classList.add('has-icon')
       }
-      
+
       console.log('[Popup] SVG 预览已更新')
     } catch (error) {
       console.error('[Popup] displaySVG 错误:', error)
@@ -845,15 +873,15 @@ document.addEventListener('DOMContentLoaded', function() {
       // 尝试简单的 URL 编码
       const encoded = encodeURIComponent(svgString)
       const svgBase64 = 'data:image/svg+xml;charset=utf-8,' + encoded
-      
+
       if (placeholder) placeholder.style.display = 'none'
       previewImg.src = svgBase64
       previewImg.style.display = 'block'
-      
+
       if (previewBox) {
         previewBox.classList.add('has-icon')
       }
-      
+
       console.log('[Popup] 使用备用方案显示 SVG')
     } catch (error) {
       console.error('[Popup] 备用方案也失败:', error)
@@ -869,7 +897,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const placeholder = document.querySelector('#svg-preview .icon-preview-placeholder')
     const previewImg = document.getElementById('svg-preview-img')
     const previewBox = document.getElementById('svg-preview')
-    
+
     if (iconGenerateInput) iconGenerateInput.value = ''
     if (placeholder) {
       placeholder.style.display = 'block'
@@ -886,14 +914,14 @@ document.addEventListener('DOMContentLoaded', function() {
   if (urlInput) {
     urlInput.addEventListener('input', (e) => {
       const url = e.target.value.trim()
-      
+
       // 防抖：500ms 后才触发
       clearTimeout(svgDebounceTimer)
       svgDebounceTimer = setTimeout(() => {
         previewSVG(url)
       }, 500)
     })
-    
+
     // 监听 blur 事件（失去焦点时立即触发）
     urlInput.addEventListener('blur', (e) => {
       const url = e.target.value.trim()
@@ -903,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
         previewSVG(url)
       }
     })
-    
+
     console.log('[Popup] ✅ SVG 预览功能已初始化')
   }
 
@@ -913,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 监听 input 事件，实时预览手动输入的 SVG
     svgInput.addEventListener('input', (e) => {
       const value = e.target.value.trim()
-      
+
       // 如果是有效的 SVG 数据，更新预览
       if (value && (value.startsWith('<svg') || value.startsWith('data:image/svg'))) {
         displaySVG(value)
@@ -925,7 +953,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearSVGPReview()
       }
     })
-    
+
     // 失去焦点时，如果有值但格式不正确，提示
     svgInput.addEventListener('blur', () => {
       const value = svgInput.value.trim()
@@ -933,7 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('[Popup] SVG 数据格式可能不正确，应以 <svg 或 data:image/svg 开头')
       }
     })
-    
+
     console.log('[Popup] ✅ SVG 手动输入监听器已初始化')
   }
 

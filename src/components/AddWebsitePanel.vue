@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
-import websiteMetadataService from '../services/websiteMetadataService'
+import websiteMetadataService, { fetchMetadataFromPlugin } from '../services/websiteMetadataService'
 
 // ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
 
@@ -211,9 +211,40 @@ function handleUrlInput(event) {
 }
 
 // 处理 URL 变化事件（失去焦点时）
-function handleUrlChange(event) {
+async function handleUrlChange(event) {
   console.log('[handleUrlChange] 检测到 change 事件:', event.target.value)
-  processUrlChange(formData.value.url)
+  const url = formData.value.url
+
+  // 先执行原有的 URL 处理逻辑
+  processUrlChange(url)
+
+  // 如果 URL 有效，尝试从插件获取元数据
+  if (url && url.length > 10) {
+    try {
+      const metadata = await fetchMetadataFromPlugin(url)
+
+      if (metadata) {
+        // 只填充空字段，不覆盖已有数据
+        if (!formData.value.title && metadata.title) {
+          formData.value.title = metadata.title
+          console.log('[handleUrlChange] ✓ 已填充 title:', metadata.title)
+        }
+
+        if (!formData.value.description && metadata.description) {
+          formData.value.description = metadata.description
+          console.log('[handleUrlChange] ✓ 已填充 description')
+        }
+
+        if (!formData.value.iconData && metadata.iconData) {
+          formData.value.iconData = metadata.iconData
+          console.log('[handleUrlChange] ✓ 已填充 iconData')
+        }
+      }
+    } catch (error) {
+      console.error('[handleUrlChange] ❌ 获取元数据失败:', error)
+      // 失败时不影响用户操作，只记录日志
+    }
+  }
 }
 
 // 提交表单

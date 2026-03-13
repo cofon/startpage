@@ -192,6 +192,90 @@ export async function batchEnrichMetadata(websites, progressCallback) {
 }
 
 /**
+ * 从插件获取网站元数据
+ * @param {string} url - 网站 URL
+ * @returns {Promise<Object>} 元数据对象 { title, description, iconData }
+ */
+export async function fetchMetadataFromPlugin(url) {
+  console.log('[fetchMetadataFromPlugin] ========== 开始获取元数据 ==========')
+  console.log('[fetchMetadataFromPlugin] URL:', url)
+
+  try {
+    // 检查是否在扩展环境中（通过 content.js）
+    if (typeof window !== 'undefined' && window.chrome && window.chrome.runtime) {
+      // 直接在扩展环境中运行
+      const metadata = await chrome.runtime.sendMessage({
+        action: 'FETCH_METADATA',
+        url: url,
+        fromCurrentTab: false
+      })
+
+      if (metadata) {
+        console.log('[fetchMetadataFromPlugin] ✓ 成功获取元数据')
+        console.log('[fetchMetadataFromPlugin] - title:', metadata.title)
+        console.log('[fetchMetadataFromPlugin] - description:', metadata.description?.substring(0, 50))
+        console.log('[fetchMetadataFromPlugin] - iconData:', metadata.iconData?.substring(0, 50))
+        return metadata
+      } else {
+        console.warn('[fetchMetadataFromPlugin] ⚠️ 未能获取元数据')
+        return null
+      }
+    } else {
+      // 在起始页中运行，通过 content.js 转发
+      console.log('[fetchMetadataFromPlugin] 在起始页中运行，通过 content.js 转发')
+
+      // 创建一个 Promise 来等待响应
+      return new Promise((resolve, reject) => {
+        const requestId = Date.now() + '-' + Math.random()
+
+        // 创建超时定时器
+        const timeoutId = setTimeout(() => {
+          document.removeEventListener('StartPageAPI-MetadataResponse', responseHandler)
+          console.error('[fetchMetadataFromPlugin] ❌ 请求超时')
+          resolve(null)
+        }, 10000)
+
+        // 监听响应事件
+        const responseHandler = (e) => {
+          if (e.detail.requestId === requestId) {
+            clearTimeout(timeoutId)
+            document.removeEventListener('StartPageAPI-MetadataResponse', responseHandler)
+
+            if (e.detail.success && e.detail.result) {
+              console.log('[fetchMetadataFromPlugin] ✓ 成功获取元数据')
+              console.log('[fetchMetadataFromPlugin] - title:', e.detail.result.title)
+              console.log('[fetchMetadataFromPlugin] - description:', e.detail.result.description?.substring(0, 50))
+              console.log('[fetchMetadataFromPlugin] - iconData:', e.detail.result.iconData?.substring(0, 50))
+              resolve(e.detail.result)
+            } else {
+              console.warn('[fetchMetadataFromPlugin] ⚠️ 未能获取元数据')
+              resolve(null)
+            }
+          }
+        }
+
+        // 添加响应监听器
+        document.addEventListener('StartPageAPI-MetadataResponse', responseHandler)
+
+        // 发送请求到 content.js
+        const event = new CustomEvent('StartPageAPI-FetchMetadata', {
+          detail: {
+            url: url,
+            requestId: requestId
+          }
+        })
+
+        console.log('[fetchMetadataFromPlugin] 发送请求到 content.js')
+        document.dispatchEvent(event)
+      })
+    }
+  } catch (error) {
+    console.error('[fetchMetadataFromPlugin] ❌ 获取元数据失败:', error)
+    return null
+  }
+}
+
+/**
  * 规范化 URL（移除尾部斜杠、统一协议等）
  * @param {string} url - 原始 URL
  * @returns {string} 规范化后的 URL
