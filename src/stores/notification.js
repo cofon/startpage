@@ -6,7 +6,7 @@ export const useNotificationStore = defineStore('notification', () => {
   const notifications = ref([])
 
   // 添加通知 duration = 3000
-  function addNotification(message, type = 'info', duration = 10000) {
+  function addNotification(message, type = 'info', duration = 3000) {
     const id = Date.now() + Math.random()
     const notification = {
       id,
@@ -40,22 +40,22 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   // 便捷方法：成功通知 duration = 3000
-  function success(message, duration = 10000) {
+  function success(message, duration = 3000) {
     return addNotification(message, 'success', duration)
   }
 
   // 便捷方法：错误通知 duration = 5000
-  function error(message, duration = 10000) {
+  function error(message, duration = 5000) {
     return addNotification(message, 'error', duration)
   }
 
   // 便捷方法：警告通知 duration = 3000
-  function warning(message, duration = 10000) {
+  function warning(message, duration = 3000) {
     return addNotification(message, 'warning', duration)
   }
 
   // 便捷方法：信息通知 duration = 2000
-  function info(message, duration = 10000) {
+  function info(message, duration = 2000) {
     return addNotification(message, 'info', duration)
   }
 
