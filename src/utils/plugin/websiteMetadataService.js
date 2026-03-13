@@ -86,31 +86,12 @@ export function normalizeWebsiteData(data) {
     data.markOrder = data.isMarked ? 0 : 0
   }
 
-  // 4. 如果没有 iconGenerateData，自动生成
-  console.log('[normalizeWebsiteData] 检查图标数据...')
-  console.log('[normalizeWebsiteData] data.iconData:', data.iconData?.substring(0, 50))
-  console.log('[normalizeWebsiteData] data.iconGenerateData:', data.iconGenerateData?.substring(0, 50))
-  console.log('[normalizeWebsiteData] 是否有 iconData:', !!data.iconData)
-  console.log('[normalizeWebsiteData] iconData 是否以 data:image 开头:', data.iconData?.startsWith('data:image'))
-  console.log('[normalizeWebsiteData] 是否有 iconGenerateData:', !!data.iconGenerateData)
-
-  const needsIconGeneration = (!data.iconData || !data.iconData.startsWith('data:image')) && !data.iconGenerateData
-  console.log('[normalizeWebsiteData] 是否需要生成图标:', needsIconGeneration)
-
-  if (needsIconGeneration) {
-    console.log('[normalizeWebsiteData] 准备生成SVG，当前 name:', data.name)
-    if (data.name) {
-      console.log('[normalizeWebsiteData] 调用 generateDefaultIcon("', data.name, '")')
-      const svgIcon = generateDefaultIcon(data.name)
-      console.log('[normalizeWebsiteData] generateDefaultIcon 返回的 SVG:', svgIcon?.substring(0, 100))
-      data.iconGenerateData = encodeSvg(svgIcon)
-      console.log('[normalizeWebsiteData] ✓ 已生成SVG图标')
-      console.log('[normalizeWebsiteData] 编码后的 SVG 前 100 字符:', data.iconGenerateData.substring(0, 100))
-    } else {
-      console.warn('[normalizeWebsiteData] ⚠️ 缺少 name，无法生成SVG')
-    }
-  } else {
-    console.log('[normalizeWebsiteData] 已有图标数据，跳过生成')
+  // 4. iconGenerateData 必须有值，与 iconData 无关
+  if (!data.iconGenerateData) {
+    // 如果有 name 则用 name 生成，否则用 URL 生成
+    const iconSource = data.name || data.url
+    const svgIcon = generateDefaultIcon(iconSource)
+    data.iconGenerateData = encodeSvg(svgIcon)
   }
 
   // 5. 使用 createWebsiteObject 创建标准对象
@@ -121,8 +102,6 @@ export function normalizeWebsiteData(data) {
     updatedAt: new Date()
   })
 
-  console.log('[normalizeWebsiteData] 最终结果的 iconGenerateData:', result.iconGenerateData?.substring(0, 100))
-  console.log('[normalizeWebsiteData] ========== 标准化完成 ==========')
   return result
 }
 

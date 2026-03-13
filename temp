@@ -1,57 +1,245 @@
-插件控制台打印：
-background.js:666 StartPage 插件已安装
-background.js:669 数据库初始化完成
-background.js:183 [Background] ====== 收到消息 #1 ======
-background.js:184 [Background] Action: CALL_STARTPAGE_API
-background.js:185 [Background] fromCurrentTab: undefined
-background.js:186 [Background] url: undefined
-background.js:187 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:223 [Background] #1 ⚡ 处理 CALL_STARTPAGE_API (method: getAllTags)
-background.js:267 [Background] 🏷️ 收到 getAllTags 请求，准备转发到起始页: {}
-background.js:342 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: getAllTags
-background.js:335 [Background] 返回 true，表示异步响应
-background.js:183 [Background] ====== 收到消息 #2 ======
-background.js:184 [Background] Action: FETCH_METADATA
-background.js:185 [Background] fromCurrentTab: true
-background.js:186 [Background] url: undefined
-background.js:187 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:290 [Background] 开始处理 FETCH_METADATA 请求
-background.js:293 [Background] 从当前标签页获取元数据
-background.js:335 [Background] 返回 true，表示异步响应
-background.js:364 [Background] 找到起始页标签页 ID: 2143332464
-background.js:365 [Background] 标签页状态: complete
-background.js:384 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'getAllTags', data: {…}, requestId: 1773398348443}
-background.js:424 [Background] 收到起始页响应: {success: true, result: Array(6)}
-background.js:278 [Background] 收到起始页返回的 getAllTags 结果: {success: true, result: Array(6)}
-background.js:319 [Background] #1 ✅ 发送响应: CALL_STARTPAGE_API 有数据
-background.js:319 [Background] #2 ✅ 发送响应: FETCH_METADATA 有数据
-background.js:183 [Background] ====== 收到消息 #3 ======
-background.js:184 [Background] Action: CALL_STARTPAGE_API
-background.js:185 [Background] fromCurrentTab: undefined
-background.js:186 [Background] url: undefined
-background.js:187 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:223 [Background] #3 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
-background.js:267 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'http://localhost:5173/#/'}
-background.js:342 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
-background.js:335 [Background] 返回 true，表示异步响应
-background.js:183 [Background] ====== 收到消息 #4 ======
-background.js:184 [Background] Action: CALL_STARTPAGE_API
-background.js:185 [Background] fromCurrentTab: undefined
-background.js:186 [Background] url: undefined
-background.js:187 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:223 [Background] #4 ⚡ 处理 CALL_STARTPAGE_API (method: normalizeWebsite)
-background.js:267 [Background] 🎨 收到 normalizeWebsite 请求，准备转发到起始页: {url: 'http://localhost:5173/#/'}
-background.js:342 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: normalizeWebsite
-background.js:335 [Background] 返回 true，表示异步响应
-background.js:364 [Background] 找到起始页标签页 ID: 2143332464
-background.js:365 [Background] 标签页状态: complete
-background.js:384 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'checkUrlExists', data: {…}, requestId: 1773398348465}
-background.js:364 [Background] 找到起始页标签页 ID: 2143332464
-background.js:365 [Background] 标签页状态: complete
-background.js:384 [Background] 发送 payload: {action: 'CALL_STARTPAGE_API', method: 'normalizeWebsite', data: {…}, requestId: 1773398348466}
-background.js:424 [Background] 收到起始页响应: {success: true, result: {…}}
-background.js:278 [Background] 收到起始页返回的 normalizeWebsite 结果: {success: true, result: {…}}
-background.js:319 [Background] #4 ✅ 发送响应: CALL_STARTPAGE_API 有数据
-background.js:424 [Background] 收到起始页响应: {success: true, result: {…}}
-background.js:278 [Background] 收到起始页返回的 checkUrlExists 结果: {success: true, result: {…}}result: exists: truewebsiteId: 7websiteName: "localhost"[[Prototype]]: Objectsuccess: true[[Prototype]]: Object
-background.js:319 [Background] #3 ✅ 发送响应: CALL_STARTPAGE_API 有数据
+测试数据(从数据库导出的文件)：
+{
+  "version": 1,
+  "exportDate": "2026-03-13T15:26:34.047Z",
+  "websites": [
+    {
+      "name": "bilibili",
+      "title": "哔哩哔哩 (゜-゜)つロ 干杯~-bilibili",
+      "url": "https://www.bilibili.com",
+      "description": "哔哩哔哩（bilibili.com)是国内知名的视频弹幕网站，这里有及时的动漫新番，活跃的ACG氛围，有创意的Up主。大家可以在这里找到许多欢乐。",
+      "iconData": "data:image/vnd.microsoft.icon;base64,AAABAAEAICAAAAEAIACoEAAAFgAAACgAAAAgAAAAQAAAAAEAIAAAAAAAABAAABMLAAATCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A1qEAANahAADWoQAG1qEAb9ahAMvWoQD01qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD01qEAy9ahAG/WoQAG1qEAANahAADWoQAA1qEAG9ahAM/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahANDWoQAb1qEAANahAAfWoQDQ1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahANHWoQAH1qEAbtahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAG7WoQDH1qEA/9ahAP/WoQD/1qEAtdahABjWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahABvWoQC11qEA/9ahAP/WoQD/1qEAx9ahAPnWoQD/1qEA/9ahAP/WoQAZ1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahABjWoQD/1qEA/9ahAP/WoQDz1qEA/9ahAP/WoQD/1qEA/9ahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEAANahAADWoQAA1qEAANahAErWoQDn1qEA5NahAErWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAErWoQDn1qEA5NahAErWoQAA1qEAANahAADWoQAA1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQAA1qEAANahAADWoQAA1qEA5tahAP/WoQD/1qEA59ahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEA5tahAP/WoQD/1qEA59ahAADWoQAA1qEAANahAADWoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAADWoQAA1qEAANahAADWoQD/1qEA/9ahAP/WoQD/1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQD/1qEA/9ahAP/WoQD/1qEAANahAADWoQAA1qEAANahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEAANahAADWoQAA1qEAANahAP/WoQD/1qEA/9ahAP/WoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAP/WoQD/1qEA/9ahAP/WoQAA1qEAANahAADWoQAA1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQAA1qEAANahAADWoQAA1qEA5tahAP/WoQD/1qEA5tahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEA5tahAP/WoQD/1qEA5tahAADWoQAA1qEAANahAADWoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAADWoQAA1qEAANahAADWoQBJ1qEA5tahAObWoQBJ1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQBJ1qEA5tahAObWoQBJ1qEAANahAADWoQAA1qEAANahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQD/1qEA/9ahAP/WoQD/1qEA+dahAP/WoQD/1qEA/9ahABnWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAGdahAP/WoQD/1qEA/9ahAPjWoQDH1qEA/9ahAP/WoQD/1qEAttahABnWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahABnWoQC21qEA/9ahAP/WoQD/1qEAx9ahAG3WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQBt1qEABtahAM/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA0NahAAfWoQAA1qEAG9ahAM/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAM/WoQAb1qEAANahAADWoQAA1qEABtahAG7WoQDH1qEA89ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA/9ahAP/WoQD/1qEA89ahAMfWoQBu1qEABtahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEADtahAMXWoQD/1qEA/9ahAP/WoQD/1qEAxdahAA/WoQAA1qEAANahAADWoQAA1qEADtahAMXWoQD/1qEA/9ahAP/WoQD/1qEAxdahAA/WoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAAbWoQDF1qEA/9ahAP/WoQD/1qEA/9ahAMXWoQAP1qEAANahAADWoQAA1qEAANahAADWoQAA1qEADtahAMXWoQD/1qEA/9ahAP/WoQD/1qEAxdahAAbWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAYtahAP/WoQD/1qEA/9ahAP/WoQDF1qEADtahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEADtahAMXWoQD/1qEA/9ahAP/WoQD/1qEAY9ahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQBf1qEA/9ahAP/WoQD/1qEAxdahAA7WoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEADtahAMXWoQD/1qEA/9ahAP/WoQBf1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAATWoQCg1qEA6tahAKjWoQAO1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEAANahAADWoQAA1qEADtahAKjWoQDr1qEAoNahAATWoQAA1qEAANahAADWoQAA1qEAAP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A///////////AAAADgAAAAQAAAAAAAAAAA///wAf//+AP///wD///8A////AP///wDw/w8A8P8PAPD/DwDw/w8A8P8PAPD/DwD///8A////AH///gA///wAAAAAAAAAAAgAAAAcAAAAP8A8A/+AfgH/gP8B/4H/gf+D/8H/////8=",
+      "iconGenerateData": null,
+      "tags": [
+        "new"
+      ],
+      "isMarked": false,
+      "isActive": true,
+      "isHidden": false,
+      "markOrder": 0,
+      "visitCount": 0,
+      "lastVisited": null
+    },
+    {
+      "name": "zhihu",
+      "title": "想和Linux之父Linus一样，写出自己的一个小操作系统，需要具备什么？ - 知乎",
+      "url": "https://www.zhihu.com/question/1965823614843610880/answer/2012101754850940850",
+      "description": "一个能启动的操作系统，最小能有多小？512字节。这不是开玩笑。x86电脑开机的时候，BIOS会把硬盘第一个扇…",
+      "iconData": "data:image/vnd.microsoft.icon;base64,AAABAAEAICAAAAEAIACoEAAAFgAAACgAAAAgAAAAQAAAAAEAIAAAAAAAABAAABMLAAATCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/ZQBg/2cAv/9lAP7/ZgD//2YA//9mAf//ZgD//2YA//9mAP//ZgD//2YA//9mAP//ZgD//2YA//9mAf7/ZgH//2YB//9lAP//ZgD//2YB/v9nAP7/agH//2sA//9sAe7/bwC//3EAXwAAAAAAAAAAAAAAAAAAAAD/YAAQ/2YAz/9lAP7/ZgD//2YA//9lAP7/ZgD//2YA//9mAP//ZgD//2YB/v9lAf7/ZgH//2UA//9mAf7/ZgH//2YA//9mAP//ZgH//2YA//9nAf//aAD//2kA//9rAP//bAD//24A//9wAP//cQD+/3QAv/9wABAAAAAAAAAAAP9lAb//ZQH+/2YA//9mAP//ZgH//2YA//9mAP//ZgD//2YA//9mAP//ZgD//2YA//9mAP//ZwH//2YA//9mAf7/ZgD//2YA//9mAP//ZwD//2gA/v9qAP//bAD//2wB/v9uAP//cAD//3IA//9zAP//dQD//3cAzwAAAAD/ZgBf/2YA//9mAP//ZgH+/2YA//9mAP//ZgH//2YA//9lAP7/ZgH//2YB/v9lAP7/ZgD//2UB/v9lAP7/ZgH+/2UB/v9mAP//ZgH//2cA//9pAP//agD//2wA//9uAP//bwD//3AA//9xAf7/dAD//3UA//92AP//eAH//3kAX/9nAL//ZQD//2YB//9mAP//ZgD//2YA//9mAP//ZgD//2UA/v9lAP7/ZgD//2YA//9mAf//ZgD//2YA//9mAP//ZgH//2cB//9nAP//aQD//2sA//9sAP//bgH//28B/v9wAP7/cgH//3MA//91AP7/dgD//3gA//95AP7/ewC//2YB7v9mAf//ZgD//2UA/v9mAf//jUD//59g//+MQP//ZgD//2UA/v9lAf7/ZgH//2YA//9lAP7/ZgD//2UA/v9mAf7/aAD//2kA//9rAP//bAH+/20A/v9vAP//cQH+/3MA//9zAf7/dQD+/3YA//95AP//egD//3sB/v99Af//ZgD//2YB/v9lAP//ZgD//2UA/v+gYP//9e/////////Yv///eSD+/2YA//9mAP//ZgH//2UA/v9mAf//xaD//2gA//9qAf//awD//2wB/v/JoP//lED//3EA//9zAP//dAD//3YB//93AP//eAD+/3oA//97AP//fQH+/38A//9lAP7/ZgH//2YA//9mAP//ZgD//2YA//+CMP//9e/////////s3///ZgD//2YB/v9lAP7/ZgD//6lw////////cxD//2wA//9tAP//bgD///bv////////wpD//30R//91Af7/eAD//3kA//96AP7/fAH//30B/v+AAf//gAD//2YA//9mAP7/ZgD//2YA//9mAP//ZgD//2YA//+fYP////////////+zgP7/ZQH+/2YA//96If//9e////////9+IP//pGD//////////////////////////////////////////////////3wA/v9+Af//gAD//4AA/v+CAP7/ZQD+/2YA//9mAf//ZgH//2UA//9mAf//ZgH+/2YA///FoP///////+zf//95IP//ZwD//9m/////////2r///20B//+lYP//////////////////l0D//9Wv////////////////////////fgD//4AB//+AAf7/ggD+/4QB//9mAP//ZgD//2YA//9mAP//ZgD//2YA//9mAf//ZgH+/3gh/v///////////6Fg//+scP7///////bv//+AIP7/bwD+/6Zg////////3L///3UA//92Af7/eAD//3oA//+LIP////////////+AAP//gQH+/4IB/v+EAP//hQD//2YA//9mAP//ZQD+/2YB//9nAf//ZgD//2UB/v9mAP//ZgD//8ag////////2r///+zf////////rnD//3AA//9xAP//p2D////////dv///dwD+/3kA//95Af7/fAD//40h/v///////////4IA//+DAP//hQD//4YA//+IAP//ZgH+/2YA//9mAP//ZgD//2YA//9mAf//ZQD+/2YA//9nAP//jkD+///////27///fyD//8CQ//9wAP//cQH+/3MA//+oYP///////96///95AP//egD+/3wB//9+Af//jyD/////////////gwD//4UA//+HAf//iAH//4kA//9mAf7/ZgD//2YA//9mAP//ZgH//2YA//9mAP//ZgD+/2gB/v9qAP//9u////////+JMf7/cAH//3EA//9zAP//dAH+/6lg////////3r///3sB//99Af//fQD+/38A//+RIf7///////////+FAf//hwH//4gB/v+KAP//igH+/2YB//9mAf7/ZgH+/2YA//9mAf//cBD//3oh/v97IP7/fSD//34g///kz////////51Q//9xAf7/cwD//3UA//92AP//q2H+///////ev///fQD//34A//9/AP//gAH+/5Ig/////////////4cA//+JAf//iQD+/4sA/v+NAf7/ZgD//2YB//9mAf7/ZgD//2YB/v+9kP///////////////////////////////////////////////////////+7f//+tYP7//////9+///9+Af//gAH+/4EA//+DAP//lCD/////////////iQH//4oB//+MAf//jgH//48A//9mAP//ZgH//2YB/v9mAP//aAD//3wg///av///7N///+3f///t3///9u/////////37///7t///+7f///v3///zp///61g////////37///4AB//+BAP//gwD//4QA/v+VIP////////////+LAf//jAD//44B//+PAP//kQD+/2YB//9mAP//ZwD//2kA//9pAP//awD//20B//9uAP7/cAD//3EA//+5gP///////8uf//93AP//eQH//3oA/v97AP//rmD////////gv///ggD//4MB/v+FAP//hgH+/5ch/v///////////4wA/v+OAP//jwD//5EA//+TAf7/ZgD//2cA//9pAf//agD//2wA//9tAP//bwD//3AA//9yAP//cwD//7mA////////zJ///3kA//97Af//fAD//34A//+vYP///////+C///+EAP//hQD//4cA//+HAf7/mCD/////////////jwD//5AA/v+RAf//kwH+/5QA//9nAP//aQH//2oB/v9sAf7/bQD//5tQ//+vcP7/ehH+/3QB//91AP//uoD////////Nn///ewD//3wB/v9+AP//gAD//7Bh////////4L///4UA//+HAP7/iAD//4oB/v+aIP////////////+QAP//kgD//5MA//+UAP//lwD+/2kA//9qAP//bAD//20A//9vAP//lED////////u3///hyD//3cB//+8gP///////86f//98AP//fgD//4AA//+BAP//sWD////////gv///iAH//4kA//+KAP//jAH//5sg/////////////5IB//+TAf//lQD//5cB/v+YAP//agD+/20B//9uAf//cAH//3EA//9yAP//3L/////////DkP//eAH+/7yA////////z5///34A//+AAf//gQD//4MB/v+yYP///////+G///+JAf//igD//4wA//+OAP//nSD/////////////lAH//5UA//+XAf7/mAD//5oA//9sAf7/bgH+/3AA//9xAP//cwD//3QA/v+pYP////////fv///ev///79/////////37///37///9+////fv///s2D//7Nh////////9+///+G////jv///47///+O////jv/////////////+VAP//lwD+/5gA//+aAP//mwD//24A//9wAP//cQD//3MA/v91AP//dgD//4gg//////////////////////////////////////////////////+0YP//tGD//////////////////////////////////////////////////5gA/v+ZAf//mgD//5wA//+eAf//cQD//3EB/v9zAP//dQD//3YA//94AP//eQH+/9av////////x5D//6BA/v+hQP//oUD//6NA/v+kQP//pUD//4kB//+REf//qUD//6pA//+rQP//rED//61A//+uQP//r0D//7BA//+yQP//mQD//5sA/v+cAf//ngD+/58A//9yAP//dAH//3UA//92AP//eAH+/3kA/v97Af//rWD////////nz///gQD//4IA//+FAf//hgH//4cA/v+JAP//igD+/4wA//+NAP//jwD//5AA//+SAf7/kwD//5YB/v+WAP//mAD//5oA/v+bAP//nQH//54A/v+fAP//oQD//3QA//91Af//dwD//3gA//96Af//ewD//30A//9/AP//t3D///fv//+TIP7/hAD//4UA//+HAP//iAD+/4sA//+MAf//jQD//48A//+RAf//kgH//5QA//+VAP//lwH+/5gB/v+aAP//mwH//50B//+eAP//oAD+/6EA//+jAO//dwG//3cA//95AP//egH+/3sA//99AP//fwD//4AA//+CAf//hAD//4UA//+GAP7/hwH+/4kA//+LAf7/jAD//44B/v+PAP//kQH+/5MA//+VAf7/lQD//5cA//+YAP//mgD//5wB//+dAP//nwH//6AA//+iAf//owH//6QAv/94AGD/eQH//3oA//98Af//fgH//4AA//+AAP//ggH//4MA//+FAP7/hgH//4gA//+KAP//iwH//40A//+OAP//kAD//5EA//+TAP//lQD//5YB/v+XAP//mQD//5sA/v+cAf7/nQH//58A//+gAP//ogH//6MA//+lAP//pgBfAAAAAP96Ac//fAD//34B/v+AAf//gQD//4IB//+DAf7/hgH//4YA/v+IAf7/igH+/4sB/v+NAP//jgD+/5AA/v+RAP//kwD+/5UA//+XAP7/lwD//5kA//+aAP//nAD//54B/v+fAP//oQD//6IB//+kAf7/pQD//6cAvwAAAAAAAAAA/4AAEP99AL//gAH+/4EA//+DAP//hAH+/4UA//+HAf//iQH//4oA//+LAP//jQH+/44A//+QAP//kgH+/5QA/v+UAP//lgD//5gA//+ZAP//mwD//5wA//+dAP//nwH//6EB//+iAf//owD//6UA//+nAM//nwAQAAAAAAAAAAAAAAAAAAAAAP+BAF//gwC//4QA7/+FAP7/hwD//4kB/v+KAP//jAD//40A//+QAf7/kAD//5IB//+UAf//lQD//5cA//+YAP//mgH+/5sA//+dAf7/ngD//58A//+hAP//owH//6QA//+lAL//pgBfAAAAAAAAAAAAAAAA4AAAB4AAAAGAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAABgAAAAeAAAAc=",
+      "iconGenerateData": null,
+      "tags": [
+        "new"
+      ],
+      "isMarked": false,
+      "isActive": true,
+      "isHidden": false,
+      "markOrder": 0,
+      "visitCount": 0,
+      "lastVisited": null
+    },
+    {
+      "name": "google",
+      "title": "google",
+      "url": "https://www.google.com",
+      "description": "",
+      "iconData": null,
+      "iconGenerateData": "data:image/svg+xml;base64,CiAgICA8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDQ4IDQ4Ij4KICAgICAgPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjdEQzZGIi8+CiAgICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iCiAgICAgICAgICAgIHRleHQtYW5jaG9yPSJtaWRkbGUiCiAgICAgICAgICAgIGZvbnQtc2l6ZT0iMjgiCiAgICAgICAgICAgIGZvbnQtd2VpZ2h0PSJib2xkIgogICAgICAgICAgICBmaWxsPSJ3aGl0ZSI+RzwvdGV4dD4KICAgIDwvc3ZnPgogIA==",
+      "tags": [
+        "new"
+      ],
+      "isMarked": false,
+      "isActive": true,
+      "isHidden": false,
+      "markOrder": 0,
+      "visitCount": 0,
+      "lastVisited": null
+    }
+  ],
+  "settings": {
+    "id": "settings",
+    "selectedThemeId": "auto",
+    "selectedSearchEngineId": "local",
+    "lastBackupTime": "2026-03-13T11:29:38.535Z"
+  },
+  "themes": [
+    {
+      "id": "auto",
+      "name": "跟随系统",
+      "colors": {
+        "primary": "#3b82f6",
+        "primaryHover": "#2563eb",
+        "primaryActive": "#1d4ed8",
+        "textMain": "#1f2937",
+        "textSecondary": "#6b7280",
+        "textDisabled": "#9ca3af",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#f9fafb",
+        "bgCard": "#ffffff",
+        "bgHover": "#f3f4f6",
+        "bgActive": "#e5e7eb",
+        "borderBase": "#e5e7eb",
+        "borderFocus": "#3b82f6",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    },
+    {
+      "id": "dark",
+      "name": "深色",
+      "colors": {
+        "primary": "#60a5fa",
+        "primaryHover": "#3b82f6",
+        "primaryActive": "#2563eb",
+        "textMain": "#f9fafb",
+        "textSecondary": "#d1d5db",
+        "textDisabled": "#9ca3af",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#111827",
+        "bgCard": "#1f2937",
+        "bgHover": "#374151",
+        "bgActive": "#4b5563",
+        "borderBase": "#374151",
+        "borderFocus": "#60a5fa",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.3)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.4)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.5)"
+      },
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    },
+    {
+      "id": "light",
+      "name": "浅色",
+      "colors": {
+        "primary": "#3b82f6",
+        "primaryHover": "#2563eb",
+        "primaryActive": "#1d4ed8",
+        "textMain": "#1f2937",
+        "textSecondary": "#6b7280",
+        "textDisabled": "#9ca3af",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#f9fafb",
+        "bgCard": "#ffffff",
+        "bgHover": "#f3f4f6",
+        "bgActive": "#e5e7eb",
+        "borderBase": "#e5e7eb",
+        "borderFocus": "#3b82f6",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    }
+  ],
+  "searchEngines": [
+    {
+      "id": "baidu",
+      "name": "百度",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 40 40\">\n  <circle cx=\"20\" cy=\"20\" r=\"16\" fill=\"currentColor\"/>\n  <text x=\"20\" y=\"26\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"bold\" fill=\"white\">B</text>\n</svg>",
+      "template": "https://www.baidu.com/s?wd={query}",
+      "iconColor": "#2932e1",
+      "order": 1,
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    },
+    {
+      "id": "bing",
+      "name": "必应",
+      "icon": "<svg version=\"1.0\" xmlns=\"http://www.w3.org/2000/svg\"\n width=\"40px\" height=\"40px\" viewBox=\"0 0 40 40\"\n preserveAspectRatio=\"xMidYMid meet\">\n  <!-- 圆形背景: 使用currentColor, 继承外部color属性 -->\n  <circle cx=\"20\" cy=\"20\" r=\"16\" fill=\"currentColor\"/>\n\n  <!-- 必应图形: 白色填充, 调整变换让图形居中在圆形内 -->\n  <g transform=\"translate(12, 29) scale(0.00096, -0.00096)\" fill=\"#FFFFFF\" stroke=\"none\">\n    <path d=\"M3148 11358 l3 -9093 92 -48 c51 -27 200 -107 332 -179 132 -72 269\n    -147 305 -166 36 -19 110 -61 165 -92 55 -31 177 -99 270 -150 94 -51 206\n    -114 250 -140 44 -26 152 -87 240 -135 88 -48 205 -113 260 -145 55 -31 206\n    -115 335 -185 129 -71 312 -171 405 -223 94 -53 220 -122 280 -154 61 -33 142\n    -77 180 -100 146 -83 455 -257 595 -334 79 -43 186 -107 237 -140 91 -60 94\n    -61 116 -44 12 9 60 39 105 66 46 27 96 56 110 65 65 39 924 534 1117 644 156\n    89 219 125 450 260 143 83 418 243 610 355 559 324 584 339 705 410 63 37 138\n    80 165 95 28 15 93 53 145 85 113 67 262 154 345 200 33 18 141 81 240 138\n    301 176 486 282 565 325 41 22 87 48 102 56 14 9 46 28 70 42 47 28 406 236\n    479 278 25 14 95 55 155 90 363 211 906 522 1179 676 61 34 153 87 205 117 52\n    31 154 89 225 130 72 41 234 135 360 208 127 73 320 184 430 247 110 63 232\n    134 270 158 63 38 395 227 514 292 25 14 51 29 56 33 13 11 121 73 225 130 47\n    26 173 98 280 160 107 62 229 132 270 155 144 82 336 193 510 295 96 57 193\n    114 215 126 l40 23 0 2294 0 2294 -50 18 c-27 9 -97 34 -155 56 -58 21 -193\n    69 -300 108 -107 38 -240 86 -295 106 -55 20 -199 72 -320 115 -121 43 -353\n    126 -515 184 -162 59 -362 131 -445 160 -360 129 -657 235 -1035 372 -753 272\n    -1154 416 -1405 504 -365 128 -923 326 -1050 372 -60 21 -245 87 -410 145\n    -517 181 -594 208 -840 298 -132 48 -334 120 -450 161 -229 80 -511 182 -760\n    274 -88 32 -311 113 -495 179 -184 66 -371 133 -414 150 -44 17 -82 29 -84 27\n    -2 -3 26 -76 61 -163 78 -190 119 -290 199 -488 33 -82 80 -198 104 -256 24\n    -59 77 -192 118 -295 40 -104 127 -326 193 -494 66 -168 151 -384 188 -480 37\n    -96 81 -206 97 -245 17 -38 61 -146 98 -240 37 -93 109 -271 160 -395 50 -124\n    109 -270 130 -325 121 -312 394 -993 425 -1057 14 -29 31 -42 78 -64 33 -14\n    121 -56 196 -91 75 -36 222 -105 326 -153 203 -94 484 -226 708 -334 76 -36\n    140 -66 142 -66 3 0 55 -25 117 -56 62 -31 156 -76 208 -99 52 -23 194 -90\n    315 -148 121 -57 267 -127 325 -154 120 -57 322 -151 393 -181 26 -12 47 -23\n    47 -26 0 -3 -19 -15 -42 -27 -24 -12 -99 -54 -168 -94 -69 -40 -251 -144 -405\n    -231 -154 -86 -388 -219 -521 -295 -132 -76 -276 -157 -320 -181 -43 -25 -221\n    -126 -394 -225 -508 -291 -1149 -655 -2015 -1143 -148 -84 -328 -186 -400\n    -228 -71 -41 -188 -108 -260 -148 -71 -39 -187 -105 -257 -145 -70 -41 -160\n    -92 -200 -115 -146 -81 -575 -328 -671 -385 -53 -33 -102 -59 -107 -59 -7 0\n    -10 2516 -10 7194 l0 7194 -72 25 c-90 31 -723 256 -833 296 -94 35 -1077 383\n    -1440 511 -137 49 -315 112 -395 140 -196 70 -505 180 -795 283 -266 94 -370\n    133 -457 171 -20 9 -40 16 -45 16 -4 0 -7 -4092 -5 -9092z\"/>\n  </g>\n</svg>",
+      "template": "https://www.bing.com/search?q={query}",
+      "iconColor": "#008373",
+      "order": 2,
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    },
+    {
+      "id": "local",
+      "name": "本地",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 40 40\">\n  <circle cx=\"20\" cy=\"20\" r=\"16\" fill=\"currentColor\"/>\n  <text x=\"20\" y=\"26\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"bold\" fill=\"white\">L</text>\n</svg>",
+      "template": "",
+      "iconColor": "#6b7280",
+      "order": 4,
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    },
+    {
+      "id": "yandex",
+      "name": "Yandex",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 40 40\">\n  <circle cx=\"20\" cy=\"20\" r=\"16\" fill=\"currentColor\"/>\n  <text x=\"20\" y=\"26\" text-anchor=\"middle\" font-size=\"20\" font-weight=\"bold\" fill=\"white\">Y</text>\n</svg>",
+      "template": "https://yandex.com/search/?text={query}",
+      "iconColor": "#fc3f1d",
+      "order": 3,
+      "createdAt": "2026-03-13T06:31:20.768Z",
+      "updatedAt": "2026-03-13T06:31:20.768Z"
+    }
+  ]
+}
+
+
+浏览器打印信息：
+content.js:13 [Content Script] StartPage Content Script 已加载
+content.js:21 [Content Script] 准备注册消息监听器 undefined
+content.js:21 [Content Script] 首次注册消息监听器 undefined
+useStartPageAPI.js:6 [StartPageAPI] 正在加载依赖模块... undefined
+useStartPageAPI.js:6 [StartPageAPI] 依赖模块加载完成 undefined
+useStartPageAPI.js:6 [StartPageAPI] 准备设置 window.StartPageAPI undefined
+useStartPageAPI.js:324 [App.vue] 注册 StartPageAPI-Call 监听器
+useStartPageAPI.js:417 [StartPageAPI] 全局 API 已就绪，CustomEvent 监听器已添加
+CommandSettings.vue:69 [CommandSettings] 解析导入数据: {version: 1, exportDate: '2026-03-13T15:26:34.047Z', websites: Array(3), settings: {…}, themes: Array(3), …}
+CommandSettings.vue:78 [CommandSettings] 检测到网站数据，使用 importService 导入...
+performanceMonitor.js:36 [性能监控] 开始监控
+performanceMonitor.js:63 [性能监控] 开始阶段: validation
+performanceMonitor.js:75 [性能监控] 完成阶段: validation (0.10ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: separation
+performanceMonitor.js:75 [性能监控] 完成阶段: separation (0.20ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: enrichment
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'enriching', processed: 0, total: 3, message: '准备补全 3 个不完整的网站...'}
+websiteMetadataService.js:200 [fetchMetadataFromPlugin] ========== 开始获取元数据 ==========
+websiteMetadataService.js:201 [fetchMetadataFromPlugin] URL: https://www.google.com
+websiteMetadataService.js:225 [fetchMetadataFromPlugin] 在起始页中运行，通过 content.js 转发
+websiteMetadataService.js:268 [fetchMetadataFromPlugin] 发送请求到 content.js
+websiteMetadataService.js:269 [Content Script] 收到获取元数据请求: https://www.google.com {requestId: '1773415759678-0.029125806513954022'}
+websiteMetadataService.js:234  [fetchMetadataFromPlugin] ❌ 请求超时
+(匿名) @ websiteMetadataService.js:234
+setTimeout
+(匿名) @ websiteMetadataService.js:232
+fetchMetadataFromPlugin @ websiteMetadataService.js:228
+(匿名) @ importService.js:200
+enrichWebsites @ importService.js:194
+importWebsites @ importService.js:363
+importData @ importService.js:72
+reader.onload @ CommandSettings.vue:80
+FileReader
+handleImport @ CommandSettings.vue:113
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'enriching', processed: 3, total: 3, message: '正在补全网站元数据... (3/3)'}
+performanceMonitor.js:75 [性能监控] 完成阶段: enrichment (10010.20ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: normalization
+performanceMonitor.js:75 [性能监控] 完成阶段: normalization (0.90ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: database
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'importing', processed: 3, total: 3, message: '正在导入网站到数据库... (3/3)'}
+performanceMonitor.js:75 [性能监控] 完成阶段: database (3.70ms)
+performanceMonitor.js:149 [性能监控] 性能报告
+performanceMonitor.js:150 总耗时: 10.02秒
+performanceMonitor.js:153 内存使用:
+performanceMonitor.js:154   初始: 124.09 MB
+performanceMonitor.js:155   峰值: 124.26726818084717 MB
+performanceMonitor.js:156   最终: 124.27 MB
+performanceMonitor.js:159 操作统计:
+performanceMonitor.js:160   总数: 3
+performanceMonitor.js:161   成功: 3
+performanceMonitor.js:162   失败: 0
+performanceMonitor.js:163   成功率: 100.00%
+performanceMonitor.js:165 各阶段耗时:
+performanceMonitor.js:167   validation: 0.10ms (0 个操作)
+performanceMonitor.js:167   separation: 0.20ms (0 个操作)
+performanceMonitor.js:167   enrichment: 10010.20ms (0 个操作)
+performanceMonitor.js:167   normalization: 0.90ms (0 个操作)
+performanceMonitor.js:167   database: 3.70ms (3 个操作)
+CommandSettings.vue:90 [CommandSettings] 导入完成: {success: 0, failed: 0, skipped: 3, updated: 0, errors: Array(0)}

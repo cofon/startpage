@@ -4,9 +4,9 @@
  */
 
 /**
- * 验证网站数据是否有效
+ * 验证网站数据是否完整
  * @param {Object} website - 网站数据对象
- * @returns {boolean} - 是否有效
+ * @returns {boolean} - 是否完整
  */
 export function validateWebsite(website) {
   // 验证URL是否存在
@@ -14,12 +14,15 @@ export function validateWebsite(website) {
     return false
   }
 
-  // 验证name、title、description至少有一个不为空
+  // 验证必需字段是否都有值
   const hasName = website.name && website.name.trim() !== ''
   const hasTitle = website.title && website.title.trim() !== ''
   const hasDescription = website.description && website.description.trim() !== ''
+  const hasIconData = website.iconData && website.iconData.trim() !== ''
+  const hasIconGenerateData = website.iconGenerateData && website.iconGenerateData.trim() !== ''
 
-  return hasName || hasTitle || hasDescription
+  // 数据完整的标准：name、title、description、iconData、iconGenerateData 都有值
+  return hasName && hasTitle && hasDescription && hasIconData && hasIconGenerateData
 }
 
 /**
@@ -30,7 +33,14 @@ export function validateWebsite(website) {
 export function fillDefaultFields(website) {
   return {
     ...website,
+    name: website.name || '',
+    title: website.title || '',
+    description: website.description || '',
+    iconData: website.iconData || '',
+    iconGenerateData: website.iconGenerateData || '',
+    tags: Array.isArray(website.tags) ? website.tags : ['new'],
     isMarked: website.isMarked !== undefined ? website.isMarked : false,
+    markOrder: website.markOrder !== undefined ? website.markOrder : 0,
     isActive: website.isActive !== undefined ? website.isActive : true,
     isHidden: website.isHidden !== undefined ? website.isHidden : false
   }

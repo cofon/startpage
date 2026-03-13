@@ -66,53 +66,48 @@ async function handleImport(event) {
     reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result)
+        console.log('[CommandSettings] 解析导入数据:', data)
 
-        // 如果有 websites 数组，验证和标准化数据
-        if (data.websites && Array.isArray(data.websites)) {
-          const { validateWebsite } = await import('../services/websiteMetadataService')
+        // 使用 importService 统一处理导入逻辑
+        const { importData } = await import('../services/importService')
 
-          // 验证每个网站数据
-          const invalidWebsites = []
-          data.websites.forEach((website, index) => {
-            const validation = validateWebsite(website)
-            if (!validation.valid) {
-              invalidWebsites.push({
-                index,
-                url: website.url,
-                errors: validation.errors
-              })
+        // 检查是否是网站数据（websites 或 urls）
+        const isWebsiteData = data.websites || data.urls
+
+        if (isWebsiteData) {
+          console.log('[CommandSettings] 检测到网站数据，使用 importService 导入...')
+
+          const result = await importData(data, {
+            mode: 'auto',
+            onIncomplete: 'enrich',
+            onProgress: (progress) => {
+              console.log('[CommandSettings] 导入进度:', progress)
+              if (progress.phase === 'enriching') {
+                notificationStore.info(progress.message)
+              }
+            },
+            onComplete: (result) => {
+              console.log('[CommandSettings] 导入完成:', result)
             }
           })
 
-          // 如果有无效数据，提示用户但继续导入
-          if (invalidWebsites.length > 0) {
-            console.warn('检测到无效的网站数据:', invalidWebsites)
-            notificationStore.warning(`检测到 ${invalidWebsites.length} 个无效的网站数据，将尝试自动修复`)
-          }
-
-          console.log('[CommandSettings] 调用 window.StartPageAPI.importWebsites...')
-          
-          const result = await window.StartPageAPI.importWebsites(data.websites)
-          
-          console.log('[CommandSettings] 导入结果:', result)
-          
           notificationStore.success(`导入成功！共 ${result.total} 个网站，成功 ${result.success} 个，失败 ${result.failed} 个`)
-          
+
           setTimeout(() => {
             window.location.reload()
-          }, 1500)
-          return
+          }, 1500000)
+        } else {
+          // 导入其他数据（设置、主题等）
+          console.log('[CommandSettings] 导入其他数据...')
+          await db.importData(data)
+          notificationStore.success('导入成功！页面即将刷新...')
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
         }
-
-        // 如果没有 websites 数组，导入其他数据（设置、主题等）
-        await db.importData(data)
-        notificationStore.success('导入成功！页面即将刷新...')
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
       } catch (error) {
         console.error('解析导入文件失败:', error)
-        notificationStore.error('导入文件格式错误')
+        notificationStore.error('导入文件格式错误: ' + error.message)
       }
     }
     reader.readAsText(file)

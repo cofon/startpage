@@ -22,7 +22,7 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
     // ========== 一次性导入所有需要的模块 ==========
     log('正在加载依赖模块...')
     const [
-      { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata },
+      { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata, fetchMetadataFromPlugin },
       { extractRootDomain, generateDefaultIcon }
     ] = await Promise.all([
       import('../utils/plugin/websiteMetadataService'),
@@ -143,8 +143,32 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
           }
 
           // 标准化数据
-          const normalizedData = normalizeWebsiteData(website)
+          let normalizedData = normalizeWebsiteData(website)
           log(`标准化后的数据 (${i + 1}):`, normalizedData)
+
+          // 如果缺少 title、description 或 iconData，尝试从插件获取
+          if (!normalizedData.title || !normalizedData.description || !normalizedData.iconData) {
+            log(`尝试从插件获取元数据: ${normalizedData.url}`)
+            try {
+              const metadata = await fetchMetadataFromPlugin(normalizedData.url)
+              if (metadata) {
+                // 只补全缺失的字段
+                if (!normalizedData.title && metadata.title) {
+                  normalizedData.title = metadata.title
+                }
+                if (!normalizedData.description && metadata.description) {
+                  normalizedData.description = metadata.description
+                }
+                if (!normalizedData.iconData && metadata.iconData) {
+                  normalizedData.iconData = metadata.iconData
+                }
+                log(`插件返回的元数据:`, metadata)
+                log(`补全后的数据 (${i + 1}):`, normalizedData)
+              }
+            } catch (error) {
+              logWarn(`获取元数据失败 (${normalizedData.url}):`, error.message)
+            }
+          }
 
           // 保存
           await websiteStore.addWebsite(normalizedData)
