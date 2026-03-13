@@ -1,251 +1,281 @@
+// 统一日志前缀
+const LOG_PREFIX = '[StartPageAPI]'
+
+// 日志工具函数
+function log(message, data) {
+  console.log(`${LOG_PREFIX} ${message}`, data)
+}
+
+function logError(message, error) {
+  console.error(`${LOG_PREFIX} ${message}`, error)
+}
+
+function logWarn(message, data) {
+  console.warn(`${LOG_PREFIX} ${message}`, data)
+}
+
 export function useStartPageAPI(db, websiteStore, searchStore) {
   /**
    * 初始化 StartPageAPI
    */
   async function initStartPageAPI() {
+    // ========== 一次性导入所有需要的模块 ==========
+    log('正在加载依赖模块...')
+    const [
+      { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata },
+      { extractRootDomain, generateDefaultIcon }
+    ] = await Promise.all([
+      import('../services/websiteMetadataService'),
+      import('../utils/websiteUtils')
+    ])
+    log('依赖模块加载完成')
+
     // ========== 暴露全局 API 给插件调用 ==========
-    console.log('[App.vue] 准备设置 window.StartPageAPI')
+    log('准备设置 window.StartPageAPI')
 
     // 检查是否已存在
     if (window.StartPageAPI) {
-      console.warn('[App.vue] ⚠️ window.StartPageAPI 已存在，将被覆盖！')
+      logWarn('⚠️ window.StartPageAPI 已存在，将被覆盖！')
     }
 
-    window.StartPageAPI = {
-      /**
-       * 添加单个网站
-       * @param {Object} data - 网站数据对象
-       * @returns {Promise<number>} - 返回新网站的 ID
-       */
-      addWebsite: async (data) => {
-        console.log('[StartPageAPI] 添加网站:', data)
+    // ========== 内部方法定义 ==========
 
-        // ========== 验证数据 ==========
-        const { validateWebsite } = await import('../services/websiteMetadataService')
-        const validation = validateWebsite(data)
+    /**
+     * 添加单个网站
+     */
+    async function addWebsite(data) {
+      // 参数验证
+      if (!data || typeof data !== 'object') {
+        throw new Error('无效的网站数据')
+      }
+      if (!data.url) {
+        throw new Error('网站 URL 不能为空')
+      }
 
-        if (!validation.valid) {
-          console.error('[StartPageAPI] ❌ 验证失败:', validation.errors)
-          throw new Error(validation.errors.join('、'))
+      log('添加网站:', data)
+
+      // 验证数据
+      const validation = validateWebsite(data)
+      if (!validation.valid) {
+        logError('❌ 验证失败:', validation.errors)
+        throw new Error(validation.errors.join('、'))
+      }
+
+      // 检查 URL 是否已存在
+      const allWebsites = await db.getAllWebsites()
+      const urlCheckResult = checkUrlExists(data.url, allWebsites)
+
+      if (urlCheckResult.exists) {
+        logError('❌ URL 已存在:', {
+          url: data.url,
+          websiteId: urlCheckResult.websiteId
+        })
+        throw new Error(`该网址已存在（ID: ${urlCheckResult.websiteId}），请勿重复添加`)
+      }
+
+      // 根域名复用策略
+      try {
+        const urlObj = new URL(data.url.startsWith('http') ? data.url : 'http://' + data.url)
+        const hostname = urlObj.hostname
+        const rootDomain = extractRootDomain(hostname)
+
+        log('提取的根域名:', rootDomain)
+
+        if (rootDomain) {
+          const websiteWithSameRoot = allWebsites.find((w) => {
+            try {
+              const wUrlObj = new URL(w.url)
+              const wRootDomain = extractRootDomain(wUrlObj.hostname)
+              return wRootDomain === rootDomain && w.iconGenerateData
+            } catch {
+              return false
+            }
+          })
+
+          if (websiteWithSameRoot) {
+            data.iconGenerateData = websiteWithSameRoot.iconGenerateData
+            log('✓ 找到相同根域名的网站，已复用 SVG:', {
+              name: websiteWithSameRoot.name,
+              url: websiteWithSameRoot.url
+            })
+          } else {
+            log('- 未找到相同根域名的网站，将生成新 SVG')
+          }
         }
+      } catch (error) {
+        logWarn('无法提取根域名，将生成新 SVG:', error.message)
+      }
 
-        // ========== 检查 URL 是否已存在（双重保护） ==========
-        const allWebsites = await db.getAllWebsites()
-        const { checkUrlExists } = await import('../services/websiteMetadataService')
-        const urlCheckResult = checkUrlExists(data.url, allWebsites)
+      // 标准化数据
+      const normalizedData = normalizeWebsiteData(data)
+      log('验证通过，标准化后的数据:', normalizedData)
 
-        if (urlCheckResult.exists) {
-          console.error(
-            '[StartPageAPI] ❌ URL 已存在:',
-            data.url,
-            '现有网站 ID:',
-            urlCheckResult.websiteId,
-          )
-          throw new Error(`该网址已存在（ID: ${urlCheckResult.websiteId}），请勿重复添加`)
-        }
+      // 保存到数据库和 store
+      const newWebsite = await websiteStore.addWebsite(normalizedData)
+      log('添加成功，ID:', newWebsite.id)
 
-        // ========== 根域名复用策略 ==========
-        const { extractRootDomain } = await import('../utils/websiteUtils')
+      return newWebsite.id
+    }
 
+    /**
+     * 批量导入网站
+     */
+    async function importWebsites(websites) {
+      // 参数验证
+      if (!Array.isArray(websites)) {
+        throw new Error('网站数据必须是数组')
+      }
+
+      log('批量导入网站，数量:', websites.length)
+
+      let successCount = 0
+      let errorCount = 0
+      const errors = []
+
+      for (let i = 0; i < websites.length; i++) {
         try {
-          const urlObj = new URL(data.url.startsWith('http') ? data.url : 'http://' + data.url)
-          const hostname = urlObj.hostname
-          const rootDomain = extractRootDomain(hostname)
+          const website = websites[i]
 
-          console.log('[StartPageAPI] 提取的根域名:', rootDomain)
-
-          if (rootDomain) {
-            // 在现有网站中查找是否有相同根域名的
-            const websiteWithSameRoot = allWebsites.find((w) => {
-              try {
-                const wUrlObj = new URL(w.url)
-                const wRootDomain = extractRootDomain(wUrlObj.hostname)
-                return wRootDomain === rootDomain && w.iconGenerateData
-              } catch {
-                return false
-              }
-            })
-
-            if (websiteWithSameRoot) {
-              // 找到相同根域名的网站，复用它的 SVG
-              data.iconGenerateData = websiteWithSameRoot.iconGenerateData
-              console.log(
-                '[StartPageAPI] ✓ 找到相同根域名的网站，已复用 SVG:',
-                websiteWithSameRoot.name,
-              )
-              console.log('[StartPageAPI]   来源网站:', websiteWithSameRoot.url)
-            } else {
-              console.log('[StartPageAPI] - 未找到相同根域名的网站，将生成新 SVG')
-            }
+          // 验证数据（宽松验证）
+          const validation = validateWebsite(website)
+          if (!validation.valid) {
+            logWarn(`⚠️ 第 ${i + 1} 个网站验证失败:`, validation.errors)
           }
+
+          // 标准化数据
+          const normalizedData = normalizeWebsiteData(website)
+          log(`标准化后的数据 (${i + 1}):`, normalizedData)
+
+          // 保存
+          await websiteStore.addWebsite(normalizedData)
+          successCount++
         } catch (error) {
-          console.warn('[StartPageAPI] 无法提取根域名，将生成新 SVG:', error.message)
+          logError(`导入第 ${i + 1} 个网站失败:`, error)
+          errorCount++
+          errors.push({
+            index: i,
+            url: websites[i]?.url || 'unknown',
+            error: error.message,
+          })
         }
+      }
 
-        // ========== 标准化数据 ==========
-        const { normalizeWebsiteData } = await import('../services/websiteMetadataService')
-        const normalizedData = normalizeWebsiteData(data)
+      log(`导入完成：成功 ${successCount}, 失败 ${errorCount}`)
 
-        console.log('[StartPageAPI] 验证通过，标准化后的数据:', normalizedData)
+      return {
+        total: websites.length,
+        success: successCount,
+        failed: errorCount,
+        errors,
+      }
+    }
 
-        // 使用标准化后的数据更新 store（store 内部会保存到数据库）
-        const newWebsite = await websiteStore.addWebsite(normalizedData)
+    /**
+     * 获取所有网站
+     */
+    async function getWebsites() {
+      return await db.getAllWebsites()
+    }
 
-        console.log('[StartPageAPI] 添加成功，ID:', newWebsite.id)
+    /**
+     * 更新网站
+     */
+    async function updateWebsite(id, data) {
+      // 参数验证
+      if (!id) {
+        throw new Error('网站 ID 不能为空')
+      }
+      if (!data || typeof data !== 'object') {
+        throw new Error('无效的更新数据')
+      }
 
-        return newWebsite.id
-      },
+      log('更新网站:', { id, data })
+      await db.updateWebsite(id, data)
+      websiteStore.updateWebsite(id, data)
+    }
 
-      /**
-       * 批量导入网站
-       * @param {Array} websites - 网站数组
-       * @returns {Promise<Object>} - 返回导入结果统计
-       */
-      importWebsites: async (websites) => {
-        console.log('[StartPageAPI] 批量导入网站，数量:', websites.length)
+    /**
+     * 导出所有网站
+     */
+    async function exportWebsites() {
+      log('导出所有网站')
+      const websites = await db.getAllWebsites()
+      return {
+        websites,
+        count: websites.length,
+      }
+    }
 
-        let successCount = 0
-        let errorCount = 0
-        const errors = []
+    /**
+     * 批量补全网站元数据
+     */
+    async function enrichWebsites(websites, progressCallback) {
+      // 参数验证
+      if (!Array.isArray(websites)) {
+        throw new Error('网站数据必须是数组')
+      }
 
-        for (let i = 0; i < websites.length; i++) {
-          try {
-            const website = websites[i]
+      log('补全网站元数据，数量:', websites.length)
+      return await batchEnrichMetadata(websites, progressCallback)
+    }
 
-            // ========== 修改：使用新的 websiteMetadataService ==========
-            // 1. 验证数据（宽松验证）
-            const { validateWebsite } = await import('../services/websiteMetadataService')
-            const validation = validateWebsite(website)
+    /**
+     * 验证网站数据
+     */
+    async function validateWebsiteAPI(websiteData) {
+      // 参数验证
+      if (!websiteData || typeof websiteData !== 'object') {
+        throw new Error('无效的网站数据')
+      }
+      return validateWebsite(websiteData)
+    }
 
-            if (!validation.valid) {
-              console.warn(`[StartPageAPI] ⚠️ 第 ${i + 1} 个网站验证失败:`, validation.errors)
-              // 继续尝试标准化和保存
-            }
+    /**
+     * 标准化网站数据
+     */
+    async function normalizeWebsiteAPI(websiteData) {
+      // 参数验证
+      if (!websiteData || typeof websiteData !== 'object') {
+        throw new Error('无效的网站数据')
+      }
+      return normalizeWebsiteData(websiteData)
+    }
 
-            // 2. 标准化数据（会自动生成缺失的字段）
-            const { normalizeWebsiteData } = await import('../services/websiteMetadataService')
-            const normalizedData = normalizeWebsiteData(website)
+    /**
+     * 生成默认 SVG 图标
+     */
+    async function generateDefaultIconAPI(name) {
+      // 参数验证
+      if (!name || typeof name !== 'string') {
+        throw new Error('网站名称或 URL 不能为空')
+      }
+      return generateDefaultIcon(name)
+    }
 
-            console.log(`[StartPageAPI] 标准化后的数据 (${i + 1}):`, normalizedData)
+    /**
+     * 检查 URL 是否已存在
+     */
+    async function checkUrlExistsAPI(data) {
+      // 参数验证
+      if (!data || !data.url) {
+        throw new Error('URL 不能为空')
+      }
+      const allWebsites = await db.getAllWebsites()
+      return checkUrlExists(data.url, allWebsites)
+    }
 
-            // 3. 使用 websiteStore.addWebsite 统一处理保存逻辑
-            await websiteStore.addWebsite(normalizedData)
-
-            successCount++
-          } catch (error) {
-            console.error(`[StartPageAPI] 导入第 ${i + 1} 个网站失败:`, error)
-            errorCount++
-            errors.push({
-              index: i,
-              url: websites[i]?.url || 'unknown',
-              error: error.message,
-            })
-          }
-        }
-
-        console.log(`[StartPageAPI] 导入完成：成功 ${successCount}, 失败 ${errorCount}`)
-
-        return {
-          total: websites.length,
-          success: successCount,
-          failed: errorCount,
-          errors,
-        }
-      },
-
-      /**
-       * 获取所有网站
-       * @returns {Promise<Array>} - 返回网站数组
-       */
-      getWebsites: async () => {
-        return await db.getAllWebsites()
-      },
-
-      /**
-       * 更新网站
-       * @param {number} id - 网站 ID
-       * @param {Object} data - 更新的数据
-       * @returns {Promise<void>}
-       */
-      updateWebsite: async (id, data) => {
-        console.log('[StartPageAPI] 更新网站:', id, data)
-        await db.updateWebsite(id, data)
-
-        // 更新 store
-        websiteStore.updateWebsite(id, data)
-      },
-
-      /**
-       * 导出所有网站
-       * @returns {Promise<Object>} - 返回导出数据
-       */
-      exportWebsites: async () => {
-        console.log('[StartPageAPI] 导出所有网站')
-        const websites = await db.getAllWebsites()
-        return {
-          websites,
-          count: websites.length,
-        }
-      },
-
-      // ========== 新增方法（重构方案 Phase 2） ==========
-
-      /**
-       * 批量补全网站元数据（供插件调用）
-       * @param {Array} websites - 网站数组
-       * @param {Function} progressCallback - 进度回调函数 (processed, total)
-       * @returns {Promise<Array>} 补全后的网站数组
-       */
-      enrichWebsites: async (websites, progressCallback) => {
-        console.log('[StartPageAPI] 补全网站元数据，数量:', websites.length)
-
-        // 动态导入 service（避免循环依赖）
-        const { batchEnrichMetadata } = await import('../services/websiteMetadataService')
-
-        // 调用 service 进行批量补全
-        return await batchEnrichMetadata(websites, progressCallback)
-      },
-
-      /**
-       * 验证网站数据（供插件调用）
-       * @param {Object} websiteData - 网站数据
-       * @returns {Object} { valid: boolean, errors: string[] }
-       */
-      validateWebsite: async (websiteData) => {
-        const { validateWebsite } = await import('../services/websiteMetadataService')
-        return validateWebsite(websiteData)
-      },
-
-      /**
-       * 标准化网站数据（供插件调用）
-       * @param {Object} websiteData - 网站数据
-       * @returns {Object} 标准化的网站对象
-       */
-      normalizeWebsite: async (websiteData) => {
-        const { normalizeWebsiteData } = await import('../services/websiteMetadataService')
-        return normalizeWebsiteData(websiteData)
-      },
-
-      /**
-       * 生成默认 SVG 图标（供插件调用）
-       * @param {string} name - 网站名称或 URL
-       * @returns {Promise<string>} SVG 字符串
-       */
-      generateDefaultIcon: async (name) => {
-        const { generateDefaultIcon } = await import('../utils/websiteUtils')
-        return generateDefaultIcon(name)
-      },
-
-      /**
-       * 检查 URL 是否已存在（供插件调用）
-       * @param {Object} data - { url: string }
-       * @returns {Promise<{exists: boolean, websiteId?: number, websiteName?: string}>}
-       */
-      checkUrlExists: async (data) => {
-        const allWebsites = await db.getAllWebsites()
-        const { checkUrlExists } = await import('../services/websiteMetadataService')
-        return checkUrlExists(data.url, allWebsites)
-      },
+    // ========== 暴露全局 API ==========
+    window.StartPageAPI = {
+      addWebsite,
+      importWebsites,
+      getWebsites,
+      updateWebsite,
+      exportWebsites,
+      enrichWebsites,
+      validateWebsite: validateWebsiteAPI,
+      normalizeWebsite: normalizeWebsiteAPI,
+      generateDefaultIcon: generateDefaultIconAPI,
+      checkUrlExists: checkUrlExistsAPI,
     }
 
     // ========== 监听来自 Content Script 的 CustomEvent ==========
@@ -255,34 +285,64 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
       console.log('[App.vue] 注册 StartPageAPI-Call 监听器')
 
       document.addEventListener('StartPageAPI-Call', async (event) => {
-        console.log('[App.vue] 收到 StartPageAPI-Call 事件:', event.detail)
+        log('收到 StartPageAPI-Call 事件:', event.detail)
 
         const { action, method, data, requestId } = event.detail
 
         try {
+          // Action 白名单
+          const ALLOWED_ACTIONS = new Set([
+            'addWebsite',
+            'importWebsites',
+            'exportWebsites',
+            'getWebsites',
+            'updateWebsite'
+          ])
+
+          // Method 白名单
+          const ALLOWED_METHODS = new Set([
+            'normalizeWebsite',
+            'checkUrlExists',
+            'validateWebsite',
+            'generateDefaultIcon'
+          ])
+
+          // 验证 action 或 method
+          if (!action && !method) {
+            throw new Error('缺少 action 或 method 参数')
+          }
+
+          if (action && !ALLOWED_ACTIONS.has(action)) {
+            throw new Error(`不支持的 action: ${action}`)
+          }
+
+          if (method && !ALLOWED_METHODS.has(method)) {
+            throw new Error(`不支持的 method: ${method}`)
+          }
+
           let result
 
           // 处理 action 类型的调用（保持向后兼容）
           if (action === 'addWebsite') {
-            result = await window.StartPageAPI.addWebsite(data)
+            result = await addWebsite(data)
           } else if (action === 'importWebsites') {
-            result = await window.StartPageAPI.importWebsites(data)
+            result = await importWebsites(data)
           } else if (action === 'exportWebsites') {
-            result = await window.StartPageAPI.exportWebsites()
+            result = await exportWebsites()
           } else if (action === 'getWebsites') {
-            result = await window.StartPageAPI.getWebsites()
+            result = await getWebsites()
           } else if (action === 'updateWebsite') {
-            result = await window.StartPageAPI.updateWebsite(data.id, data)
+            result = await updateWebsite(data.id, data)
           }
-          // 新增：处理 method 类型的调用（通用 API）
+          // 处理 method 类型的调用（通用 API）
           else if (method === 'normalizeWebsite') {
-            result = await window.StartPageAPI.normalizeWebsite(data)
+            result = await normalizeWebsiteAPI(data)
           } else if (method === 'generateDefaultIcon') {
-            result = await window.StartPageAPI.generateDefaultIcon(data)
+            result = await generateDefaultIconAPI(data)
           } else if (method === 'validateWebsite') {
-            result = await window.StartPageAPI.validateWebsite(data)
+            result = await validateWebsiteAPI(data)
           } else if (method === 'checkUrlExists') {
-            result = await window.StartPageAPI.checkUrlExists(data)
+            result = await checkUrlExistsAPI(data)
           } else {
             throw new Error('未知操作：' + (action || method))
           }
@@ -296,9 +356,9 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
             },
           })
           document.dispatchEvent(responseEvent)
-          console.log('[App.vue] 已发送响应事件')
+          log('已发送响应事件')
         } catch (error) {
-          console.error('[App.vue] 处理请求失败:', error)
+          logError('处理请求失败:', error)
 
           // 发送错误响应
           const responseEvent = new CustomEvent('StartPageAPI-Response', {

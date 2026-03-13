@@ -686,6 +686,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('[Popup] 未找到 iconData 输入框元素')
           }
         }
+
+        // 立即检测 URL 是否存在并生成 SVG 预览
+        if (metadata.url && urlEl) {
+          console.log('[Popup] 自动填充后立即检测 URL 是否存在:', metadata.url)
+          checkUrlExists(metadata.url)
+
+          // 立即生成 SVG 预览
+          console.log('[Popup] 自动填充后立即生成 SVG 预览:', metadata.url)
+          previewSVG(metadata.url)
+        }
       }
     } catch (error) {
       console.warn('[Popup] 获取元数据失败（可能不在网页上下文中）:', error)

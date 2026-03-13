@@ -218,79 +218,63 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
-      // ========== 新增：调用 StartPageAPI 通用方法 ==========
+      // ========== 调用 StartPageAPI 通用方法 ==========
       case 'CALL_STARTPAGE_API':
         console.log(
           `[Background] #${currentMsgId} ⚡ 处理 CALL_STARTPAGE_API (method: ${message.method})`,
         )
+
+        // Method 白名单验证
+        const ALLOWED_METHODS = new Set([
+          'normalizeWebsite',
+          'checkUrlExists',
+          'validateWebsite',
+          'generateDefaultIcon'
+        ])
+
+        if (!message.method) {
+          console.error('[Background] ❌ 缺少 method 参数')
+          return {
+            success: false,
+            error: '缺少 method 参数'
+          }
+        }
+
+        if (!ALLOWED_METHODS.has(message.method)) {
+          console.error('[Background] ❌ 不支持的 method:', message.method)
+          return {
+            success: false,
+            error: `不支持的 method: ${message.method}`
+          }
+        }
+
+        // Method 日志前缀映射
+        const METHOD_LOG_PREFIX = {
+          normalizeWebsite: '🎨',
+          checkUrlExists: '🔍',
+          validateWebsite: '✅',
+          generateDefaultIcon: '🎨'
+        }
+
         try {
-          // 所有方法都转发到起始页处理，确保使用统一的业务逻辑
+          const method = message.method
+          const logPrefix = METHOD_LOG_PREFIX[method] || '⚡'
 
-          // 1. normalizeWebsite - 标准化网站数据（包含 SVG 图标生成）
-          if (message.method === 'normalizeWebsite') {
-            console.log(
-              '[Background] 🎨 收到 normalizeWebsite 请求，准备转发到起始页:',
-              message.data,
-            )
-            const response = await forwardToStartPage({
-              action: 'CALL_STARTPAGE_API',
-              method: 'normalizeWebsite',
-              data: message.data,
-            })
-            console.log('[Background] 收到起始页返回的 normalizeWebsite 结果:', response)
-            return response
-          }
+          console.log(
+            `[Background] ${logPrefix} 收到 ${method} 请求，准备转发到起始页:`,
+            message.data,
+          )
 
-          // 2. checkUrlExists - 检查 URL 是否存在
-          else if (message.method === 'checkUrlExists') {
-            console.log('[Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页:', message.data)
-            const response = await forwardToStartPage({
-              action: 'CALL_STARTPAGE_API',
-              method: 'checkUrlExists',
-              data: message.data,
-            })
-            console.log('[Background] 收到起始页返回的 checkUrlExists 结果:', response)
-            return response
-          }
+          const response = await forwardToStartPage({
+            action: 'CALL_STARTPAGE_API',
+            method: method,
+            data: message.data,
+          })
 
-          // 3. validateWebsite - 验证网站数据
-          else if (message.method === 'validateWebsite') {
-            console.log(
-              '[Background] ✅ 收到 validateWebsite 请求，准备转发到起始页:',
-              message.data,
-            )
-            const response = await forwardToStartPage({
-              action: 'CALL_STARTPAGE_API',
-              method: 'validateWebsite',
-              data: message.data,
-            })
-            console.log('[Background] 收到起始页返回的 validateWebsite 结果:', response)
-            return response
-          }
-
-          // 4. generateDefaultIcon - 生成默认图标
-          else if (message.method === 'generateDefaultIcon') {
-            console.log(
-              '[Background] 🎨 收到 generateDefaultIcon 请求，准备转发到起始页:',
-              message.data,
-            )
-            const response = await forwardToStartPage({
-              action: 'CALL_STARTPAGE_API',
-              method: 'generateDefaultIcon',
-              data: message.data,
-            })
-            console.log('[Background] 收到起始页返回的 generateDefaultIcon 结果:', response)
-            return response
-          }
-
-          // 其他未识别的方法，尝试直接转发
-          else {
-            console.warn('[Background] ⚠️ 未知方法:', message.method, '尝试直接转发')
-            const response = await forwardToStartPage(message)
-            return response
-          }
+          console.log(`[Background] 收到起始页返回的 ${method} 结果:`, response)
+          return response
         } catch (error) {
-          console.error(`[Background] #${currentMsgId} 处理 CALL_STARTPAGE_API 失败:`, error)
+          console.error(`[Background] #${currentMsgId} 处理 ${message.method} 失败:`, error)
           return {
             success: false,
             error: error.message || 'API 调用失败',
@@ -348,7 +332,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true
 })
 
-// ========== 新增：转发消息到起始页 ==========
+// ========== 转发消息到起始页 ==========
 async function forwardToStartPage(message) {
   try {
     console.log('[Background] 转发消息到起始页:', message.action, 'method:', message.method)
@@ -395,15 +379,30 @@ async function forwardToStartPage(message) {
 
     console.log('[Background] 发送 payload:', payload)
 
-    // 发送到 content.js，添加重试机制
+    // 发送到 content.js，添加重试和重新注入机制
     return new Promise((resolve) => {
       const maxRetries = 3
       let retryCount = 0
 
-      function sendMessage() {
-        chrome.tabs.sendMessage(targetTab.id, payload, (response) => {
+      async function sendMessage() {
+        chrome.tabs.sendMessage(targetTab.id, payload, async (response) => {
           if (chrome.runtime.lastError) {
             retryCount++
+
+            // 如果是第一次失败，尝试重新注入 content.js
+            if (retryCount === 1) {
+              console.warn('[Background] 发送消息失败，尝试重新注入 content.js...')
+              try {
+                await chrome.scripting.executeScript({
+                  target: { tabId: targetTab.id },
+                  files: ['content.js']
+                })
+                console.log('[Background] content.js 重新注入成功')
+              } catch (error) {
+                console.error('[Background] content.js 重新注入失败:', error)
+              }
+            }
+
             if (retryCount < maxRetries) {
               console.warn(`[Background] 发送消息失败，第 ${retryCount} 次重试...`)
               setTimeout(sendMessage, 300)

@@ -192,6 +192,38 @@ export async function batchEnrichMetadata(websites, progressCallback) {
 }
 
 /**
+ * 规范化 URL（移除尾部斜杠、统一协议等）
+ * @param {string} url - 原始 URL
+ * @returns {string} 规范化后的 URL
+ */
+function normalizeUrl(url) {
+  if (!url) return ''
+
+  try {
+    // 确保有协议
+    let normalized = url
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized
+    }
+
+    // 创建 URL 对象以解析各个部分
+    const urlObj = new URL(normalized)
+
+    // 移除尾部斜杠
+    let pathname = urlObj.pathname
+    if (pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1)
+    }
+
+    // 重新构建 URL（不包含 hash 和 search）
+    return `${urlObj.protocol}//${urlObj.host}${pathname}`
+  } catch (error) {
+    console.warn('[URLChecker] URL 解析失败:', url, error)
+    return url
+  }
+}
+
+/**
  * 检查 URL 是否已存在于数据库中
  * @param {string} url - 要检查的 URL
  * @param {Array} allWebsites - 所有网站数组（从数据库查询）
@@ -203,17 +235,30 @@ function checkUrlExists(url, allWebsites) {
     return { exists: false }
   }
 
-  const existingWebsite = allWebsites.find(w => w.url === url && w.isActive)
+  // 规范化要检查的 URL
+  const normalizedUrl = normalizeUrl(url)
+  console.log('[URLChecker] 规范化后的 URL:', normalizedUrl)
+
+  // 在所有网站中查找匹配的 URL
+  const existingWebsite = allWebsites.find(w => {
+    if (!w.isActive) return false
+
+    // 规范化数据库中的 URL
+    const normalizedExistingUrl = normalizeUrl(w.url)
+
+    // 比较规范化的 URL
+    return normalizedExistingUrl === normalizedUrl
+  })
 
   if (existingWebsite) {
-    console.log('[URLChecker] ✓ URL 已存在，ID:', existingWebsite.id)
+    console.log('[URLChecker] ✓ URL 已存在，ID:', existingWebsite.id, '原始URL:', url, '数据库URL:', existingWebsite.url)
     return {
       exists: true,
       websiteId: existingWebsite.id,
       websiteName: existingWebsite.name
     }
   } else {
-    console.log('[URLChecker] - URL 不存在')
+    console.log('[URLChecker] - URL 不存在:', normalizedUrl)
     return {
       exists: false
     }
