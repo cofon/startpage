@@ -33,15 +33,21 @@ const formData = ref({
 const urlExists = ref(false)
 
 // 获取所有标签
-const allTags = computed(() => {
-  const tags = new Set()
-  websiteStore.websites.forEach(website => {
-    if (website.tags && Array.isArray(website.tags)) {
-      website.tags.forEach(tag => tags.add(tag))
+const allTags = ref([])
+
+// 加载所有标签
+async function loadAllTags() {
+  try {
+    if (window.StartPageAPI && window.StartPageAPI.getAllTags) {
+      allTags.value = await window.StartPageAPI.getAllTags()
     }
-  })
-  return Array.from(tags).sort()
-})
+  } catch (error) {
+    console.error('[AddWebsitePanel] 获取所有标签失败:', error)
+  }
+}
+
+// 初始化时加载标签
+loadAllTags()
 
 // 获取当前输入的标签列表
 const currentTags = computed(() => {

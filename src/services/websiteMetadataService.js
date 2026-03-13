@@ -210,7 +210,8 @@ function checkUrlExists(url, allWebsites) {
     return {
       exists: true,
       websiteId: existingWebsite.id,
-      websiteName: existingWebsite.name
+      websiteName: existingWebsite.name,
+      website: existingWebsite
     }
   } else {
     console.log('[URLChecker] - URL 不存在')

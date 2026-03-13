@@ -190,7 +190,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         'normalizeWebsite',
         'checkUrlExists',
         'validateWebsite',
-        'generateDefaultIcon'
+        'generateDefaultIcon',
+        'getAllTags'
       ])
 
       if (!message.method) {

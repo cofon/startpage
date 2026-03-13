@@ -229,7 +229,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           'normalizeWebsite',
           'checkUrlExists',
           'validateWebsite',
-          'generateDefaultIcon'
+          'generateDefaultIcon',
+          'getWebsites',
+          'getAllTags'
         ])
 
         if (!message.method) {
@@ -253,7 +255,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           normalizeWebsite: '🎨',
           checkUrlExists: '🔍',
           validateWebsite: '✅',
-          generateDefaultIcon: '🎨'
+          generateDefaultIcon: '🎨',
+          getWebsites: '📋',
+          getAllTags: '🏷️'
         }
 
         try {

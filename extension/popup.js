@@ -44,6 +44,122 @@ document.addEventListener('DOMContentLoaded', function () {
   const fetchMetadataBtn = document.getElementById('fetch-metadata-btn')
   const urlInput = document.getElementById('url')
   const urlExistsMessage = document.getElementById('url-exists-message')
+  const tagsInput = document.getElementById('tags')
+  const tagsDropdown = document.getElementById('tags-dropdown')
+
+  // ========== Tags 相关功能 ==========
+  let allTags = []
+
+  // 获取所有标签
+  async function fetchAllTags() {
+    console.log('[Popup] fetchAllTags 开始执行')
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'CALL_STARTPAGE_API',
+        method: 'getAllTags',
+        data: {}
+      })
+      console.log('[Popup] fetchAllTags 收到响应:', response)
+
+      if (response && response.success && response.result) {
+        allTags = response.result
+        console.log('[Popup] 获取到的所有标签:', allTags)
+        renderTagsDropdown()
+      } else {
+        console.log('[Popup] 响应无效或没有结果:', response)
+      }
+    } catch (error) {
+      console.error('[Popup] 获取所有标签失败:', error)
+    }
+  }
+
+  // 渲染 tags 下拉列表
+  function renderTagsDropdown() {
+    console.log('[Popup] renderTagsDropdown 开始执行, allTags:', allTags)
+    console.log('[Popup] tagsDropdown 元素:', tagsDropdown)
+    
+    tagsDropdown.innerHTML = ''
+    allTags.forEach(tag => {
+      const tagItem = document.createElement('div')
+      tagItem.className = 'tag-item'
+      tagItem.textContent = tag
+      tagItem.addEventListener('click', () => toggleTag(tag))
+      tagsDropdown.appendChild(tagItem)
+    })
+    console.log('[Popup] 渲染了', allTags.length, '个标签')
+    console.log('[Popup] tagsDropdown.innerHTML:', tagsDropdown.innerHTML)
+    updateTagStyles()
+  }
+
+  // 获取当前输入的标签列表
+  function getCurrentTags() {
+    return tagsInput.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t)
+  }
+
+  // 检查标签是否已添加
+  function isTagAdded(tag) {
+    return getCurrentTags().includes(tag)
+  }
+
+  // 添加或移除标签
+  function toggleTag(tag) {
+    console.log('[Popup] toggleTag 被调用, tag:', tag)
+    const tags = getCurrentTags()
+    const index = tags.indexOf(tag)
+
+    if (index > -1) {
+      // 如果标签已存在，则移除
+      console.log('[Popup] 移除标签:', tag)
+      tags.splice(index, 1)
+    } else {
+      // 如果标签不存在，则添加
+      console.log('[Popup] 添加标签:', tag)
+      tags.push(tag)
+    }
+
+    tagsInput.value = tags.join(', ')
+    console.log('[Popup] 更新后的 tagsInput.value:', tagsInput.value)
+    updateTagStyles()
+  }
+
+  // 更新标签样式
+  function updateTagStyles() {
+    console.log('[Popup] updateTagStyles 被调用')
+    const tagItems = tagsDropdown.querySelectorAll('.tag-item')
+    console.log('[Popup] 找到', tagItems.length, '个标签项')
+    tagItems.forEach(item => {
+      const isAdded = isTagAdded(item.textContent)
+      console.log('[Popup] 标签:', item.textContent, '是否已添加:', isAdded)
+      if (isAdded) {
+        item.classList.add('tag-added')
+      } else {
+        item.classList.remove('tag-added')
+      }
+    })
+  }
+
+  // 监听 tags 输入框变化
+  tagsInput.addEventListener('input', () => {
+    updateTagStyles()
+  })
+
+  // 监听 tags 输入框焦点
+  tagsInput.addEventListener('focus', () => {
+    console.log('[Popup] tagsInput 获得焦点')
+  })
+
+  // 点击外部关闭 tags 下拉列表（已禁用，始终显示）
+  // document.addEventListener('click', (e) => {
+  //   if (!e.target.closest('.tags-input-container')) {
+  //     tagsDropdown.style.display = 'none'
+  //   }
+  // })
+
+  // 初始化：获取所有标签
+  fetchAllTags()
 
   // ========== URL 输入框实时检查 ==========
   let urlCheckTimeout = null
@@ -61,6 +177,11 @@ document.addEventListener('DOMContentLoaded', function () {
       })
 
       console.log('[Popup] ✅ 收到响应:', checkResponse)
+      console.log('[Popup] checkResponse.result:', checkResponse.result)
+      if (checkResponse.result && checkResponse.result.website) {
+        console.log('[Popup] checkResponse.result.website:', checkResponse.result.website)
+        console.log('[Popup] checkResponse.result.website.tags:', checkResponse.result.website.tags)
+      }
 
       if (
         checkResponse &&
@@ -71,6 +192,19 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('[Popup] 🔴 URL 已存在:', url, 'ID:', checkResponse.result.websiteId)
         urlExistsMessage.style.display = 'block'
         urlInput.classList.add('url-exists')
+        
+        // 获取完整的网站信息并填充表单
+        if (checkResponse.result.website) {
+          const website = checkResponse.result.website
+          console.log('[Popup] 获取到网站信息:', website)
+          
+          // 填充 tags
+          if (website.tags && Array.isArray(website.tags) && website.tags.length > 0) {
+            tagsInput.value = website.tags.join(', ')
+            console.log('[Popup] 填充 tags:', tagsInput.value)
+            updateTagStyles()
+          }
+        }
       } else {
         console.log('[Popup] 🟢 URL 不存在:', url)
         urlExistsMessage.style.display = 'none'

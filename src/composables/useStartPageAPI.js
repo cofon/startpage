@@ -264,6 +264,20 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
       return checkUrlExists(data.url, allWebsites)
     }
 
+    /**
+     * 获取所有标签
+     */
+    async function getAllTags() {
+      const allWebsites = await db.getAllWebsites()
+      const tagsSet = new Set()
+      allWebsites.forEach(website => {
+        if (website.tags && Array.isArray(website.tags)) {
+          website.tags.forEach(tag => tagsSet.add(tag))
+        }
+      })
+      return Array.from(tagsSet).sort()
+    }
+
     // ========== 暴露全局 API ==========
     window.StartPageAPI = {
       addWebsite,
@@ -276,6 +290,7 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
       normalizeWebsite: normalizeWebsiteAPI,
       generateDefaultIcon: generateDefaultIconAPI,
       checkUrlExists: checkUrlExistsAPI,
+      getAllTags,
     }
 
     // ========== 监听来自 Content Script 的 CustomEvent ==========
@@ -304,7 +319,8 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
             'normalizeWebsite',
             'checkUrlExists',
             'validateWebsite',
-            'generateDefaultIcon'
+            'generateDefaultIcon',
+            'getAllTags'
           ])
 
           // 验证 action 或 method
@@ -343,6 +359,8 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
             result = await validateWebsiteAPI(data)
           } else if (method === 'checkUrlExists') {
             result = await checkUrlExistsAPI(data)
+          } else if (method === 'getAllTags') {
+            result = await getAllTags()
           } else {
             throw new Error('未知操作：' + (action || method))
           }
