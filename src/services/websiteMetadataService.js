@@ -41,12 +41,12 @@ export function validateWebsite(data) {
 
   // 3. iconData/iconGenerateData至少有一个不为空
   // ========== 修改：更宽松的验证规则 ==========
-  const hasValidIconData = data.iconData && 
+  const hasValidIconData = data.iconData &&
     (data.iconData.startsWith('data:image/') || data.iconData.length > 0)
-  
-  const hasValidIconGenerateData = data.iconGenerateData && 
+
+  const hasValidIconGenerateData = data.iconGenerateData &&
     (data.iconGenerateData.startsWith('data:image/svg') || data.iconGenerateData.length > 0)
-  
+
   // 批量导入时放宽要求，允许后续自动生成
   if (!hasValidIconData && !hasValidIconGenerateData) {
     // 只在 URL 有效时才记录警告（避免输入过程中频繁打印）
@@ -69,7 +69,7 @@ export function validateWebsite(data) {
 export function normalizeWebsiteData(data) {
   console.log('[normalizeWebsiteData] ========== 开始标准化 ==========')
   console.log('[normalizeWebsiteData] 输入数据:', JSON.stringify(data, null, 2))
-  
+
   // 1. 如果 name 为空，从 URL 提取
   if (!data.name && data.url) {
     data.name = extractSiteNameFromUrl(data.url)
@@ -93,10 +93,10 @@ export function normalizeWebsiteData(data) {
   console.log('[normalizeWebsiteData] 是否有 iconData:', !!data.iconData)
   console.log('[normalizeWebsiteData] iconData 是否以 data:image 开头:', data.iconData?.startsWith('data:image'))
   console.log('[normalizeWebsiteData] 是否有 iconGenerateData:', !!data.iconGenerateData)
-  
+
   const needsIconGeneration = (!data.iconData || !data.iconData.startsWith('data:image')) && !data.iconGenerateData
   console.log('[normalizeWebsiteData] 是否需要生成图标:', needsIconGeneration)
-  
+
   if (needsIconGeneration) {
     console.log('[normalizeWebsiteData] 准备生成SVG，当前 name:', data.name)
     if (data.name) {
@@ -120,7 +120,7 @@ export function normalizeWebsiteData(data) {
     createdAt: new Date(),
     updatedAt: new Date()
   })
-  
+
   console.log('[normalizeWebsiteData] 最终结果的 iconGenerateData:', result.iconGenerateData?.substring(0, 100))
   console.log('[normalizeWebsiteData] ========== 标准化完成 ==========')
   return result
@@ -202,9 +202,9 @@ function checkUrlExists(url, allWebsites) {
     console.error('[URLChecker] 网站数组无效')
     return { exists: false }
   }
-  
+
   const existingWebsite = allWebsites.find(w => w.url === url && w.isActive)
-  
+
   if (existingWebsite) {
     console.log('[URLChecker] ✓ URL 已存在，ID:', existingWebsite.id)
     return {

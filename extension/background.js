@@ -94,23 +94,23 @@ async function addWebsite(websiteData) {
 // 批量导入网站
 async function importWebsites(websites) {
   try {
-   console.log('[Background] 📥 开始导入网站，数量:', websites.length)
+    console.log('[Background] 📥 开始导入网站，数量:', websites.length)
 
     // 转发到起始页，调用 window.StartPageAPI.importWebsites
-   const response = await forwardToStartPage({
+    const response = await forwardToStartPage({
       action: 'IMPORT_WEBSITES',
-      data: websites
+      data: websites,
     })
 
-   if (response.success) {
-     console.log('[Background] ✅ 导入成功:', response)
+    if (response.success) {
+      console.log('[Background] ✅ 导入成功:', response)
     } else {
-     console.error('[Background] ❌ 导入失败:', response.error)
+      console.error('[Background] ❌ 导入失败:', response.error)
     }
 
     return response
   } catch (error) {
-   console.error('[Background] 导入失败:', error)
+    console.error('[Background] 导入失败:', error)
     return {
       success: false,
       error: error.message,
@@ -180,59 +180,62 @@ async function getAllWebsites() {
 let bgMessageCounter = 0
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const currentMsgId = ++bgMessageCounter
-  console.log(
-    `[Background] ====== 收到消息 #${currentMsgId} ======`,
-  )
+  console.log(`[Background] ====== 收到消息 #${currentMsgId} ======`)
   console.log('[Background] Action:', message.action)
   console.log('[Background] fromCurrentTab:', message.fromCurrentTab)
   console.log('[Background] url:', message.url)
   console.log('[Background] sender:', sender)
 
   const handleAsync = async () => {
-   switch (message.action) {
+    switch (message.action) {
       case 'addWebsite':
-      console.log(`[Background] #${currentMsgId} 处理 addWebsite`)
+        console.log(`[Background] #${currentMsgId} 处理 addWebsite`)
         return await addWebsite(message.data)
 
       case 'importWebsites':
-      console.log(`[Background] #${currentMsgId} 处理 importWebsites`)
+        console.log(`[Background] #${currentMsgId} 处理 importWebsites`)
         return await importWebsites(message.data)
 
       case 'exportWebsites':
-      console.log(`[Background] #${currentMsgId} 处理 exportWebsites`)
+        console.log(`[Background] #${currentMsgId} 处理 exportWebsites`)
         return await exportWebsites()
 
       // ========== 转发给起始页的消息 ==========
       case 'ADD_WEBSITE':
-    console.log(`[Background] #${currentMsgId} ⚡ 转发 ADD_WEBSITE 到起始页`)
-    console.log('[Background] 数据:', message.data)
+        console.log(`[Background] #${currentMsgId} ⚡ 转发 ADD_WEBSITE 到起始页`)
+        console.log('[Background] 数据:', message.data)
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
       case 'EXPORT_WEBSITES':
-    console.log(`[Background] #${currentMsgId} ⚡ 转发 EXPORT_WEBSITES 到起始页`)
+        console.log(`[Background] #${currentMsgId} ⚡ 转发 EXPORT_WEBSITES 到起始页`)
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
       case 'IMPORT_WEBSITES':
-    console.log(`[Background] #${currentMsgId} 📥 转发 IMPORT_WEBSITES 到起始页`)
-    console.log('[Background] 导入数据:', message.data?.length, '个网站')
+        console.log(`[Background] #${currentMsgId} 📥 转发 IMPORT_WEBSITES 到起始页`)
+        console.log('[Background] 导入数据:', message.data?.length, '个网站')
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
       // ========== 新增：调用 StartPageAPI 通用方法 ==========
       case 'CALL_STARTPAGE_API':
-        console.log(`[Background] #${currentMsgId} ⚡ 处理 CALL_STARTPAGE_API (method: ${message.method})`)
+        console.log(
+          `[Background] #${currentMsgId} ⚡ 处理 CALL_STARTPAGE_API (method: ${message.method})`,
+        )
         try {
           // 所有方法都转发到起始页处理，确保使用统一的业务逻辑
-          
+
           // 1. normalizeWebsite - 标准化网站数据（包含 SVG 图标生成）
           if (message.method === 'normalizeWebsite') {
-            console.log('[Background] 🎨 收到 normalizeWebsite 请求，准备转发到起始页:', message.data)
+            console.log(
+              '[Background] 🎨 收到 normalizeWebsite 请求，准备转发到起始页:',
+              message.data,
+            )
             const response = await forwardToStartPage({
               action: 'CALL_STARTPAGE_API',
               method: 'normalizeWebsite',
-              data: message.data
+              data: message.data,
             })
             console.log('[Background] 收到起始页返回的 normalizeWebsite 结果:', response)
             return response
@@ -244,36 +247,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const response = await forwardToStartPage({
               action: 'CALL_STARTPAGE_API',
               method: 'checkUrlExists',
-              data: message.data
+              data: message.data,
             })
             console.log('[Background] 收到起始页返回的 checkUrlExists 结果:', response)
             return response
           }
-          
+
           // 3. validateWebsite - 验证网站数据
           else if (message.method === 'validateWebsite') {
-            console.log('[Background] ✅ 收到 validateWebsite 请求，准备转发到起始页:', message.data)
+            console.log(
+              '[Background] ✅ 收到 validateWebsite 请求，准备转发到起始页:',
+              message.data,
+            )
             const response = await forwardToStartPage({
               action: 'CALL_STARTPAGE_API',
               method: 'validateWebsite',
-              data: message.data
+              data: message.data,
             })
             console.log('[Background] 收到起始页返回的 validateWebsite 结果:', response)
             return response
           }
-          
+
           // 4. generateDefaultIcon - 生成默认图标
           else if (message.method === 'generateDefaultIcon') {
-            console.log('[Background] 🎨 收到 generateDefaultIcon 请求，准备转发到起始页:', message.data)
+            console.log(
+              '[Background] 🎨 收到 generateDefaultIcon 请求，准备转发到起始页:',
+              message.data,
+            )
             const response = await forwardToStartPage({
               action: 'CALL_STARTPAGE_API',
               method: 'generateDefaultIcon',
-              data: message.data
+              data: message.data,
             })
             console.log('[Background] 收到起始页返回的 generateDefaultIcon 结果:', response)
             return response
           }
-          
+
           // 其他未识别的方法，尝试直接转发
           else {
             console.warn('[Background] ⚠️ 未知方法:', message.method, '尝试直接转发')
@@ -284,22 +293,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           console.error(`[Background] #${currentMsgId} 处理 CALL_STARTPAGE_API 失败:`, error)
           return {
             success: false,
-            error: error.message || 'API 调用失败'
+            error: error.message || 'API 调用失败',
           }
         }
 
       // ========== 获取元数据 ==========
       case 'FETCH_METADATA': {
-    console.log('[Background] 开始处理 FETCH_METADATA 请求')
+        console.log('[Background] 开始处理 FETCH_METADATA 请求')
 
-    if (message.fromCurrentTab) {
-      console.log('[Background] 从当前标签页获取元数据')
+        if (message.fromCurrentTab) {
+          console.log('[Background] 从当前标签页获取元数据')
           return await fetchMetadataFromCurrentTab()
         } else if (message.url) {
-        console.log('[Background] 从 URL 获取元数据:', message.url)
+          console.log('[Background] 从 URL 获取元数据:', message.url)
           return await fetchMetadataFromURL(message.url)
         }
-    console.log('[Background] 无效的请求参数')
+        console.log('[Background] 无效的请求参数')
         return null
       }
 
@@ -309,7 +318,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       default:
-      console.log(`[Background] #${currentMsgId} 未知操作：`, message.action)
+        console.log(`[Background] #${currentMsgId} 未知操作：`, message.action)
         return {
           success: false,
           error: '未知操作：' + message.action,
@@ -319,11 +328,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   handleAsync()
     .then((result) => {
-   console.log(`[Background] #${currentMsgId} ✅ 发送响应:`, message.action, result ? '有数据' : 'null')
+      console.log(
+        `[Background] #${currentMsgId} ✅ 发送响应:`,
+        message.action,
+        result ? '有数据' : 'null',
+      )
       sendResponse(result)
     })
     .catch((err) => {
-   console.error(`[Background] #${currentMsgId} ❌ 处理消息出错:`, err)
+      console.error(`[Background] #${currentMsgId} ❌ 处理消息出错:`, err)
       sendResponse({
         success: false,
         error: err.message || '处理失败',
@@ -342,7 +355,12 @@ async function forwardToStartPage(message) {
 
     // 查找起始页的标签页
     const tabs = await chrome.tabs.query({
-      url: ['file:///*/startpage/dist/index.html', 'http://localhost/*'],
+      url: [
+        'http://localhost/*',
+        'http://localhost:*/*',
+        'file:///*/startpage/dist/index.html',
+        'file:///*/startpage/dist*/index.html',
+      ],
     })
 
     if (tabs.length === 0) {
@@ -372,7 +390,7 @@ async function forwardToStartPage(message) {
       action: message.action || 'StartPageAPI-Call',
       method: message.method,
       data: message.data,
-      requestId: Date.now()
+      requestId: Date.now(),
     }
 
     console.log('[Background] 发送 payload:', payload)
@@ -390,7 +408,10 @@ async function forwardToStartPage(message) {
               console.warn(`[Background] 发送消息失败，第 ${retryCount} 次重试...`)
               setTimeout(sendMessage, 300)
             } else {
-              console.error('[Background] 发送消息失败，已达最大重试次数:', chrome.runtime.lastError.message)
+              console.error(
+                '[Background] 发送消息失败，已达最大重试次数:',
+                chrome.runtime.lastError.message,
+              )
               resolve({
                 success: false,
                 error: '无法连接到起始页，请刷新起始页后重试',
@@ -482,7 +503,7 @@ async function fetchMetadataFromURL(url) {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
@@ -498,13 +519,15 @@ async function fetchMetadataFromURL(url) {
     const title = titleMatch ? titleMatch[1].trim() : ''
 
     // 使用正则表达式提取 description
-    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
-                      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i)
+    const descMatch =
+      html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i)
     const description = descMatch ? descMatch[1].trim() : ''
 
     // 使用正则表达式提取 icon URL
-    const iconLinkMatch = html.match(/<link[^>]*rel=["'](icon|shortcut icon)[^>]*href=["']([^"']*)["'][^>]*>/i) ||
-                          html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](icon|shortcut icon)[^>]*>/i)
+    const iconLinkMatch =
+      html.match(/<link[^>]*rel=["'](icon|shortcut icon)[^>]*href=["']([^"']*)["'][^>]*>/i) ||
+      html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](icon|shortcut icon)[^>]*>/i)
 
     let iconUrl = ''
     if (iconLinkMatch && iconLinkMatch[2]) {
@@ -575,7 +598,22 @@ function extractRootDomain(hostname) {
   if (parts.length < 2) return ''
 
   // 处理常见顶级域名
-  const commonTlds = ['com', 'cn', 'net', 'org', 'edu', 'gov', 'mil', 'int', 'io', 'co', 'jp', 'uk', 'de', 'fr']
+  const commonTlds = [
+    'com',
+    'cn',
+    'net',
+    'org',
+    'edu',
+    'gov',
+    'mil',
+    'int',
+    'io',
+    'co',
+    'jp',
+    'uk',
+    'de',
+    'fr',
+  ]
 
   // 如果倒数第二部分是常见顶级域名，则返回最后两部分
   const secondLastPart = parts[parts.length - 2]
@@ -637,7 +675,10 @@ function normalizeWebsiteData(data) {
 
   // 确保 tags 是数组
   if (typeof normalized.tags === 'string') {
-    normalized.tags = normalized.tags.split(',').map(t => t.trim()).filter(t => t)
+    normalized.tags = normalized.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t)
   } else if (!Array.isArray(normalized.tags)) {
     normalized.tags = []
   }
