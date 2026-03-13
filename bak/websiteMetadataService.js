@@ -11,9 +11,9 @@ import {
   extractSiteNameFromUrl,
   generateDefaultIcon,
   extractRootDomain
-} from '../utils/websiteUtils'
+} from '../utils/website/websiteUtils'
 
-import { createWebsiteObject } from '../utils/websiteNormalizer'
+import { createWebsiteObject } from '../utils/website/websiteNormalizer'
 
 /**
  * 验证网站数据
@@ -192,7 +192,123 @@ export async function batchEnrichMetadata(websites, progressCallback) {
 }
 
 /**
-z * 检查 URL 是否已存在于数据库中
+ * 从插件获取网站元数据
+ * @param {string} url - 网站 URL
+ * @returns {Promise<Object>} 元数据对象 { title, description, iconData }
+ */
+export async function fetchMetadataFromPlugin(url) {
+  console.log('[fetchMetadataFromPlugin] ========== 开始获取元数据 ==========')
+  console.log('[fetchMetadataFromPlugin] URL:', url)
+
+  try {
+    // 检查是否在扩展环境中（通过 content.js）
+    if (typeof window !== 'undefined' && window.chrome && window.chrome.runtime) {
+      // 直接在扩展环境中运行
+      const metadata = await chrome.runtime.sendMessage({
+        action: 'FETCH_METADATA',
+        url: url,
+        fromCurrentTab: false
+      })
+
+      if (metadata) {
+        console.log('[fetchMetadataFromPlugin] ✓ 成功获取元数据')
+        console.log('[fetchMetadataFromPlugin] - title:', metadata.title)
+        console.log('[fetchMetadataFromPlugin] - description:', metadata.description?.substring(0, 50))
+        console.log('[fetchMetadataFromPlugin] - iconData:', metadata.iconData?.substring(0, 50))
+        return metadata
+      } else {
+        console.warn('[fetchMetadataFromPlugin] ⚠️ 未能获取元数据')
+        return null
+      }
+    } else {
+      // 在起始页中运行，通过 content.js 转发
+      console.log('[fetchMetadataFromPlugin] 在起始页中运行，通过 content.js 转发')
+
+      // 创建一个 Promise 来等待响应
+      return new Promise((resolve, reject) => {
+        const requestId = Date.now() + '-' + Math.random()
+
+        // 创建超时定时器
+        const timeoutId = setTimeout(() => {
+          document.removeEventListener('StartPageAPI-MetadataResponse', responseHandler)
+          console.error('[fetchMetadataFromPlugin] ❌ 请求超时')
+          resolve(null)
+        }, 10000)
+
+        // 监听响应事件
+        const responseHandler = (e) => {
+          if (e.detail.requestId === requestId) {
+            clearTimeout(timeoutId)
+            document.removeEventListener('StartPageAPI-MetadataResponse', responseHandler)
+
+            if (e.detail.success && e.detail.result) {
+              console.log('[fetchMetadataFromPlugin] ✓ 成功获取元数据')
+              console.log('[fetchMetadataFromPlugin] - title:', e.detail.result.title)
+              console.log('[fetchMetadataFromPlugin] - description:', e.detail.result.description?.substring(0, 50))
+              console.log('[fetchMetadataFromPlugin] - iconData:', e.detail.result.iconData?.substring(0, 50))
+              resolve(e.detail.result)
+            } else {
+              console.warn('[fetchMetadataFromPlugin] ⚠️ 未能获取元数据')
+              resolve(null)
+            }
+          }
+        }
+
+        // 添加响应监听器
+        document.addEventListener('StartPageAPI-MetadataResponse', responseHandler)
+
+        // 发送请求到 content.js
+        const event = new CustomEvent('StartPageAPI-FetchMetadata', {
+          detail: {
+            url: url,
+            requestId: requestId
+          }
+        })
+
+        console.log('[fetchMetadataFromPlugin] 发送请求到 content.js')
+        document.dispatchEvent(event)
+      })
+    }
+  } catch (error) {
+    console.error('[fetchMetadataFromPlugin] ❌ 获取元数据失败:', error)
+    return null
+  }
+}
+
+/**
+ * 规范化 URL（移除尾部斜杠、统一协议等）
+ * @param {string} url - 原始 URL
+ * @returns {string} 规范化后的 URL
+ */
+function normalizeUrl(url) {
+  if (!url) return ''
+
+  try {
+    // 确保有协议
+    let normalized = url
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized
+    }
+
+    // 创建 URL 对象以解析各个部分
+    const urlObj = new URL(normalized)
+
+    // 移除尾部斜杠
+    let pathname = urlObj.pathname
+    if (pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1)
+    }
+
+    // 重新构建 URL（不包含 hash 和 search）
+    return `${urlObj.protocol}//${urlObj.host}${pathname}`
+  } catch (error) {
+    console.warn('[URLChecker] URL 解析失败:', url, error)
+    return url
+  }
+}
+
+/**
+ * 检查 URL 是否已存在于数据库中
  * @param {string} url - 要检查的 URL
  * @param {Array} allWebsites - 所有网站数组（从数据库查询）
  * @returns {{exists: boolean, websiteId?: number, websiteName?: string}}
@@ -203,17 +319,30 @@ function checkUrlExists(url, allWebsites) {
     return { exists: false }
   }
 
-  const existingWebsite = allWebsites.find(w => w.url === url && w.isActive)
+  // 规范化要检查的 URL
+  const normalizedUrl = normalizeUrl(url)
+  console.log('[URLChecker] 规范化后的 URL:', normalizedUrl)
+
+  // 在所有网站中查找匹配的 URL
+  const existingWebsite = allWebsites.find(w => {
+    if (!w.isActive) return false
+
+    // 规范化数据库中的 URL
+    const normalizedExistingUrl = normalizeUrl(w.url)
+
+    // 比较规范化的 URL
+    return normalizedExistingUrl === normalizedUrl
+  })
 
   if (existingWebsite) {
-    console.log('[URLChecker] ✓ URL 已存在，ID:', existingWebsite.id)
+    console.log('[URLChecker] ✓ URL 已存在，ID:', existingWebsite.id, '原始URL:', url, '数据库URL:', existingWebsite.url)
     return {
       exists: true,
       websiteId: existingWebsite.id,
       websiteName: existingWebsite.name
     }
   } else {
-    console.log('[URLChecker] - URL 不存在')
+    console.log('[URLChecker] - URL 不存在:', normalizedUrl)
     return {
       exists: false
     }

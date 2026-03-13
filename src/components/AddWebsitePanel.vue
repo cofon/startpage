@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
-import websiteMetadataService, { fetchMetadataFromPlugin } from '../services/websiteMetadataService'
+import websiteMetadataService, { fetchMetadataFromPlugin } from '../utils/plugin/websiteMetadataService'
 
 // ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
 

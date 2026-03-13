@@ -4,9 +4,9 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { parseSearchQuery, applyFilters } from '../utils/searchParser'
-import { createWebsiteObject } from '../utils/websiteNormalizer'
-import db from '../utils/indexedDB'
+import { parseSearchQuery, applyFilters } from '../utils/search/searchParser'
+import { createWebsiteObject } from '../utils/website/websiteNormalizer'
+import db from '../utils/database'
 
 export const useWebsiteStore = defineStore('website', () => {
   // 状态

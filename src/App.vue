@@ -4,14 +4,14 @@ import { useWebsiteStore } from './stores/website'
 import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
 import { useNotificationStore } from './stores/notification'
-import db from './utils/indexedDB'
+import db from './utils/database'
 import { defaultWebsites } from './data/defaultWebsites'
-import { normalizeWebsiteForDB } from './utils/websiteNormalizer'
+import { normalizeWebsiteForDB } from './utils/website/websiteNormalizer'
 import {
   handleWebsiteDeleted,
   handleWebsiteRestored,
   handleWebsiteMarkToggled,
-} from './utils/displayModeManager'
+} from './utils/ui/displayModeManager'
 import SearchModule from './components/SearchModule.vue'
 import DisplayModule from './components/DisplayModule.vue'
 import WebsiteDialog from './components/WebsiteDialog.vue'

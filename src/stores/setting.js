@@ -4,7 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import db from '../utils/indexedDB'
+import db from '../utils/database'
 import defaultThemes from '../data/defaultThemes'
 import defaultSearchEngines from '../data/defaultSearchEngines'
 

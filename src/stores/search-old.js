@@ -6,7 +6,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from './website'
 import { useSettingStore } from './setting'
-import { updateDisplayResults, refreshCurrentDisplay } from '../utils/displayModeManager'
+import { updateDisplayResults, refreshCurrentDisplay } from '../utils/ui/displayModeManager'
 
 export const useSearchStore = defineStore('search', () => {
   // Stores

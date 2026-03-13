@@ -25,8 +25,8 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
       { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata },
       { extractRootDomain, generateDefaultIcon }
     ] = await Promise.all([
-      import('../services/websiteMetadataService'),
-      import('../utils/websiteUtils')
+      import('../utils/plugin/websiteMetadataService'),
+      import('../utils/website/websiteUtils')
     ])
     log('依赖模块加载完成')
 

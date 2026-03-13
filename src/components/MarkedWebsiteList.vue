@@ -5,7 +5,7 @@
  */
 import { ref } from 'vue'
 import WebsiteIcon from './WebsiteIcon.vue'
-import { initDragDrop } from '../utils/dragDropManager'
+import { initDragDrop } from '../utils/ui/dragDropManager'
 import { useWebsiteStore } from '../stores/website'
 import { useSearchStore } from '../stores/search'
 

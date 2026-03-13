@@ -1,32 +1,216 @@
-现在项目中的工具函数比较散乱
-
-这两个文件：
-D:\vue\startpage\importData_complete.js
-D:\vue\startpage\importData_new.js
-在项目根目录，不知道什么时候写的，也不知道有没有用到，要看一下
-
-tools目录 是python获取网站信息目录，先不要管它，也不要查看，不理会就行
-
-extension目录 是 插件目录，这个也先不管它
-
-主要精力先放在起始页项目本身
-
-components 是 .vue 文件的目录，没有工具函数，不管它
-
-composables放了两个文件，
-useLayoutMetrics.js 是之前 onMounted 独立出来的文件,
-useStartPageAPI.js 插件的API文件，应该还有一些其他函数，
-要看一下
-
-data 是存放了一些默认的数据，不管它
-
-router只有一个index.js，不管它
-
-services 存放了一个文件,websiteMetadataService.js, 看名字是跟插件有关系，要看一下
-
-stores 看起来是状态管理的目录，应该没有工具函数，不过还是看一下进行确认
-
-utils 看名字就是工具函数的目录，必须看
-
-根据以上文档，查看项目的工具 代码，现在这些文件太过散乱，需要集中管理，
-你先查看代码，看完之后给我一个解决方案，先不要写代码，等我确认之后再修改。
+content.js:13 [Content Script] StartPage Content Script 已加载
+content.js:21 [Content Script] 准备注册消息监听器 undefined
+content.js:21 [Content Script] 首次注册消息监听器 undefined
+useStartPageAPI.js?t=1773392901247:6 [StartPageAPI] 正在加载依赖模块... undefined
+useStartPageAPI.js?t=1773392901247:27   GET http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636 net::ERR_ABORTED 404 (Not Found)
+initStartPageAPI @ useStartPageAPI.js?t=1773392901247:27
+(匿名) @ App.vue:236
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+mount @ runtime-core.esm-bundler.js:4179
+app.mount @ runtime-dom.esm-bundler.js:1826
+(匿名) @ main.js:12
+useStartPageAPI.js?t=1773392901247:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773392901247 net::ERR_ABORTED 404 (Not Found)
+initStartPageAPI @ useStartPageAPI.js?t=1773392901247:27
+(匿名) @ App.vue:236
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+mount @ runtime-core.esm-bundler.js:4179
+app.mount @ runtime-dom.esm-bundler.js:1826
+(匿名) @ main.js:12
+App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
+(匿名) @ App.vue:238
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+mount @ runtime-core.esm-bundler.js:4179
+app.mount @ runtime-dom.esm-bundler.js:1826
+(匿名) @ main.js:12
+useStartPageAPI.js?t=1773393228507:6 [StartPageAPI] 正在加载依赖模块... undefined
+App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
+(匿名) @ App.vue:238
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+context.reload @ runtime-core.esm-bundler.js:4173
+reload @ runtime-core.esm-bundler.js:538
+(匿名) @ runtime-core.esm-bundler.js:565
+(匿名) @ App.vue:267
+(匿名) @ client:66
+(匿名) @ client:218
+(匿名) @ client:196
+queueUpdate @ client:196
+await in queueUpdate
+(匿名) @ client:839
+handleMessage @ client:838
+await in handleMessage
+(匿名) @ client:458
+dequeue @ client:480
+(匿名) @ client:472
+enqueue @ client:466
+(匿名) @ client:458
+onMessage @ client:305
+(匿名) @ client:413
+useStartPageAPI.js?t=1773393228507:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773393228507 net::ERR_ABORTED 500 (Internal Server Error)
+initStartPageAPI @ useStartPageAPI.js?t=1773393228507:27
+(匿名) @ App.vue:236
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+context.reload @ runtime-core.esm-bundler.js:4173
+reload @ runtime-core.esm-bundler.js:538
+(匿名) @ runtime-core.esm-bundler.js:565
+(匿名) @ App.vue:267
+(匿名) @ client:66
+(匿名) @ client:218
+(匿名) @ client:196
+queueUpdate @ client:196
+await in queueUpdate
+(匿名) @ client:839
+handleMessage @ client:838
+await in handleMessage
+(匿名) @ client:458
+dequeue @ client:480
+(匿名) @ client:472
+enqueue @ client:466
+(匿名) @ client:458
+onMessage @ client:305
+(匿名) @ client:413
+useStartPageAPI.js?t=1773393234583:6 [StartPageAPI] 正在加载依赖模块... undefined
+App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
+(匿名) @ App.vue:238
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+context.reload @ runtime-core.esm-bundler.js:4173
+reload @ runtime-core.esm-bundler.js:538
+(匿名) @ runtime-core.esm-bundler.js:565
+(匿名) @ App.vue:267
+(匿名) @ client:66
+(匿名) @ client:218
+(匿名) @ client:196
+queueUpdate @ client:196
+await in queueUpdate
+(匿名) @ client:839
+handleMessage @ client:838
+await in handleMessage
+(匿名) @ client:458
+dequeue @ client:480
+(匿名) @ client:472
+enqueue @ client:466
+(匿名) @ client:458
+onMessage @ client:305
+(匿名) @ client:413
+useStartPageAPI.js?t=1773393234583:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773393234583 net::ERR_ABORTED 500 (Internal Server Error)
+initStartPageAPI @ useStartPageAPI.js?t=1773393234583:27
+(匿名) @ App.vue:236
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+context.reload @ runtime-core.esm-bundler.js:4173
+reload @ runtime-core.esm-bundler.js:538
+(匿名) @ runtime-core.esm-bundler.js:565
+(匿名) @ App.vue:267
+(匿名) @ client:66
+(匿名) @ client:218
+(匿名) @ client:196
+queueUpdate @ client:196
+await in queueUpdate
+(匿名) @ client:839
+handleMessage @ client:838
+await in handleMessage
+(匿名) @ client:458
+dequeue @ client:480
+(匿名) @ client:472
+enqueue @ client:466
+(匿名) @ client:458
+onMessage @ client:305
+(匿名) @ client:413
+useStartPageAPI.js:6 [StartPageAPI] 正在加载依赖模块... undefined
+App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
+(匿名) @ App.vue:238
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+context.reload @ runtime-core.esm-bundler.js:4173
+reload @ runtime-core.esm-bundler.js:538
+(匿名) @ runtime-core.esm-bundler.js:565
+(匿名) @ App.vue:267
+(匿名) @ client:66
+(匿名) @ client:218
+(匿名) @ client:196
+queueUpdate @ client:196
+await in queueUpdate
+(匿名) @ client:839
+handleMessage @ client:838
+await in handleMessage
+(匿名) @ client:458
+dequeue @ client:480
+(匿名) @ client:472
+enqueue @ client:466
+(匿名) @ client:458
+onMessage @ client:305
+(匿名) @ client:413
+useStartPageAPI.js:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773393236371 net::ERR_ABORTED 500 (Internal Server Error)
+initStartPageAPI @ useStartPageAPI.js:27
+(匿名) @ App.vue:236
+await in (匿名)
+(匿名) @ runtime-core.esm-bundler.js:3056
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+render2 @ runtime-core.esm-bundler.js:6732
+context.reload @ runtime-core.esm-bundler.js:4173
+reload @ runtime-core.esm-bundler.js:538
+(匿名) @ runtime-core.esm-bundler.js:565
+(匿名) @ App.vue:267
+(匿名) @ client:66
+(匿名) @ client:218
+(匿名) @ client:196
+queueUpdate @ client:196
+await in queueUpdate
+(匿名) @ client:839
+handleMessage @ client:838
+await in handleMessage
+(匿名) @ client:458
+dequeue @ client:480
+(匿名) @ client:472
+enqueue @ client:466
+(匿名) @ client:458
+onMessage @ client:305
+(匿名) @ client:413
