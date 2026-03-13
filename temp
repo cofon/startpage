@@ -1,31 +1,30 @@
-background.js:183 [Background] ====== 收到消息 #17 ======
-background.js:186 [Background] Action: CALL_STARTPAGE_API
-background.js:187 [Background] fromCurrentTab: undefined
-background.js:188 [Background] url: undefined
-background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:225 [Background] #17 ⚡ 处理 CALL_STARTPAGE_API (method: checkUrlExists)
-background.js:243 [Background] 🔍 收到 checkUrlExists 请求，准备转发到起始页: {url: 'https://www.baidu.com'}
-background.js:341 [Background] 转发消息到起始页: CALL_STARTPAGE_API method: checkUrlExists
-background.js:334 [Background] 返回 true，表示异步响应
-background.js:349  [Background] 未找到起始页标签页
-forwardToStartPage @ background.js:349
-await in forwardToStartPage
-handleAsync @ background.js:244
-(匿名) @ background.js:320
-background.js:249 [Background] 收到起始页返回的 checkUrlExists 结果: {success: false, error: '起始页未打开，请先打开起始页后再试'}
-background.js:322 [Background] #17 ✅ 发送响应: CALL_STARTPAGE_API 有数据
-background.js:183 [Background] ====== 收到消息 #18 ======
-background.js:186 [Background] Action: ADD_WEBSITE
-background.js:187 [Background] fromCurrentTab: undefined
-background.js:188 [Background] url: undefined
-background.js:189 [Background] sender: {id: 'dnkfpjilidlfmhgkkehenkkfccoegfnp', url: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp/popup.html', origin: 'chrome-extension://dnkfpjilidlfmhgkkehenkkfccoegfnp'}
-background.js:207 [Background] #18 ⚡ 转发 ADD_WEBSITE 到起始页
-background.js:208 [Background] 数据: {name: '', title: 'Vite App', url: 'https://www.baidu.com', description: '', tags: Array(0), …}
-background.js:341 [Background] 转发消息到起始页: ADD_WEBSITE method: undefined
-background.js:334 [Background] 返回 true，表示异步响应
-background.js:349  [Background] 未找到起始页标签页
-forwardToStartPage @ background.js:349
-await in forwardToStartPage
-handleAsync @ background.js:210
-(匿名) @ background.js:320
-background.js:322 [Background] #18 ✅ 发送响应: ADD_WEBSITE 有数据
+http://localhost:5173/#/崩了，信息：
+[plugin:vite:import-analysis] Failed to resolve import "./services/websiteMetadataService" from "src/composables/useStartPageAPI.js". Does the file exist?
+D:/vue/startpage/src/composables/useStartPageAPI.js:24:49
+22 |  
+23 |          // ========== 验证数据 ==========
+24 |          const { validateWebsite } = await import('./services/websiteMetadataService')
+   |                                                                          ^
+25 |          const validation = validateWebsite(data)
+
+at TransformPluginContext._formatLog (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:28999:43)
+    at TransformPluginContext.error (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:28996:14)
+    at normalizeUrl (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:27119:18)
+    at async file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:27177:32
+    at async Promise.all (index 0)
+    at async TransformPluginContext.transform (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:27145:4)
+    at async file:///D:/vue/startpage/node_modules/vite-plugin-inspect/dist/shared/vite-plugin-inspect.BzUKaD4x.mjs:403:17
+    at async EnvironmentPluginContainer.transform (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:28797:14)
+    at async loadAndTransform (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:22670:26)
+    at async viteTransformMiddleware (file:///D:/vue/startpage/node_modules/vite/dist/node/chunks/config.js:24542:20)
+
+    Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.
+
+
+
+浏览器控制台报错：
+App.vue:31   GET http://localhost:5173/src/composables/useStartPageAPI.js net::ERR_ABORTED 500 (Internal Server Error)
+content.js:12 [Content Script] StartPage Content Script 已加载
+content.js:64 [Content Script] 准备注册消息监听器
+content.js:69 [Content Script] 首次注册消息监听器
