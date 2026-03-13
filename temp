@@ -1,216 +1,142 @@
+插件面板点击保存提示：✗ 添加失败：checkUrlExists is not a function
+
+浏览器控制台打印信息：
 content.js:13 [Content Script] StartPage Content Script 已加载
 content.js:21 [Content Script] 准备注册消息监听器 undefined
 content.js:21 [Content Script] 首次注册消息监听器 undefined
-useStartPageAPI.js?t=1773392901247:6 [StartPageAPI] 正在加载依赖模块... undefined
-useStartPageAPI.js?t=1773392901247:27   GET http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636 net::ERR_ABORTED 404 (Not Found)
-initStartPageAPI @ useStartPageAPI.js?t=1773392901247:27
-(匿名) @ App.vue:236
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-mount @ runtime-core.esm-bundler.js:4179
-app.mount @ runtime-dom.esm-bundler.js:1826
-(匿名) @ main.js:12
-useStartPageAPI.js?t=1773392901247:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773392901247 net::ERR_ABORTED 404 (Not Found)
-initStartPageAPI @ useStartPageAPI.js?t=1773392901247:27
-(匿名) @ App.vue:236
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-mount @ runtime-core.esm-bundler.js:4179
-app.mount @ runtime-dom.esm-bundler.js:1826
-(匿名) @ main.js:12
-App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
-(匿名) @ App.vue:238
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-mount @ runtime-core.esm-bundler.js:4179
-app.mount @ runtime-dom.esm-bundler.js:1826
-(匿名) @ main.js:12
-useStartPageAPI.js?t=1773393228507:6 [StartPageAPI] 正在加载依赖模块... undefined
-App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
-(匿名) @ App.vue:238
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-context.reload @ runtime-core.esm-bundler.js:4173
-reload @ runtime-core.esm-bundler.js:538
-(匿名) @ runtime-core.esm-bundler.js:565
-(匿名) @ App.vue:267
-(匿名) @ client:66
-(匿名) @ client:218
-(匿名) @ client:196
-queueUpdate @ client:196
-await in queueUpdate
-(匿名) @ client:839
-handleMessage @ client:838
-await in handleMessage
-(匿名) @ client:458
-dequeue @ client:480
-(匿名) @ client:472
-enqueue @ client:466
-(匿名) @ client:458
-onMessage @ client:305
-(匿名) @ client:413
-useStartPageAPI.js?t=1773393228507:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773393228507 net::ERR_ABORTED 500 (Internal Server Error)
-initStartPageAPI @ useStartPageAPI.js?t=1773393228507:27
-(匿名) @ App.vue:236
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-context.reload @ runtime-core.esm-bundler.js:4173
-reload @ runtime-core.esm-bundler.js:538
-(匿名) @ runtime-core.esm-bundler.js:565
-(匿名) @ App.vue:267
-(匿名) @ client:66
-(匿名) @ client:218
-(匿名) @ client:196
-queueUpdate @ client:196
-await in queueUpdate
-(匿名) @ client:839
-handleMessage @ client:838
-await in handleMessage
-(匿名) @ client:458
-dequeue @ client:480
-(匿名) @ client:472
-enqueue @ client:466
-(匿名) @ client:458
-onMessage @ client:305
-(匿名) @ client:413
-useStartPageAPI.js?t=1773393234583:6 [StartPageAPI] 正在加载依赖模块... undefined
-App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
-(匿名) @ App.vue:238
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-context.reload @ runtime-core.esm-bundler.js:4173
-reload @ runtime-core.esm-bundler.js:538
-(匿名) @ runtime-core.esm-bundler.js:565
-(匿名) @ App.vue:267
-(匿名) @ client:66
-(匿名) @ client:218
-(匿名) @ client:196
-queueUpdate @ client:196
-await in queueUpdate
-(匿名) @ client:839
-handleMessage @ client:838
-await in handleMessage
-(匿名) @ client:458
-dequeue @ client:480
-(匿名) @ client:472
-enqueue @ client:466
-(匿名) @ client:458
-onMessage @ client:305
-(匿名) @ client:413
-useStartPageAPI.js?t=1773393234583:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773393234583 net::ERR_ABORTED 500 (Internal Server Error)
-initStartPageAPI @ useStartPageAPI.js?t=1773393234583:27
-(匿名) @ App.vue:236
-await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-context.reload @ runtime-core.esm-bundler.js:4173
-reload @ runtime-core.esm-bundler.js:538
-(匿名) @ runtime-core.esm-bundler.js:565
-(匿名) @ App.vue:267
-(匿名) @ client:66
-(匿名) @ client:218
-(匿名) @ client:196
-queueUpdate @ client:196
-await in queueUpdate
-(匿名) @ client:839
-handleMessage @ client:838
-await in handleMessage
-(匿名) @ client:458
-dequeue @ client:480
-(匿名) @ client:472
-enqueue @ client:466
-(匿名) @ client:458
-onMessage @ client:305
-(匿名) @ client:413
 useStartPageAPI.js:6 [StartPageAPI] 正在加载依赖模块... undefined
-App.vue:238  初始化应用失败: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/src/utils/websiteUtils.js?t=1773392847636
-(匿名) @ App.vue:238
+useStartPageAPI.js:6 [StartPageAPI] 依赖模块加载完成 undefined
+useStartPageAPI.js:6 [StartPageAPI] 准备设置 window.StartPageAPI undefined
+useStartPageAPI.js:285 [App.vue] 注册 StartPageAPI-Call 监听器
+useStartPageAPI.js:375 [StartPageAPI] 全局 API 已就绪，CustomEvent 监听器已添加
+content.js:21 [Content Script] ====== 收到消息 #0 ====== {action: 'CALL_STARTPAGE_API', requestId: 1773393778753, sender: 'dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:21 [Content Script] 🎯 处理 CALL_STARTPAGE_API {requestId: 1773393778753, method: 'checkUrlExists'}
+content.js:21 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773393778755-0.15064647141269782'}
+useStartPageAPI.js:6 [StartPageAPI] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773393778755-0.15064647141269782'}
+content.js:21 [Content Script] ====== 收到消息 #0 ====== {action: 'CALL_STARTPAGE_API', requestId: 1773393778754, sender: 'dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:21 [Content Script] 🎯 处理 CALL_STARTPAGE_API {requestId: 1773393778754, method: 'normalizeWebsite'}
+content.js:21 [Content Script] 发送事件到页面: {action: null, method: 'normalizeWebsite', data: {…}, requestId: '1773393778758-0.9995341685154174'}
+useStartPageAPI.js:6 [StartPageAPI] 收到 StartPageAPI-Call 事件: {action: null, method: 'normalizeWebsite', data: {…}, requestId: '1773393778758-0.9995341685154174'}
+websiteMetadataService.js:70 [normalizeWebsiteData] ========== 开始标准化 ==========
+websiteMetadataService.js:71 [normalizeWebsiteData] 输入数据: {
+  "url": "https://www.zhihu.com/"
+}
+websiteMetadataService.js:76 [normalizeWebsiteData] 从 URL 提取名称: zhihu
+websiteMetadataService.js:90 [normalizeWebsiteData] 检查图标数据...
+websiteMetadataService.js:91 [normalizeWebsiteData] data.iconData: undefined
+websiteMetadataService.js:92 [normalizeWebsiteData] data.iconGenerateData: undefined
+websiteMetadataService.js:93 [normalizeWebsiteData] 是否有 iconData: false
+websiteMetadataService.js:94 [normalizeWebsiteData] iconData 是否以 data:image 开头: undefined
+websiteMetadataService.js:95 [normalizeWebsiteData] 是否有 iconGenerateData: false
+websiteMetadataService.js:98 [normalizeWebsiteData] 是否需要生成图标: true
+websiteMetadataService.js:101 [normalizeWebsiteData] 准备生成SVG，当前 name: zhihu
+websiteMetadataService.js:103 [normalizeWebsiteData] 调用 generateDefaultIcon(" zhihu ")
+websiteMetadataService.js:105 [normalizeWebsiteData] generateDefaultIcon 返回的 SVG: 
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+      <rect width="48" height="48"
+websiteMetadataService.js:107 [normalizeWebsiteData] ✓ 已生成SVG图标
+websiteMetadataService.js:108 [normalizeWebsiteData] 编码后的 SVG 前 100 字符: data:image/svg+xml;base64,CiAgICA8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMC
+websiteMetadataService.js:124 [normalizeWebsiteData] 最终结果的 iconGenerateData: data:image/svg+xml;base64,CiAgICA8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMC
+websiteMetadataService.js:125 [normalizeWebsiteData] ========== 标准化完成 ==========
+useStartPageAPI.js:358 [Content Script] 收到页面响应: {requestId: '1773393778758-0.9995341685154174', success: true, result: {…}}
+useStartPageAPI.js:6 [StartPageAPI] 已发送响应事件 undefined
+content.js:21 [Content Script] ✅ API 调用成功 {requestId: 1773393778754}
+content.js:21 [Content Script] 🔓 处理完成 {requestId: 1773393778754}
+useStartPageAPI.js:10  [StartPageAPI] 处理请求失败: TypeError: checkUrlExists is not a function
+    at checkUrlExistsAPI (useStartPageAPI.js:264:14)
+    at async HTMLDocument.<anonymous> (useStartPageAPI.js:345:22)
+logError @ useStartPageAPI.js:10
+(匿名) @ useStartPageAPI.js:361
 await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-context.reload @ runtime-core.esm-bundler.js:4173
-reload @ runtime-core.esm-bundler.js:538
-(匿名) @ runtime-core.esm-bundler.js:565
-(匿名) @ App.vue:267
-(匿名) @ client:66
-(匿名) @ client:218
-(匿名) @ client:196
-queueUpdate @ client:196
-await in queueUpdate
-(匿名) @ client:839
-handleMessage @ client:838
-await in handleMessage
-(匿名) @ client:458
-dequeue @ client:480
-(匿名) @ client:472
-enqueue @ client:466
-(匿名) @ client:458
-onMessage @ client:305
-(匿名) @ client:413
-useStartPageAPI.js:27   GET http://localhost:5173/src/services/websiteMetadataService.js?t=1773393236371 net::ERR_ABORTED 500 (Internal Server Error)
-initStartPageAPI @ useStartPageAPI.js:27
-(匿名) @ App.vue:236
+(匿名) @ content.js:80
+callStartPageAPI @ content.js:34
+(匿名) @ content.js:218
+useStartPageAPI.js:371 [Content Script] 收到页面响应: {requestId: '1773393778755-0.15064647141269782', success: false, error: 'checkUrlExists is not a function'}
+content.js:25  [Content Script] ❌ API 调用失败 {requestId: 1773393778753, error: 'checkUrlExists is not a function'}
+logError @ content.js:25
+(匿名) @ content.js:224
+Promise.catch
+(匿名) @ content.js:223
+content.js:21 [Content Script] 🔓 处理完成 {requestId: 1773393778753}
+content.js:21 [Content Script] ====== 收到消息 #0 ====== {action: 'CALL_STARTPAGE_API', requestId: 1773393786117, sender: 'dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:21 [Content Script] 🎯 处理 CALL_STARTPAGE_API {requestId: 1773393786117, method: 'checkUrlExists'}
+content.js:21 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773393786118-0.2585992323633347'}
+useStartPageAPI.js:6 [StartPageAPI] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773393786118-0.2585992323633347'}
+useStartPageAPI.js:10  [StartPageAPI] 处理请求失败: TypeError: checkUrlExists is not a function
+    at checkUrlExistsAPI (useStartPageAPI.js:264:14)
+    at async HTMLDocument.<anonymous> (useStartPageAPI.js:345:22)
+logError @ useStartPageAPI.js:10
+(匿名) @ useStartPageAPI.js:361
 await in (匿名)
-(匿名) @ runtime-core.esm-bundler.js:3056
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:3036
-flushPostFlushCbs @ runtime-core.esm-bundler.js:385
-render2 @ runtime-core.esm-bundler.js:6732
-context.reload @ runtime-core.esm-bundler.js:4173
-reload @ runtime-core.esm-bundler.js:538
-(匿名) @ runtime-core.esm-bundler.js:565
-(匿名) @ App.vue:267
-(匿名) @ client:66
-(匿名) @ client:218
-(匿名) @ client:196
-queueUpdate @ client:196
-await in queueUpdate
-(匿名) @ client:839
-handleMessage @ client:838
-await in handleMessage
-(匿名) @ client:458
-dequeue @ client:480
-(匿名) @ client:472
-enqueue @ client:466
-(匿名) @ client:458
-onMessage @ client:305
-(匿名) @ client:413
+(匿名) @ content.js:80
+callStartPageAPI @ content.js:34
+(匿名) @ content.js:218
+useStartPageAPI.js:371 [Content Script] 收到页面响应: {requestId: '1773393786118-0.2585992323633347', success: false, error: 'checkUrlExists is not a function'}
+content.js:25  [Content Script] ❌ API 调用失败 {requestId: 1773393786117, error: 'checkUrlExists is not a function'}
+logError @ content.js:25
+(匿名) @ content.js:224
+Promise.catch
+(匿名) @ content.js:223
+content.js:21 [Content Script] 🔓 处理完成 {requestId: 1773393786117}
+content.js:21 [Content Script] ====== 收到消息 #0 ====== {action: 'ADD_WEBSITE', requestId: 1773393786124, sender: 'dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:21 [Content Script] 🎯 开始处理 ADD_WEBSITE {requestId: 1773393786124, data: {…}}
+content.js:21 [Content Script] 发送事件到页面: {action: 'addWebsite', method: null, data: {…}, requestId: '1773393786125-0.10653172233351593'}
+useStartPageAPI.js:6 [StartPageAPI] 收到 StartPageAPI-Call 事件: {action: 'addWebsite', method: null, data: {…}, requestId: '1773393786125-0.10653172233351593'}
+useStartPageAPI.js:6 [StartPageAPI] 添加网站: {name: 'zhihu', title: '(61 封私信 / 26 条消息) 首页 - 知乎', url: 'https://www.zhihu.com/', description: '知乎，中文互联网高质量的问答社区和创作者聚集的原创内容平台，于 2011 年 1 月正式上线，以「让…领域具有关键影响力的知识分享社区和创作者聚集的原创内容平台，建立起了以社区驱动的内容变现商业模式。', tags: Array(0), …}
+useStartPageAPI.js:10  [StartPageAPI] 处理请求失败: TypeError: checkUrlExists is not a function
+    at addWebsite (useStartPageAPI.js:66:30)
+    at async HTMLDocument.<anonymous> (useStartPageAPI.js:327:22)
+logError @ useStartPageAPI.js:10
+(匿名) @ useStartPageAPI.js:361
+await in (匿名)
+(匿名) @ content.js:80
+callStartPageAPI @ content.js:34
+(匿名) @ content.js:120
+useStartPageAPI.js:371 [Content Script] 收到页面响应: {requestId: '1773393786125-0.10653172233351593', success: false, error: 'checkUrlExists is not a function'}
+content.js:25  [Content Script] ❌ 添加失败 {requestId: 1773393786124, error: 'checkUrlExists is not a function'}
+logError @ content.js:25
+(匿名) @ content.js:126
+Promise.catch
+(匿名) @ content.js:125
+content.js:21 [Content Script] 🔓 处理完成 {requestId: 1773393786124}
+content.js:21 [Content Script] ====== 收到消息 #0 ====== {action: 'CALL_STARTPAGE_API', requestId: 1773393792709, sender: 'dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:21 [Content Script] 🎯 处理 CALL_STARTPAGE_API {requestId: 1773393792709, method: 'checkUrlExists'}
+content.js:21 [Content Script] 发送事件到页面: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773393792710-0.42563338793774597'}
+useStartPageAPI.js:6 [StartPageAPI] 收到 StartPageAPI-Call 事件: {action: null, method: 'checkUrlExists', data: {…}, requestId: '1773393792710-0.42563338793774597'}
+useStartPageAPI.js:10  [StartPageAPI] 处理请求失败: TypeError: checkUrlExists is not a function
+    at checkUrlExistsAPI (useStartPageAPI.js:264:14)
+    at async HTMLDocument.<anonymous> (useStartPageAPI.js:345:22)
+logError @ useStartPageAPI.js:10
+(匿名) @ useStartPageAPI.js:361
+await in (匿名)
+(匿名) @ content.js:80
+callStartPageAPI @ content.js:34
+(匿名) @ content.js:218
+useStartPageAPI.js:371 [Content Script] 收到页面响应: {requestId: '1773393792710-0.42563338793774597', success: false, error: 'checkUrlExists is not a function'}
+content.js:25  [Content Script] ❌ API 调用失败 {requestId: 1773393792709, error: 'checkUrlExists is not a function'}
+logError @ content.js:25
+(匿名) @ content.js:224
+Promise.catch
+(匿名) @ content.js:223
+content.js:21 [Content Script] 🔓 处理完成 {requestId: 1773393792709}
+content.js:21 [Content Script] ====== 收到消息 #0 ====== {action: 'ADD_WEBSITE', requestId: 1773393792715, sender: 'dnkfpjilidlfmhgkkehenkkfccoegfnp'}
+content.js:21 [Content Script] 🎯 开始处理 ADD_WEBSITE {requestId: 1773393792715, data: {…}}
+content.js:21 [Content Script] 发送事件到页面: {action: 'addWebsite', method: null, data: {…}, requestId: '1773393792716-0.4697772518572094'}
+useStartPageAPI.js:6 [StartPageAPI] 收到 StartPageAPI-Call 事件: {action: 'addWebsite', method: null, data: {…}, requestId: '1773393792716-0.4697772518572094'}
+useStartPageAPI.js:6 [StartPageAPI] 添加网站: {name: 'zhihu', title: '(61 封私信 / 26 条消息) 首页 - 知乎', url: 'https://www.zhihu.com/', description: '知乎，中文互联网高质量的问答社区和创作者聚集的原创内容平台，于 2011 年 1 月正式上线，以「让…领域具有关键影响力的知识分享社区和创作者聚集的原创内容平台，建立起了以社区驱动的内容变现商业模式。', tags: Array(0), …}
+useStartPageAPI.js:10  [StartPageAPI] 处理请求失败: TypeError: checkUrlExists is not a function
+    at addWebsite (useStartPageAPI.js:66:30)
+    at async HTMLDocument.<anonymous> (useStartPageAPI.js:327:22)
+logError @ useStartPageAPI.js:10
+(匿名) @ useStartPageAPI.js:361
+await in (匿名)
+(匿名) @ content.js:80
+callStartPageAPI @ content.js:34
+(匿名) @ content.js:120
+useStartPageAPI.js:371 [Content Script] 收到页面响应: {requestId: '1773393792716-0.4697772518572094', success: false, error: 'checkUrlExists is not a function'}
+content.js:25  [Content Script] ❌ 添加失败 {requestId: 1773393792715, error: 'checkUrlExists is not a function'}
+logError @ content.js:25
+(匿名) @ content.js:126
+Promise.catch
+(匿名) @ content.js:125
+content.js:21 [Content Script] 🔓 处理完成 {requestId: 1773393792715}

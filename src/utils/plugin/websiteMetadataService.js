@@ -313,7 +313,7 @@ function normalizeUrl(url) {
  * @param {Array} allWebsites - 所有网站数组（从数据库查询）
  * @returns {{exists: boolean, websiteId?: number, websiteName?: string}}
  */
-function checkUrlExists(url, allWebsites) {
+export function checkUrlExists(url, allWebsites) {
   if (!allWebsites || !Array.isArray(allWebsites)) {
     console.error('[URLChecker] 网站数组无效')
     return { exists: false }
