@@ -496,9 +496,6 @@ async function fetchMetadataFromURL(url) {
   try {
     console.log('[Background] 从 URL 获取元数据:', url)
 
-    // 方案：注入脚本到目标页面进行解析（需要目标页面可访问）
-    // 但由于跨域限制，我们改用正则表达式解析 HTML
-
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -512,32 +509,121 @@ async function fetchMetadataFromURL(url) {
     })
 
     const html = await response.text()
+    console.log('[Background] HTML 长度:', html.length)
 
-    // 使用正则表达式提取 title
-    const titleMatch = html.match(/<title>([^<]*)<\/title>/i)
-    const title = titleMatch ? titleMatch[1].trim() : ''
+    // ========== 改进的 title 提取逻辑 ==========
+    let title = ''
 
-    // 使用正则表达式提取 description
-    const descMatch =
-      html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
-      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i)
-    const description = descMatch ? descMatch[1].trim() : ''
+    // 方法 1: 从 <title> 标签获取（支持属性和换行）
+    const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
+    if (titleMatch) {
+      title = titleMatch[1].trim()
+      console.log('[Background] 从 <title> 标签获取 title:', title)
+    }
 
-    // 使用正则表达式提取 icon URL
-    const iconLinkMatch =
-      html.match(/<link[^>]*rel=["'](icon|shortcut icon)[^>]*href=["']([^"']*)["'][^>]*>/i) ||
-      html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](icon|shortcut icon)[^>]*>/i)
+    // 方法 2: 如果 title 为空，从 og:title meta 标签获取
+    if (!title) {
+      const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                           html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:title["'][^>]*>/i)
+      if (ogTitleMatch) {
+        title = ogTitleMatch[1].trim()
+        console.log('[Background] 从 og:title 获取 title:', title)
+      }
+    }
 
+    // 方法 3: 如果 title 仍为空，从 twitter:title meta 标签获取
+    if (!title) {
+      const twitterTitleMatch = html.match(/<meta[^>]*name=["']twitter:title["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                                html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']twitter:title["'][^>]*>/i)
+      if (twitterTitleMatch) {
+        title = twitterTitleMatch[1].trim()
+        console.log('[Background] 从 twitter:title 获取 title:', title)
+      }
+    }
+
+    // 方法 4: 如果 title 仍为空，从 URL 提取
+    if (!title) {
+      try {
+        const urlObj = new URL(url)
+        title = urlObj.hostname.replace('www.', '')
+        console.log('[Background] 从 URL 提取 title:', title)
+      } catch (e) {
+        console.warn('[Background] 从 URL 提取 title 失败:', e)
+      }
+    }
+
+    // ========== 改进的 description 提取逻辑 ==========
+    let description = ''
+
+    // 方法 1: 从 name="description" meta 标签获取
+    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i)
+    if (descMatch) {
+      description = descMatch[1].trim()
+      console.log('[Background] 从 description meta 标签获取 description')
+    }
+
+    // 方法 2: 如果 description 为空，从 og:description meta 标签获取
+    if (!description) {
+      const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                          html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:description["'][^>]*>/i)
+      if (ogDescMatch) {
+        description = ogDescMatch[1].trim()
+        console.log('[Background] 从 og:description 获取 description')
+      }
+    }
+
+    // 方法 3: 如果 description 仍为空，从 twitter:description meta 标签获取
+    if (!description) {
+      const twitterDescMatch = html.match(/<meta[^>]*name=["']twitter:description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                               html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']twitter:description["'][^>]*>/i)
+      if (twitterDescMatch) {
+        description = twitterDescMatch[1].trim()
+        console.log('[Background] 从 twitter:description 获取 description')
+      }
+    }
+
+    // ========== 改进的 icon 提取逻辑 ==========
     let iconUrl = ''
-    if (iconLinkMatch && iconLinkMatch[2]) {
-      iconUrl = new URL(iconLinkMatch[2], url).href
-    } else {
-      // 回退到根路径
+
+    // 方法 1: 从 rel="icon" link 标签获取
+    const iconMatch = html.match(/<link[^>]*rel=["']icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                      html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']icon["'][^>]*>/i)
+    if (iconMatch) {
+      iconUrl = new URL(iconMatch[1], url).href
+      console.log('[Background] 从 rel="icon" 获取 icon:', iconUrl)
+    }
+
+    // 方法 2: 如果 iconUrl 为空，从 rel="shortcut icon" link 标签获取
+    if (!iconUrl) {
+      const shortcutIconMatch = html.match(/<link[^>]*rel=["']shortcut icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                                html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']shortcut icon["'][^>]*>/i)
+      if (shortcutIconMatch) {
+        iconUrl = new URL(shortcutIconMatch[1], url).href
+        console.log('[Background] 从 rel="shortcut icon" 获取 icon:', iconUrl)
+      }
+    }
+
+    // 方法 3: 如果 iconUrl 仍为空，从 rel="apple-touch-icon" link 标签获取
+    if (!iconUrl) {
+      const appleIconMatch = html.match(/<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                             html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']apple-touch-icon["'][^>]*>/i)
+      if (appleIconMatch) {
+        iconUrl = new URL(appleIconMatch[1], url).href
+        console.log('[Background] 从 rel="apple-touch-icon" 获取 icon:', iconUrl)
+      }
+    }
+
+    // 方法 4: 如果 iconUrl 仍为空，回退到 /favicon.ico
+    if (!iconUrl) {
       iconUrl = new URL('/favicon.ico', url).href
+      console.log('[Background] 使用默认 /favicon.ico:', iconUrl)
     }
 
     // 获取图标数据
     const iconData = await fetchIconAsBase64(iconUrl)
+
+    console.log('[Background] 最终结果:', { title, description, iconUrl, hasIconData: !!iconData })
 
     return {
       title,

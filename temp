@@ -1,0 +1,32 @@
+现在项目中的工具函数比较散乱
+
+这两个文件：
+D:\vue\startpage\importData_complete.js
+D:\vue\startpage\importData_new.js
+在项目根目录，不知道什么时候写的，也不知道有没有用到，要看一下
+
+tools目录 是python获取网站信息目录，先不要管它，也不要查看，不理会就行
+
+extension目录 是 插件目录，这个也先不管它
+
+主要精力先放在起始页项目本身
+
+components 是 .vue 文件的目录，没有工具函数，不管它
+
+composables放了两个文件，
+useLayoutMetrics.js 是之前 onMounted 独立出来的文件,
+useStartPageAPI.js 插件的API文件，应该还有一些其他函数，
+要看一下
+
+data 是存放了一些默认的数据，不管它
+
+router只有一个index.js，不管它
+
+services 存放了一个文件,websiteMetadataService.js, 看名字是跟插件有关系，要看一下
+
+stores 看起来是状态管理的目录，应该没有工具函数，不过还是看一下进行确认
+
+utils 看名字就是工具函数的目录，必须看
+
+根据以上文档，查看项目的工具 代码，现在这些文件太过散乱，需要集中管理，
+你先查看代码，看完之后给我一个解决方案，先不要写代码，等我确认之后再修改。
