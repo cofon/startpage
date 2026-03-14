@@ -148,7 +148,7 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
 
           // 如果缺少 title、description 或 iconData，尝试从插件获取
           if (!normalizedData.title || !normalizedData.description || !normalizedData.iconData) {
-            log(`尝试从插件获取元数据: ${normalizedData.url}`)
+            log(`尝试从插件获取元数据：${normalizedData.url}`)
             try {
               const metadata = await fetchMetadataFromPlugin(normalizedData.url)
               if (metadata) {
@@ -164,9 +164,35 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
                 }
                 log(`插件返回的元数据:`, metadata)
                 log(`补全后的数据 (${i + 1}):`, normalizedData)
+              } else {
+                // 获取失败：添加 meta_failed 标签
+                logWarn(`⚠️ 无法获取元数据：${normalizedData.url}`)
+                if (!normalizedData.tags) {
+                  normalizedData.tags = []
+                } else if (typeof normalizedData.tags === 'string') {
+                  normalizedData.tags = normalizedData.tags.split(',').map(t => t.trim()).filter(t => t)
+                }
+                
+                if (!normalizedData.tags.includes('meta_failed')) {
+                  normalizedData.tags.push('meta_failed')
+                  log(`✗ 已添加 "meta_failed" 标签到：${normalizedData.url}`)
+                }
               }
             } catch (error) {
-              logWarn(`获取元数据失败 (${normalizedData.url}):`, error.message)
+              // 网络错误、SSL 问题等不处理，只记录日志
+              logWarn(`获取元数据失败 (${normalizedData.url}): ${error.message}`)
+              
+              // 获取失败：添加 meta_failed 标签
+              if (!normalizedData.tags) {
+                normalizedData.tags = []
+              } else if (typeof normalizedData.tags === 'string') {
+                normalizedData.tags = normalizedData.tags.split(',').map(t => t.trim()).filter(t => t)
+              }
+              
+              if (!normalizedData.tags.includes('meta_failed')) {
+                normalizedData.tags.push('meta_failed')
+                log(`✗ 已添加 "meta_failed" 标签到：${normalizedData.url}`)
+              }
             }
           }
 

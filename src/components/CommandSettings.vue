@@ -95,7 +95,7 @@ async function handleImport(event) {
 
           setTimeout(() => {
             window.location.reload()
-          }, 1500)
+          }, 150000000)
         } else {
           // 导入其他数据（设置、主题等）
           console.log('[CommandSettings] 导入其他数据...')

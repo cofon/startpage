@@ -197,21 +197,42 @@ export async function enrichWebsites(websites, config, progressCallback) {
           const needsEnrichment = !website.name || !website.title || !website.description || !website.iconData
 
           if (needsEnrichment) {
+            console.log(`[ImportService] 🔍 尝试获取元数据：${website.url}`)
             const metadata = await fetchMetadataFromPlugin(website.url)
 
             if (metadata) {
-              // 补全所有缺失的字段
+              // ✅ 成功：补全所有缺失的字段
               if (!website.name && metadata.name) {
                 website.name = metadata.name
+                console.log(`[ImportService] ✓ 已补全 name: ${metadata.name}`)
               }
               if (!website.title && metadata.title) {
                 website.title = metadata.title
+                console.log(`[ImportService] ✓ 已补全 title: ${metadata.title}`)
               }
               if (!website.description && metadata.description) {
                 website.description = metadata.description
+                console.log(`[ImportService] ✓ 已补全 description`)
               }
               if (!website.iconData && metadata.iconData) {
                 website.iconData = metadata.iconData
+                console.log(`[ImportService] ✓ 已补全 iconData (长度：${metadata.iconData.length})`)
+              }
+            } else {
+              // ❌ 失败：添加 meta_failed 标签
+              console.warn(`[ImportService] ⚠️ 无法获取元数据：${website.url}`)
+              
+              // 初始化 tags 数组
+              if (!website.tags) {
+                website.tags = []
+              } else if (typeof website.tags === 'string') {
+                website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
+              }
+              
+              // 添加标签（避免重复）
+              if (!website.tags.includes('meta_failed')) {
+                website.tags.push('meta_failed')
+                console.log(`[ImportService] ✗ 已添加 "meta_failed" 标签到：${website.url}`)
               }
             }
           }
