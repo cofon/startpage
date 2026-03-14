@@ -1,0 +1,70 @@
+
+websites表字段：
+    - id: number,              // 自增 ID (主键)
+    - name: string,            // 网站名称
+    - title: string,           // 网站标题（新增）
+    - url: string,             // 网站链接
+    - description: string,     // 网站描述
+    - iconData: string,        // 从网络获取的 icon 的 base64(PNG/ICO/JPG等)
+    - iconGenerateData: string, // 本地生成的 SVG 图标
+    - tags: Array,             // 标签数组 [tag1, tag2, ...]
+    - isMarked: boolean,       // 是否为已标记网站
+    - markOrder: number,       // marked 网站排序 (仅当 isMarked 为 true 时有效)
+    - visitCount: number,      // 访问次数统计
+    - lastVisited: Date,       // 最近访问时间
+    - createdAt: Date,         // 创建时间
+    - updatedAt: Date,         // 更新时间
+    - isActive: boolean,       // 是否激活状态 (正常搜索不显示非激活的网站)
+    - isHidden: boolean        // 是否隐藏状态 (正常搜索不显示隐藏的网站)
+
+添加网站页面可以编辑的字段有：
+    - url
+    - name
+    - title
+    - description
+    - iconData
+    - iconGenerateData
+    - tags
+    - isMarked
+    - isActive
+    - isHidden
+
+提交之前必须有值字段：
+    - url
+
+点击提交按钮时必须有值的字段：
+    - url
+    - name
+    - iconGenerateData
+    - tags
+    - isMarked
+    - isActive
+    - isHidden
+
+可以空值的字段(因为这几个是使用插件从网络获取的，可能获取不到数据，所以可以空值)：
+    - title
+    - description
+    - iconData
+
+程序自动填充字段的依赖关系：
+    - 依赖URL的字段有：name、title、description、iconData、iconGenerateData
+    - 依赖name的字段有：iconGenerateData (使用name第一个字生成SVG)
+
+查看当前起始页 --add 打开的添加网站页面，查看它添加网站和填充字段的逻辑；
+我要修改现有的逻辑，具体方案看 temp 文件；
+修改方案如下：
+- 搜索模块输入框输入 --add，在显示模块显示添加网站页面；
+- 页面UI布局
+    - 【url】【input】【获取meta数据按钮】
+    - 【如果url不合法，则显示提示信息，如果URL合法不显示】
+    - 【name】【input】
+    - 【title】【input】
+    - 【description】【input】
+    - 【img 网站图标的预览图】【input 网络图标的base64字符串】
+    - 【img SVG图标的预览图】【input SVG图标的base64字符串】
+    - 【复选框 默认false】isMarked 【复选框 默认ture】isActive 【复选框 默认false】isHidden
+    - 【tags】【input】
+    - 【tags-list】
+    - 【取消按钮】【提交按钮】
+- 修改后的逻辑
+    - 添加网站页面可以编辑的字段有10个：url、name、title、description、img、tags、isMarked、isActive、isHidden、tags-list

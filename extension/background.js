@@ -91,91 +91,6 @@ async function addWebsite(websiteData) {
   }
 }
 
-// 批量导入网站
-async function importWebsites(websites) {
-  try {
-    console.log('[Background] 📥 开始导入网站，数量:', websites.length)
-
-    // 转发到起始页，调用 window.StartPageAPI.importWebsites
-    const response = await forwardToStartPage({
-      action: 'IMPORT_WEBSITES',
-      data: websites,
-    })
-
-    if (response.success) {
-      console.log('[Background] ✅ 导入成功:', response)
-    } else {
-      console.error('[Background] ❌ 导入失败:', response.error)
-    }
-
-    return response
-  } catch (error) {
-    console.error('[Background] 导入失败:', error)
-    return {
-      success: false,
-      error: error.message,
-    }
-  }
-}
-
-// 导出所有网站
-async function exportWebsites() {
-  try {
-    const db = await openDatabase()
-
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORE_WEBSITES], 'readonly')
-      const store = transaction.objectStore(STORE_WEBSITES)
-
-      const request = store.getAll()
-
-      request.onsuccess = () => {
-        resolve({
-          success: true,
-          data: {
-            websites: request.result,
-          },
-          count: request.result.length,
-        })
-      }
-
-      request.onerror = () => {
-        reject(new Error('导出失败：' + request.error.message))
-      }
-    })
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-    }
-  }
-}
-
-// 获取所有网站
-async function getAllWebsites() {
-  try {
-    const db = await openDatabase()
-
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([STORE_WEBSITES], 'readonly')
-      const store = transaction.objectStore(STORE_WEBSITES)
-
-      const request = store.getAll()
-
-      request.onsuccess = () => {
-        resolve(request.result || [])
-      }
-
-      request.onerror = () => {
-        reject(new Error('查询失败：' + request.error.message))
-      }
-    })
-  } catch (error) {
-    console.error('[Background] 查询所有网站失败:', error)
-    return []
-  }
-}
-
 // ========== 统一消息处理器 ==========
 let bgMessageCounter = 0
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -192,14 +107,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(`[Background] #${currentMsgId} 处理 addWebsite`)
         return await addWebsite(message.data)
 
-      case 'importWebsites':
-        console.log(`[Background] #${currentMsgId} 处理 importWebsites`)
-        return await importWebsites(message.data)
-
-      case 'exportWebsites':
-        console.log(`[Background] #${currentMsgId} 处理 exportWebsites`)
-        return await exportWebsites()
-
       // ========== 转发给起始页的消息 ==========
       case 'ADD_WEBSITE':
         console.log(`[Background] #${currentMsgId} ⚡ 转发 ADD_WEBSITE 到起始页`)
@@ -207,19 +114,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 转发到起始页的 content.js
         return await forwardToStartPage(message)
 
-      case 'EXPORT_WEBSITES':
-        console.log(`[Background] #${currentMsgId} ⚡ 转发 EXPORT_WEBSITES 到起始页`)
-        // 转发到起始页的 content.js
-        return await forwardToStartPage(message)
-
-      case 'IMPORT_WEBSITES':
-        console.log(`[Background] #${currentMsgId} 📥 转发 IMPORT_WEBSITES 到起始页`)
-        console.log('[Background] 导入数据:', message.data?.length, '个网站')
-        // 转发到起始页的 content.js
-        return await forwardToStartPage(message)
-
       // ========== 调用 StartPageAPI 通用方法 ==========
-      case 'CALL_STARTPAGE_API':
+      case 'CALL_STARTPAGE_API': {
         console.log(
           `[Background] #${currentMsgId} ⚡ 处理 CALL_STARTPAGE_API (method: ${message.method})`,
         )
@@ -276,7 +172,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           })
 
           console.log(`[Background] 收到起始页返回的 ${method} 结果:`, response)
-          return response
+
+          try {
+            return response
+          } catch (error) {
+            console.error(`[Background] #${currentMsgId} 处理 ${message.method} 失败:`, error)
+            return {
+              success: false,
+              error: error.message || 'API 调用失败',
+            }
+          }
         } catch (error) {
           console.error(`[Background] #${currentMsgId} 处理 ${message.method} 失败:`, error)
           return {
@@ -284,6 +189,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             error: error.message || 'API 调用失败',
           }
         }
+      }
 
       // ========== 获取元数据 ==========
       case 'FETCH_METADATA': {
@@ -675,75 +581,3 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // ========== 新增：工具函数（避免使用 import） ==========
 
-
-/**
- * 从 URL 提取网站名称
- * @param {string} url - URL
- * @returns {string} 网站名称
- */
-function extractSiteNameFromUrl(url) {
-  try {
-    const urlObj = new URL(url.startsWith('http') ? url : 'http://' + url)
-    const hostname = urlObj.hostname
-
-    // 移除 www. 前缀
-    const name = hostname.replace(/^www\./i, '')
-
-    // 移除端口号
-    const withoutPort = name.split(':')[0]
-
-    // 移除根域名之前的部分（如 news.cn → cn，但保留主要部分）
-    const parts = withoutPort.split('.')
-    if (parts.length > 2) {
-      // 取第一个子域名作为名称（如 news.baidu.com → news）
-      return parts[0].toUpperCase()
-    } else {
-      // 如果是根域名（如 baidu.com），返回大写
-      return withoutPort.toUpperCase()
-    }
-  } catch (_e) {
-    return 'Unknown'
-  }
-}
-
-/**
- * 标准化网站数据
- * @param {Object} data - 原始网站数据
- * @returns {Object} 标准化的网站对象
- */
-function normalizeWebsiteData(data) {
-  const normalized = { ...data }
-
-  // 确保 URL 有协议前缀
-  if (!normalized.url.startsWith('http://') && !normalized.url.startsWith('https://')) {
-    normalized.url = 'https://' + normalized.url
-  }
-
-  // 如果名称为空，从 URL 提取
-  if (!normalized.name || normalized.name.trim() === '') {
-    normalized.name = extractSiteNameFromUrl(normalized.url)
-  }
-
-  // 确保 tags 是数组
-  if (typeof normalized.tags === 'string') {
-    normalized.tags = normalized.tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t)
-  } else if (!Array.isArray(normalized.tags)) {
-    normalized.tags = []
-  }
-
-  // 设置默认值
-  normalized.isMarked = normalized.isMarked ?? false
-  normalized.isActive = normalized.isActive ?? true
-  normalized.isHidden = normalized.isHidden ?? false
-
-  // 删除可能存在的废弃字段
-  delete normalized.iconUrl
-  delete normalized.iconCanFetch
-  delete normalized.iconFetchAttempts
-  delete normalized.iconLastFetchTime
-
-  return normalized
-}

@@ -137,52 +137,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true
     }
 
-    // 处理导入数据请求
-    if (message.action === 'IMPORT_WEBSITES') {
-      log(`处理 IMPORT_WEBSITES`, { requestId })
-      callStartPageAPI('importWebsites', message.data)
-        .then((result) => {
-          log(`导入完成`, { requestId, result })
-          sendResponse({ success: true, ...result })
-        })
-        .catch((error) => {
-          logError(`导入失败`, { requestId, error: error.message })
-          sendResponse({
-            success: false,
-            error: error.message || '导入数据失败',
-          })
-        })
-        .finally(() => {
-          pendingRequests.delete(requestId)
-          log(`🔓 处理完成`, { requestId })
-        })
-
-      return true
-    }
-
-    // 处理导出数据请求
-    if (message.action === 'EXPORT_WEBSITES') {
-      log(`处理 EXPORT_WEBSITES`, { requestId })
-      callStartPageAPI('exportWebsites')
-        .then((result) => {
-          log(`导出完成`, { requestId, result })
-          sendResponse({ success: true, ...result })
-        })
-        .catch((error) => {
-          logError(`导出失败`, { requestId, error: error.message })
-          sendResponse({
-            success: false,
-            error: error.message || '导出数据失败',
-          })
-        })
-        .finally(() => {
-          pendingRequests.delete(requestId)
-          log(`🔓 处理完成`, { requestId })
-        })
-
-      return true
-    }
-
     // 处理通用 API 调用
     if (message.action === 'CALL_STARTPAGE_API') {
       // Method 白名单验证

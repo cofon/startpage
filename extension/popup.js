@@ -327,8 +327,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // 验证 URL 格式
       try {
         new URL(url.startsWith('http') ? url : 'http://' + url)
-      } catch (_e) {
-        // eslint-disable-line no-unused-vars
+      } catch {
         // URL 格式不正确，不进行检查
         console.log('[Popup] URL 格式不正确，跳过检测')
         urlExistsMessage.style.display = 'none'
@@ -385,8 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
         checkUrlExists(url)
         console.log('[Popup] 🎨 Blur 时立即生成 SVG')
         previewSVG(url)
-      } catch (_e) {
-        // eslint-disable-line no-unused-vars
+      } catch {
         urlExistsMessage.style.display = 'none'
         urlInput.classList.remove('url-exists')
       }
