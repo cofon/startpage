@@ -1,27 +1,104 @@
 /**
  * 网站工具函数
- * 用于处理网站相关的通用功能，如URL验证、获取网站信息、生成图标等
+ * 用于处理网站相关的通用功能，如 URL 验证、获取网站信息、生成图标等
  */
 
 /**
- * 验证URL是否有效
- * @param {string} url - 要验证的URL
- * @returns {boolean} URL是否有效
+ * 验证 URL 是否有效（增强版）
+ * 支持 http、https、file 协议，支持 localhost 和内网 IP
+ * @param {string} urlString - 待验证的 URL 字符串
+ * @returns {{valid: boolean, error?: string}} - 验证结果
  */
-export function isValidUrl(url) {
-  if (!url) return false
+export function isValidUrl(urlString) {
+  if (!urlString || typeof urlString !== 'string') {
+    return { valid: false, error: 'URL 不能为空' }
+  }
+
+  // 去除首尾空格
+  const urlTrimmed = urlString.trim()
+
+  // 检查长度
+  if (urlTrimmed.length === 0) {
+    return { valid: false, error: 'URL 不能为空' }
+  }
+
+  if (urlTrimmed.length > 2048) {
+    return { valid: false, error: 'URL 长度不能超过 2048 个字符' }
+  }
 
   try {
-    const urlObj = new URL(url)
-    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+    // 使用浏览器原生 URL API 验证
+    const urlObj = new URL(urlTrimmed)
+
+    // 验证协议：支持 http、https、file
+    if (!['http:', 'https:', 'file:'].includes(urlObj.protocol)) {
+      return { 
+        valid: false, 
+        error: 'URL 必须使用 HTTP、HTTPS 或 FILE 协议' 
+      }
+    }
+
+    // 针对 file:// 协议的特殊处理
+    if (urlObj.protocol === 'file:') {
+      // file:// 协议只需要路径有效
+      if (!urlObj.pathname || urlObj.pathname.length < 2) {
+        return { valid: false, error: '文件路径不正确' }
+      }
+      return { valid: true }
+    }
+
+    // 针对 http/https 协议的验证
+    // 验证主机名
+    if (!urlObj.hostname || urlObj.hostname.length === 0) {
+      return { valid: false, error: 'URL 必须包含有效的域名' }
+    }
+
+    // 支持 localhost 和本地 IP 地址
+    const hostname = urlObj.hostname.toLowerCase()
+    
+    // 允许的本地主机名
+    const allowedLocalHostnames = ['localhost', '127.0.0.1', '0.0.0.0']
+    
+    // 如果是本地主机名，直接通过
+    if (allowedLocalHostnames.includes(hostname)) {
+      return { valid: true }
+    }
+
+    // 如果是内网 IP 地址（如 192.168.x.x, 10.x.x.x, 172.16-31.x.x）
+    const ipPattern = /^(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/
+    if (ipPattern.test(hostname)) {
+      return { valid: true }
+    }
+
+    // 对于普通域名，验证基本格式
+    // 规则：
+    // 1. 不能以点开头或结尾
+    // 2. 必须包含至少一个点（有 TLD）
+    // 3. 每个标签（label）由字母、数字、连字符组成
+    // 4. 每个标签不能以连字符开头或结尾
+    // 5. TLD 必须是 2-63 个字母（符合 DNS 规范）
+    const domainPattern = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,63}$/
+    
+    if (domainPattern.test(hostname)) {
+      return { valid: true }
+    }
+
+    // 如果以上都不匹配，说明域名格式有问题
+    return { valid: false, error: '域名格式不正确' }
   } catch {
-    return false
+    return { valid: false, error: 'URL 格式不正确，无法解析' }
   }
 }
 
+// 兼容旧版本的简单布尔返回值
+export function isValidUrlSimple(url) {
+  const result = isValidUrl(url)
+  return result.valid
+}
+
 /**
- * 从URL中提取域名
- * @param {string} url - 网站URL
+ * 从 URL 中提取域名
+ * @param {string} url - 网站 URL
  * @returns {string} 域名（如：baidu.com）
  */
 export function extractDomain(url) {
@@ -54,8 +131,8 @@ export function extractSiteName(domain) {
 }
 
 /**
- * 从URL中提取网站名称
- * @param {string} url - 网站URL
+ * 从 URL 中提取网站名称
+ * @param {string} url - 网站 URL
  * @returns {string} 网站名称
  */
 export function extractSiteNameFromUrl(url) {
@@ -78,7 +155,7 @@ export function generateDefaultIcon(name) {
       const urlObj = new URL(name)
       displayName = urlObj.hostname.replace(/^www\./, '')
     }
-  } catch (e) {
+  } catch {
     // 不是 URL 则直接使用 name
   }
 
@@ -98,7 +175,7 @@ export function generateDefaultIcon(name) {
   }
   const backgroundColor = colorPalette[Math.abs(hash) % colorPalette.length]
 
-  // 生成SVG（带背景色区分）- 适配 48x48 尺寸
+  // 生成 SVG（带背景色区分）- 适配 48x48 尺寸
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
       <rect width="48" height="48" fill="${backgroundColor}"/>
@@ -113,12 +190,12 @@ export function generateDefaultIcon(name) {
 
 /**
  * 获取网站标题和描述
- * @param {string} url - 网站URL
+ * @param {string} url - 网站 URL
  * @returns {Promise<{title: string, description: string}>} 网站标题和描述
  */
 export async function fetchWebsiteInfo(url) {
   try {
-    // 使用多个CORS代理服务，按优先级尝试
+    // 使用多个 CORS 代理服务，按优先级尝试
     const corsProxies = [
       'https://api.allorigins.win/raw?url=',
       'https://corsproxy.io/?',
@@ -145,7 +222,7 @@ export async function fetchWebsiteInfo(url) {
 
         html = await response.text()
 
-        // 如果成功获取到HTML，跳出循环
+        // 如果成功获取到 HTML，跳出循环
         if (html && html.length > 0) {
           break
         }
@@ -164,14 +241,14 @@ export async function fetchWebsiteInfo(url) {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
 
-    // 尝试获取title
+    // 尝试获取 title
     let title = ''
     const titleElement = doc.querySelector('title')
     if (titleElement) {
       title = titleElement.textContent.trim()
     }
 
-    // 如果没有title，使用og:title
+    // 如果没有 title，使用 og:title
     if (!title) {
       const ogTitle = doc.querySelector('meta[property="og:title"]')
       if (ogTitle) {
@@ -179,14 +256,14 @@ export async function fetchWebsiteInfo(url) {
       }
     }
 
-    // 尝试获取description
+    // 尝试获取 description
     let description = ''
     const descElement = doc.querySelector('meta[name="description"]')
     if (descElement) {
       description = descElement.getAttribute('content')
     }
 
-    // 如果没有description，使用og:description
+    // 如果没有 description，使用 og:description
     if (!description) {
       const ogDesc = doc.querySelector('meta[property="og:description"]')
       if (ogDesc) {
@@ -203,7 +280,7 @@ export async function fetchWebsiteInfo(url) {
 
 /**
  * 从网络获取网站图标
- * @param {string} url - 网站URL
+ * @param {string} url - 网站 URL
  * @returns {Promise<string>} 图标的 data URL
  */
 export async function fetchWebsiteIcon(url) {
@@ -211,7 +288,7 @@ export async function fetchWebsiteIcon(url) {
     const urlObj = new URL(url)
     const domain = urlObj.hostname
 
-    // 图标API列表，按优先级排序
+    // 图标 API 列表，按优先级排序
     const iconAPIs = [
       `https://faviconsnap.com/api/favicon?url=${domain}`,
       `https://icon.horse/icon/${domain}`,
@@ -219,7 +296,7 @@ export async function fetchWebsiteIcon(url) {
       `https://api.afmax.cn/so/ico/index.php?r=${domain}`
     ]
 
-    // 尝试从各个API获取
+    // 尝试从各个 API 获取
     for (const apiUrl of iconAPIs) {
       try {
         const controller = new AbortController()
@@ -243,7 +320,7 @@ export async function fetchWebsiteIcon(url) {
           continue
         }
 
-        // 转换为base64
+        // 转换为 base64
         const base64 = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onloadend = () => resolve(reader.result)
@@ -258,7 +335,7 @@ export async function fetchWebsiteIcon(url) {
         }
       } catch (error) {
         console.log(`从 ${apiUrl} 获取图标失败:`, error)
-        // 继续尝试下一个API
+        // 继续尝试下一个 API
       }
     }
 
@@ -271,7 +348,7 @@ export async function fetchWebsiteIcon(url) {
 
 /**
  * 验证图标是否有效
- * @param {string} iconData - 图标的data URL
+ * @param {string} iconData - 图标的 data URL
  * @returns {Promise<boolean>} - 是否有效
  */
 function validateIcon(iconData) {
@@ -282,14 +359,14 @@ function validateIcon(iconData) {
       return
     }
 
-    // 提取base64数据
+    // 提取 base64 数据
     const base64Data = iconData.split(',')[1]
     if (!base64Data) {
       resolve(false)
       return
     }
 
-    // 检查base64解码后的数据长度
+    // 检查 base64 解码后的数据长度
     try {
       const decodedData = atob(base64Data)
       if (decodedData.length < 100) {
@@ -307,7 +384,7 @@ function validateIcon(iconData) {
 
     img.onload = function() {
       clearTimeout(timeout)
-      // 检查图片尺寸是否合理（至少16x16）
+      // 检查图片尺寸是否合理（至少 16x16）
       resolve(img.width >= 16 && img.height >= 16)
     }
 
