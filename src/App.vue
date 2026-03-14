@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, onBeforeUnmount } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useWebsiteStore } from './stores/website'
 import { useSettingStore } from './stores/setting'
 import { useSearchStore } from './stores/search'
@@ -15,7 +15,6 @@ import {
 import SearchModule from './components/SearchModule.vue'
 import DisplayModule from './components/DisplayModule.vue'
 import WebsiteDialog from './components/WebsiteDialog.vue'
-import { useLayoutMetrics } from './composables/useLayoutMetrics'
 import { useStartPageAPI } from './composables/useStartPageAPI'
 import NotificationContainer from './components/NotificationContainer.vue'
 
@@ -32,40 +31,38 @@ const editingWebsite = ref(null)
 // DOM 引用
 const appRef = ref(null)
 
-// 使用 useLayoutMetrics composable
-const { containerWidth, itemsPerRow, setupLayoutMetrics, cleanupLayoutMetrics } = useLayoutMetrics(appRef)
-
-// 监听窗口大小变化
-onBeforeUnmount(() => {
-  cleanupLayoutMetrics()
-})
-
-// 计算顶部空白高度（动态调整）
+// 计算顶部空白高度
 const topPadding = computed(() => {
-  // 基础顶部空白（非 marked 模式使用）
+  // 基础顶部空白
   const basePadding = 24
 
   // 只在显示 marked list 时根据行数动态调整
   if (searchStore.displayMode === 'marked') {
     const markedCount = searchStore.results?.length || 0
 
-    // 根据实际每行 item 数量计算行数
-    if (markedCount > 0 && itemsPerRow.value > 0) {
-      const rows = Math.ceil(markedCount / itemsPerRow.value) + 1
-
-      // 行数越多，顶部空白越小，每增加一行减少 50px
-      // 1 行：300px, 2 行：250px, 3 行：200px, 4 行：150px...
-      const paddingReduction = (rows - 1) * 60
-
-      // 最小值为 150px（避免空白太小）
-      return Math.max(24, 300 - paddingReduction)
+    // marked list 为空时，使用较大空白使搜索模块居中偏上
+    if (markedCount === 0) {
+      return 300
+    }
+    if (markedCount <= 7) {
+      return 270
+    }
+    if (markedCount <= 14) {
+      return 250
+    }
+    if (markedCount <= 21) {
+      return 220
+    }
+    if (markedCount <= 28) {
+      return 170
+    }
+    if (markedCount <= 35) {
+      return 100
     }
 
-    // marked list 为空时，使用基础空白
-    return 300
   }
 
-  // 其他模式（搜索、普通列表等）统一使用固定值 20px
+  // 其他模式（搜索、普通列表等）统一使用固定值 24px
   return basePadding
 })
 
@@ -204,9 +201,6 @@ async function toggleWebsiteMark(website) {
 // 初始化应用
 onMounted(async () => {
   try {
-    // ========== 初始化布局度量 ==========
-    setupLayoutMetrics()
-
     // ========== 1. 初始化 IndexedDB（基础依赖） ==========
     await db.init()
 
@@ -238,6 +232,7 @@ onMounted(async () => {
     console.error('初始化应用失败:', error)
   }
 })
+
 </script>
 
 <template>
@@ -280,7 +275,7 @@ onMounted(async () => {
   padding-bottom: 20px;
   box-sizing: border-box; /* 确保 padding 包含在宽度内 */
   overflow-x: hidden; /* 防止水平溢出 */
-  transition: padding-top 0.3s ease; /* 平滑过渡 */
+  min-height: calc(100vh - 40px); /* 确保内容少时也占满视口（减去上下 padding） */
 }
 
 /* 主题样式 */

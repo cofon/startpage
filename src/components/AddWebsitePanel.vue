@@ -512,7 +512,7 @@ function handleCancel() {
   <div class="add-website-panel">
     <!-- URL 输入行 -->
     <div class="form-row url-input-row">
-      <span class="form-label">网站链接 <span class="required">*</span></span>
+      <span class="form-label">网站链接</span>
       <div class="input-button-group">
         <input
           id="website-url"
@@ -631,7 +631,7 @@ function handleCancel() {
     </div>
 
     <!-- Tags 输入行 -->
-    <div class="form-row" :class="{ 'has-tags-dropdown': allTags.length > 0 }">
+    <div class="form-row">
       <span class="form-label">标签</span>
       <div class="tags-input-group">
         <input
@@ -641,8 +641,14 @@ function handleCancel() {
           class="form-input"
           placeholder="输入标签，用逗号分隔"
         />
-        <!-- 标签列表：绝对定位在 input 下方 -->
-        <div v-if="allTags.length > 0" class="tags-dropdown">
+      </div>
+    </div>
+    
+    <!-- 标签列表行（与 input 左对齐） -->
+    <div v-if="allTags.length > 0" class="form-row tags-list-row">
+      <span class="form-label form-label-placeholder">标签</span>
+      <div class="tags-list-container">
+        <div class="tags-dropdown">
           <div
             v-for="tag in allTags"
             :key="tag"
@@ -655,7 +661,6 @@ function handleCancel() {
         </div>
       </div>
     </div>
-    <div class="form-hint">点击标签可添加或移除</div>
 
     <!-- 网站设置行 -->
     <div class="form-row checkbox-row">
@@ -699,7 +704,6 @@ function handleCancel() {
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
-  position: relative; /* 为子元素的绝对定位提供基准 */
 }
 
 /* URL 输入行特殊处理：为错误提示预留空间 */
@@ -707,19 +711,14 @@ function handleCancel() {
   margin-bottom: 40px; /* 为错误提示预留空间（提示高度约 20px + 间距） */
 }
 
-/* 标签输入容器：为标签列表提供定位基准 */
+/* 标签输入容器 */
 .tags-input-group {
   display: flex;
   align-items: stretch;
   flex: 1;
   height: 40px;
-  position: relative; /* 关键：为下方标签列表预留定位基准 */
 }
 
-/* 标签行特殊处理：当有标签列表时，增加底部间距 */
-.form-row.has-tags-dropdown {
-  margin-bottom: 140px; /* 为标签列表预留足够空间（列表高度 + 间距） */
-}
 
 .form-label {
   flex: 0 0 auto;
@@ -960,10 +959,28 @@ function handleCancel() {
 }
 
 /* ========== 标签选择器 ========== */
+.tags-list-row {
+  margin-top: -8px; /* 向上偏移，紧贴输入框下方 */
+  padding-top: 0;
+}
+
+.form-label-placeholder {
+  visibility: hidden; /* 隐藏但保留空间 */
+  pointer-events: none; /* 禁止交互 */
+}
+
+.tags-list-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+  padding-left: 0;
+}
+
 .tags-dropdown {
-  position: absolute; /* 绝对定位，相对于 tags-input-group */
-  left: 0; /* 与 input 左边缘对齐 */
-  top: calc(100% + 4px); /* 在 input 下方：input 高度 (40px) + 间距 (4px) */
+  position: static; /* 改为静态定位，融入文档流 */
+  left: 0;
+  top: auto;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
