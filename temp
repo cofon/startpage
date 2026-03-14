@@ -1,5 +1,17 @@
+{
+  "websites": [
+    {
+        "url": "https://www.google.com/"
+    }
+  ],
+  "settings": {},
+  "themes": [],
+  "searchEngines": []
+}
 
-
-
-
-
+{
+  "urls": [
+    "https://www.google.com",
+    "https://www.bilibili.com"
+  ]
+}

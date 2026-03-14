@@ -155,9 +155,31 @@ export async function batchEnrichMetadata(websites, progressCallback) {
           if (!website.iconData && metadata.iconData) {
             website.iconData = metadata.iconData
           }
+        } else {
+          // 获取失败：添加 meta_failed 标签
+          console.warn(`[MetadataService] ⚠ 无法获取元数据：${website.url}`)
+          if (!website.tags) {
+            website.tags = []
+          } else if (typeof website.tags === 'string') {
+            website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
+          }
+          
+          if (!website.tags.includes('meta_failed')) {
+            website.tags.push('meta_failed')
+          }
         }
       } catch (error) {
         // 网络错误、SSL 问题等不处理，静默失败
+        // 获取失败：添加 meta_failed 标签
+        if (!website.tags) {
+          website.tags = []
+        } else if (typeof website.tags === 'string') {
+          website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
+        }
+        
+        if (!website.tags.includes('meta_failed')) {
+          website.tags.push('meta_failed')
+        }
       }
     }
 
