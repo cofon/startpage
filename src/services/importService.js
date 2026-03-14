@@ -12,8 +12,7 @@
  * @module services/importService
  */
 
-// 导入依赖
-import { validateWebsite } from '../utils/website/websiteImportUtils'
+// 导入依赖（按需引入）
 import { isValidUrl } from '../utils/website/websiteUtils'
 import { normalizeWebsiteData } from '../services/websiteMetadataService'
 import { fetchMetadataFromPlugin } from '../utils/plugin/websiteMetadataService'
@@ -131,7 +130,7 @@ export function getImportType(data) {
 }
 
 /**
- * 检查网站数据完整性
+ * 检查网站数据完整性（仅针对插件可补全的字段）
  * @param {Object} website - 网站数据
  * @returns {boolean} 是否完整
  */
@@ -141,15 +140,14 @@ export function isWebsiteComplete(website) {
     return false
   }
 
-  // 检查所有必需字段是否都有值
-  const hasName = website.name && website.name.trim() !== ''
+  // 只检查插件可补全的字段：title、description、iconData
   const hasTitle = website.title && website.title.trim() !== ''
   const hasDescription = website.description && website.description.trim() !== ''
   const hasIconData = website.iconData && website.iconData.trim() !== ''
-  const hasIconGenerateData = website.iconGenerateData && website.iconGenerateData.trim() !== ''
 
-  // 数据完整的标准：name、title、description、iconData、iconGenerateData 都有值
-  return hasName && hasTitle && hasDescription && hasIconData && hasIconGenerateData
+  // 数据完整的标准：title、description、iconData 都有值
+  // name 和 iconGenerateData 不由插件提供，不纳入检查
+  return hasTitle && hasDescription && hasIconData
 }
 
 /**
@@ -175,8 +173,8 @@ export function separateWebsites(websites) {
 }
 
 /**
- * 批量补全网站元数据
- * @param {Array} websites - 需要补全的网站数组
+ * 批量补全网站元数据（只补全插件可提供的字段）
+ * @param {Array} websites - 需要补全的网站数组（应该都是不完整的）
  * @param {Object} config - 配置选项
  * @param {Function} progressCallback - 进度回调
  * @returns {Promise<Array>} 补全后的网站数组
@@ -190,55 +188,47 @@ export async function enrichWebsites(websites, config, progressCallback) {
     const batch = websites.slice(i, i + batchSize)
 
     // 批量获取元数据
-    const enrichedBatch = await Promise.all(
+    await Promise.all(
       batch.map(async (website) => {
         try {
-          // 检查是否需要补全：name、title、description、iconData 中任何一个缺失
-          const needsEnrichment = !website.name || !website.title || !website.description || !website.iconData
+          console.log(`[ImportService] 🔍 尝试获取元数据：${website.url}`)
+          const metadata = await fetchMetadataFromPlugin(website.url, config.timeout)
 
-          if (needsEnrichment) {
-            console.log(`[ImportService] 🔍 尝试获取元数据：${website.url}`)
-            const metadata = await fetchMetadataFromPlugin(website.url)
-
-            if (metadata) {
-              // ✅ 成功：补全所有缺失的字段
-              if (!website.name && metadata.name) {
-                website.name = metadata.name
-                console.log(`[ImportService] ✓ 已补全 name: ${metadata.name}`)
-              }
-              if (!website.title && metadata.title) {
-                website.title = metadata.title
-                console.log(`[ImportService] ✓ 已补全 title: ${metadata.title}`)
-              }
-              if (!website.description && metadata.description) {
-                website.description = metadata.description
-                console.log(`[ImportService] ✓ 已补全 description`)
-              }
-              if (!website.iconData && metadata.iconData) {
-                website.iconData = metadata.iconData
-                console.log(`[ImportService] ✓ 已补全 iconData (长度：${metadata.iconData.length})`)
-              }
-            } else {
-              // ❌ 失败：添加 meta_failed 标签
-              console.warn(`[ImportService] ⚠️ 无法获取元数据：${website.url}`)
-              
-              // 初始化 tags 数组
-              if (!website.tags) {
-                website.tags = []
-              } else if (typeof website.tags === 'string') {
-                website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
-              }
-              
-              // 添加标签（避免重复）
-              if (!website.tags.includes('meta_failed')) {
-                website.tags.push('meta_failed')
-                console.log(`[ImportService] ✗ 已添加 "meta_failed" 标签到：${website.url}`)
-              }
+          if (metadata) {
+            // ✅ 成功：只补全插件负责的 3 个字段（title、description、iconData）
+            if (!website.title && metadata.title) {
+              website.title = metadata.title
+              console.log(`[ImportService] ✓ 已补全 title: ${metadata.title}`)
+            }
+            if (!website.description && metadata.description) {
+              website.description = metadata.description
+              console.log(`[ImportService] ✓ 已补全 description`)
+            }
+            if (!website.iconData && metadata.iconData) {
+              website.iconData = metadata.iconData
+              console.log(`[ImportService] ✓ 已补全 iconData (长度：${metadata.iconData.length})`)
+            }
+          } else {
+            // ❌ 失败：添加 meta_failed 标签
+            console.warn(`[ImportService] ⚠️ 无法获取元数据：${website.url}`)
+            
+            // 初始化 tags 数组
+            if (!website.tags) {
+              website.tags = []
+            } else if (typeof website.tags === 'string') {
+              website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
+            }
+            
+            // 添加标签（避免重复）
+            if (!website.tags.includes('meta_failed')) {
+              website.tags.push('meta_failed')
+              console.log(`[ImportService] ✗ 已添加 "meta_failed" 标签到：${website.url}`)
             }
           }
 
           return website
         } catch (error) {
+          console.error(`[ImportService] ❌ 补全失败：${website.url}`, error)
           // 返回原始数据，后续会使用默认值
           return website
         }
