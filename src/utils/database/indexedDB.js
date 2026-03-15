@@ -169,38 +169,6 @@ class IndexedDB {
     })
   }
 
-  // 更新网站
-  async updateWebsite(website) {
-    if (!this.db) {
-      throw new Error('数据库未初始化')
-    }
-
-    const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
-    const store = transaction.objectStore(STORE_WEBSITES)
-
-    // 确保 website 对象是一个纯净的 JavaScript 对象，而不是响应式对象
-    // 使用 JSON.parse(JSON.stringify()) 来深度克隆并移除响应式属性
-    const plainWebsite = JSON.parse(JSON.stringify(website))
-
-    // 删除已废弃的字段
-    delete plainWebsite.iconUrl
-    delete plainWebsite.iconCanFetch
-    delete plainWebsite.iconFetchAttempts
-    delete plainWebsite.iconLastFetchTime
-
-    return new Promise((resolve, reject) => {
-      const request = store.put(plainWebsite)
-
-      request.onsuccess = () => {
-        resolve(request.result)
-      }
-
-      request.onerror = () => {
-        reject(request.error)
-      }
-    })
-  }
-
   // 删除网站
   async deleteWebsite(id) {
     if (!this.db) {
@@ -212,6 +180,38 @@ class IndexedDB {
 
     return new Promise((resolve, reject) => {
       const request = store.delete(id)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
+  // 更新网站（用于导入时更新已存在的数据）
+  async updateWebsite(website) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_WEBSITES], 'readwrite')
+    const store = transaction.objectStore(STORE_WEBSITES)
+
+    // 确保 website 对象是一个纯净的 JavaScript 对象，而不是响应式对象
+    // 使用 JSON.parse(JSON.stringify()) 来深度克隆并移除响应式属性
+    const plainWebsite = JSON.parse(JSON.stringify(website))
+    
+    // 删除已废弃的字段（但保留 id 字段作为主键）
+    delete plainWebsite.iconUrl
+    delete plainWebsite.iconCanFetch
+    delete plainWebsite.iconFetchAttempts
+    delete plainWebsite.iconLastFetchTime
+
+    return new Promise((resolve, reject) => {
+      const request = store.put(plainWebsite)
 
       request.onsuccess = () => {
         resolve(request.result)

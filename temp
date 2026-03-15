@@ -1,0 +1,10 @@
+
+
+导入数据的json文件有两种格式；
+格式1：
+{"websites":[{website1},{website2}], "themes":[{theme1},{theme2}], "searchEngines":[{searchEngine1},{searchEngine2}], "settings":{}}
+格式2：
+{"urls":["url1","url2"]}
+；
+格式1现在有验证URL是否已保存到数据库的功能，如果数据完整就跳过；
+格式2没有，需要给它添加上去，看格式1是怎么处理的，照着做就行；

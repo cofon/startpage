@@ -507,6 +507,14 @@ MIT License
 
 ## 未完成工作
 
+规范流程
+检查URL是否已存在于数据库
+检查 https://www.baidu.com https://www.baidu.com/ 是否相同
+检查是否需要添加meta， if title | description
+检查获取meta状态，失败tags添加 meta_failed
+检查tags是否空，if null add new
+
+
 插件起始页数据传递机制：
 - 统一消息机制
 - 使用 Promise + requestId

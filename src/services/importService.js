@@ -1,14 +1,14 @@
 /**
  * 导入服务
  * 统一处理起始页的数据导入逻辑
- * 
+ *
  * 功能：
  * - 支持两种导入模式：websites（完整网站数据）和 urls（URL 列表）
  * - 数据验证和格式判断
  * - 数据完整性检查
  * - 批量补全元数据（通过插件）
  * - 进度管理和错误处理
- * 
+ *
  * @module services/importService
  */
 
@@ -18,6 +18,41 @@ import { normalizeWebsiteData } from '../services/websiteMetadataService'
 import { fetchMetadataFromPlugin } from '../utils/plugin/websiteMetadataService'
 import db from '../utils/database'
 import { PerformanceMonitor, BatchProcessor, MemoryOptimizer } from '../utils/performanceMonitor'
+
+/**
+ * URL 规范化处理（与 AddWebsitePanel 保持一致）
+ * - 移除末尾斜杠
+ * - 统一协议（如果没有协议）
+ * - 移除 hash 和 search 参数
+ * @param {string} url - 要规范化的 URL
+ * @returns {string} 规范化后的 URL
+ */
+function normalizeImportUrl(url) {
+  if (!url) return ''
+
+  try {
+    // 确保有协议
+    let normalized = url
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized
+    }
+
+    // 创建 URL 对象以解析各个部分
+    const urlObj = new URL(normalized)
+
+    // 移除尾部斜杠
+    let pathname = urlObj.pathname
+    if (pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1)
+    }
+
+    // 重新构建 URL（不包含 hash 和 search）
+    return `${urlObj.protocol}//${urlObj.host}${pathname}`
+  } catch (error) {
+    console.warn('[ImportService] URL 规范化失败:', url, error)
+    return url
+  }
+}
 
 /**
  * 导入数据的主入口
@@ -131,6 +166,9 @@ export function getImportType(data) {
 
 /**
  * 检查网站数据完整性（仅针对插件可补全的字段）
+ * 这个函数名现在不合适了，因为要判断的逻辑已经发生了变化
+ * 之前要判断 url name title description iconData 的完整性
+ * 现在只需要判断 url title|description 的完整性
  * @param {Object} website - 网站数据
  * @returns {boolean} 是否完整
  */
@@ -140,14 +178,20 @@ export function isWebsiteComplete(website) {
     return false
   }
 
-  // 只检查插件可补全的字段：title、description、iconData
+  // ========== 修改：优化完整性判断逻辑 ==========
+  // 1. iconData 不纳入检查范围（因为缺失时可以用 iconGenerateData 替补）
+  // 2. title 和 description 只需要有一个有值即可（显示逻辑优先显示 title）
+
   const hasTitle = website.title && website.title.trim() !== ''
   const hasDescription = website.description && website.description.trim() !== ''
-  const hasIconData = website.iconData && website.iconData.trim() !== ''
 
-  // 数据完整的标准：title、description、iconData 都有值
-  // name 和 iconGenerateData 不由插件提供，不纳入检查
-  return hasTitle && hasDescription && hasIconData
+  const hasTitleOrDescription = hasTitle || hasDescription
+
+  // 数据完整的标准：
+  // - URL 有效
+  // - title 或 description至少有一个
+  // （iconData 不检查，因为可以由 iconGenerateData 替补）
+  return hasTitleOrDescription
 }
 
 /**
@@ -211,14 +255,14 @@ export async function enrichWebsites(websites, config, progressCallback) {
           } else {
             // ❌ 失败：添加 meta_failed 标签
             console.warn(`[ImportService] ⚠️ 无法获取元数据：${website.url}`)
-            
+
             // 初始化 tags 数组
             if (!website.tags) {
               website.tags = []
             } else if (typeof website.tags === 'string') {
               website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
             }
-            
+
             // 添加标签（避免重复）
             if (!website.tags.includes('meta_failed')) {
               website.tags.push('meta_failed')
@@ -263,9 +307,11 @@ export function normalizeWebsites(websites) {
  * 批量导入网站到数据库
  * @param {Array} websites - 网站数组
  * @param {Object} config - 配置选项
+ * @param {Object} monitor - 性能监控器
+ * @param {Map} existingUrlsMap - 数据库中已存在的 URL 映射（可选）
  * @returns {Promise<Object>} 导入结果
  */
-export async function importWebsitesToDB(websites, config, monitor) {
+export async function importWebsitesToDB(websites, config, monitor, existingUrlsMap = null) {
   // 开始数据库导入阶段
   monitor.startPhase('database')
 
@@ -277,9 +323,15 @@ export async function importWebsitesToDB(websites, config, monitor) {
     errors: []
   }
 
-  // 获取所有现有网站（用于检查重复）
-  const existingWebsites = await db.getAllWebsites()
-  const existingUrls = new Set(existingWebsites.map(w => w.url))
+  // 如果没有传入 existingUrlsMap，则获取所有现有网站
+  const existingUrls = existingUrlsMap
+    ? new Set(existingUrlsMap.keys())
+    : new Set()
+
+  if (!existingUrlsMap) {
+    const existingWebsites = await db.getAllWebsites()
+    existingUrls.add(...existingWebsites.map(w => w.url))
+  }
 
   // 检查内存使用
   MemoryOptimizer.checkMemoryUsage(500)
@@ -321,10 +373,12 @@ export async function importWebsitesToDB(websites, config, monitor) {
       result.success++
       monitor.recordSuccess()
     } catch (error) {
+      console.error('[ImportService] ❌ 导入失败:', website.url, error)
+      console.error('[ImportService] 错误堆栈:', error.stack)
       result.failed++
       result.errors.push({
         url: website.url,
-        error: error.message
+        error: error.message || '未知错误'
       })
       monitor.recordFailure()
     }
@@ -332,10 +386,6 @@ export async function importWebsitesToDB(websites, config, monitor) {
 
   // 结束数据库导入阶段
   monitor.endPhase()
-
-  // 清理大对象
-  MemoryOptimizer.cleanupLargeObject(existingWebsites)
-  existingUrls.clear()
 
   return result
 }
@@ -347,52 +397,208 @@ export async function importWebsitesToDB(websites, config, monitor) {
  * @returns {Promise<Object>} 导入结果
  */
 async function importWebsites(websites, config, monitor) {
-  // 开始分离阶段
-  monitor.startPhase('separation')
+  // ========== 新增：数据库完整性检查 ==========
+  monitor.startPhase('db_check')
 
-  // 分离完整和不完整的网站
-  const { complete, incomplete } = separateWebsites(websites)
-
-  // 结束分离阶段
-  monitor.endPhase()
-
-  // 补全不完整的网站
-  let enrichedWebsites = incomplete
-  if (incomplete.length > 0 && config.onIncomplete !== 'skip') {
-    // 开始补全阶段
-    monitor.startPhase('enrichment')
-
-    if (config.onProgress) {
-      config.onProgress({
-        phase: 'enriching',
-        processed: 0,
-        total: incomplete.length,
-        message: `准备补全 ${incomplete.length} 个不完整的网站...`
-      })
-    }
-
-    enrichedWebsites = await enrichWebsites(incomplete, config, config.onProgress)
-
-    // 结束补全阶段
-    monitor.endPhase()
+  if (config.onProgress) {
+    config.onProgress({
+      phase: 'db_check',
+      processed: 0,
+      total: websites.length,
+      message: `正在检查数据库中已存在的网站...`
+    })
   }
 
-  // 开始标准化阶段
-  monitor.startPhase('normalization')
+  // 获取数据库中所有现有网站
+  const existingWebsitesInDB = await db.getAllWebsites()
+  const existingUrlsMap = new Map(existingWebsitesInDB.map(w => [w.url, w]))
 
-  // 合并完整和补全后的网站
-  const allWebsites = [...complete, ...enrichedWebsites]
+  // 分类处理
+  const skipWebsites = [] // 数据库中已存在且完整，直接跳过
+  const needImportWebsites = [] // 需要导入或补全的网站
 
-  // 标准化数据
-  const normalizedWebsites = normalizeWebsites(allWebsites)
+  // ========== 详细日志记录 ==========
+  const logDetails = {
+    total: websites.length,
+    existedComplete: 0,
+    existedIncomplete: 0,
+    newImport: 0,
+    urls: {
+      skip: [],
+      update: [],
+      create: []
+    }
+  }
 
-  // 结束标准化阶段
+  for (const website of websites) {
+    // ========== 新增：URL 规范化处理 ==========
+    // 对导入的 URL 进行规范化，确保 https://www.bilibili.com 和 https://www.bilibili.com/ 被视为相同
+    const normalizedImportUrl = normalizeImportUrl(website.url)
+    
+    // 在 existingUrlsMap 中查找时，需要遍历所有键并进行规范化比较
+    let existingWebsite = null
+    for (const [dbUrl, dbWebsite] of existingUrlsMap.entries()) {
+      const normalizedDbUrl = normalizeImportUrl(dbUrl)
+      if (normalizedDbUrl === normalizedImportUrl) {
+        existingWebsite = dbWebsite
+        break
+      }
+    }
+
+    if (existingWebsite) {
+      // URL 已存在，检查数据库中数据的完整性
+      const isCompleteInDB = isWebsiteComplete(existingWebsite)
+
+      if (isCompleteInDB) {
+        // 数据库中数据完整，直接跳过
+        console.log(`[ImportService] ✅ ${website.url} 在数据库中已存在且数据完整，跳过`)
+        skipWebsites.push(existingWebsite)
+        logDetails.existedComplete++
+        logDetails.urls.skip.push({
+          url: website.url,
+          title: existingWebsite.title,
+          reason: '数据库已存在且完整'
+        })
+      } else {
+        // 数据库中数据不完整，需要更新
+        console.log(`[ImportService] ⚠️ ${website.url} 在数据库中已存在但数据不完整，将更新`)
+        // ✅ 修复：使用数据库中的 existingWebsite 而不是导入的 website
+        // 因为 existingWebsite 包含 id 字段，而导入的 website 可能只有 URL
+        needImportWebsites.push(existingWebsite)
+        logDetails.existedIncomplete++
+        logDetails.urls.update.push({
+          url: website.url,
+          missingFields: getMissingFields(existingWebsite)
+        })
+      }
+    } else {
+      // URL 不存在，需要导入
+      needImportWebsites.push(website)
+      logDetails.newImport++
+      logDetails.urls.create.push({
+        url: website.url,
+        hasTitle: !!website.title,
+        hasDescription: !!website.description,
+        hasIconData: !!website.iconData
+      })
+    }
+  }
+
   monitor.endPhase()
 
-  // 导入数据库
-  const result = await importWebsitesToDB(normalizedWebsites, config, monitor)
+  // ========== 打印详细统计报告 ==========
+  console.log('\n========== 📊 导入数据统计报告 ==========')
+  console.log(`总数：${logDetails.total} 个网站`)
+  console.log(`✅ 数据库中已存在且完整：${logDetails.existedComplete} 个（直接跳过）`)
+  console.log(`⚠️  数据库中已存在但不完整：${logDetails.existedIncomplete} 个（需要更新）`)
+  console.log(`🆕 新导入：${logDetails.newImport} 个`)
+  console.log('=========================================\n')
 
-  return result
+  if (logDetails.existedComplete > 0) {
+    console.log('📋 跳过的网站列表（已存在且完整）:')
+    logDetails.urls.skip.forEach((item, index) => {
+      console.log(`  ${index + 1}. ${item.url} - ${item.title}`)
+    })
+    console.log('')
+  }
+
+  if (logDetails.existedIncomplete > 0) {
+    console.log('📋 需要更新的网站列表（已存在但不完整）:')
+    logDetails.urls.update.forEach((item, index) => {
+      console.log(`  ${index + 1}. ${item.url} - 缺失字段：${item.missingFields.join(', ')}`)
+    })
+    console.log('')
+  }
+
+  if (config.onProgress) {
+    config.onProgress({
+      phase: 'db_check',
+      processed: websites.length,
+      total: websites.length,
+      message: `数据库检查完成：${skipWebsites.length} 个已存在且完整，${needImportWebsites.length} 个需要处理`
+    })
+  }
+  // ========== 数据库完整性检查结束 ==========
+
+  // 对需要导入的网站进行分离和补全
+  let enrichedWebsites = []
+  if (needImportWebsites.length > 0) {
+    // 分离完整和不完整的网站
+    const { complete: needComplete, incomplete: needIncomplete } = separateWebsites(needImportWebsites)
+
+    console.log(`\n========== 🔍 需要处理的网站分析 ==========`)
+    console.log(`完整（无需插件补全）：${needComplete.length} 个`)
+    console.log(`不完整（需要插件补全）：${needIncomplete.length} 个`)
+    console.log('=========================================\n')
+
+    // 补全不完整的网站
+    if (needIncomplete.length > 0 && config.onIncomplete !== 'skip') {
+      // 开始补全阶段
+      monitor.startPhase('enrichment')
+
+      if (config.onProgress) {
+        config.onProgress({
+          phase: 'enriching',
+          processed: 0,
+          total: needIncomplete.length,
+          message: `准备补全 ${needIncomplete.length} 个不完整的网站...`
+        })
+      }
+
+      enrichedWebsites = await enrichWebsites(needIncomplete, config, config.onProgress)
+
+      // 结束补全阶段
+      monitor.endPhase()
+    }
+
+    // 合并需要导入的完整网站和补全后的网站
+    const allNeedImportWebsites = [...needComplete, ...enrichedWebsites]
+
+    // 标准化数据
+    monitor.startPhase('normalization')
+    const normalizedWebsites = normalizeWebsites(allNeedImportWebsites)
+    monitor.endPhase()
+
+    // 导入数据库
+    // 对于需要更新的网站（已存在但不完整），使用 update 模式
+    const dbConfig = {
+      ...config,
+      onDuplicate: 'update' // 强制更新已存在的网站
+    }
+    const result = await importWebsitesToDB(normalizedWebsites, dbConfig, monitor, existingUrlsMap)
+
+    // 合并跳过的网站到结果中
+    return {
+      ...result,
+      skipped: result.skipped + skipWebsites.length
+    }
+  } else {
+    // 所有网站都已存在于数据库且完整
+    console.log('\n========== ✅ 导入完成 ==========')
+    console.log(`所有 ${skipWebsites.length} 个网站都已存在于数据库且数据完整，无需任何操作`)
+    console.log('================================\n')
+
+    return {
+      success: 0,
+      failed: 0,
+      skipped: skipWebsites.length,
+      updated: 0,
+      errors: []
+    }
+  }
+}
+
+/**
+ * 获取缺失的字段列表
+ * @param {Object} website - 网站对象
+ * @returns {string[]} 缺失字段数组
+ */
+function getMissingFields(website) {
+  const missing = []
+  if (!website.title || !website.title.trim()) missing.push('title')
+  if (!website.description || !website.description.trim()) missing.push('description')
+  if (!website.iconData || !website.iconData.trim()) missing.push('iconData')
+  return missing
 }
 
 /**
@@ -402,44 +608,191 @@ async function importWebsites(websites, config, monitor) {
  * @returns {Promise<Object>} 导入结果
  */
 async function importUrls(urls, config, monitor) {
-  // 开始转换阶段
-  monitor.startPhase('conversion')
+  // ========== 新增：数据库完整性检查（与 importWebsites 保持一致） ==========
+  monitor.startPhase('db_check')
 
-  // 将 URL 转换为网站对象
-  const websites = urls.map(url => ({ url }))
-
-  // 结束转换阶段
-  monitor.endPhase()
-
-  // 开始补全阶段
-  monitor.startPhase('enrichment')
-
-  // 补全元数据
   if (config.onProgress) {
     config.onProgress({
-      phase: 'enriching',
+      phase: 'db_check',
       processed: 0,
-      total: websites.length,
-      message: `准备获取 ${websites.length} 个网站的元数据...`
+      total: urls.length,
+      message: `正在检查数据库中已存在的网站...`
     })
   }
 
-  const enrichedWebsites = await enrichWebsites(websites, config, config.onProgress)
+  // 获取数据库中所有现有网站
+  const existingWebsitesInDB = await db.getAllWebsites()
+  const existingUrlsMap = new Map(existingWebsitesInDB.map(w => [w.url, w]))
 
-  // 结束补全阶段
+  // 分类处理
+  const skipWebsites = [] // 数据库中已存在且完整，直接跳过
+  const needImportUrls = [] // 需要导入或补全的 URL
+
+  // ========== 详细日志记录 ==========
+  const logDetails = {
+    total: urls.length,
+    existedComplete: 0,
+    existedIncomplete: 0,
+    newImport: 0,
+    urls: {
+      skip: [],
+      update: [],
+      create: []
+    }
+  }
+
+  for (const url of urls) {
+    // ========== 新增：URL 规范化处理 ==========
+    // 对导入的 URL 进行规范化，确保 https://www.bilibili.com 和 https://www.bilibili.com/ 被视为相同
+    const normalizedImportUrl = normalizeImportUrl(url)
+    
+    // 在 existingUrlsMap 中查找时，需要遍历所有键并进行规范化比较
+    let existingWebsite = null
+    for (const [dbUrl, dbWebsite] of existingUrlsMap.entries()) {
+      const normalizedDbUrl = normalizeImportUrl(dbUrl)
+      if (normalizedDbUrl === normalizedImportUrl) {
+        existingWebsite = dbWebsite
+        break
+      }
+    }
+
+    if (existingWebsite) {
+      // URL 已存在，检查数据库中数据的完整性
+      const isCompleteInDB = isWebsiteComplete(existingWebsite)
+
+      if (isCompleteInDB) {
+        // 数据库中数据完整，直接跳过
+        console.log(`[ImportService] ✅ ${url} 在数据库中已存在且数据完整，跳过`)
+        skipWebsites.push(existingWebsite)
+        logDetails.existedComplete++
+        logDetails.urls.skip.push({
+          url: url,
+          title: existingWebsite.title,
+          reason: '数据库已存在且完整'
+        })
+      } else {
+        // 数据库中数据不完整，需要更新
+        console.log(`[ImportService] ⚠️ ${url} 在数据库中已存在但数据不完整，将更新`)
+        needImportUrls.push(existingWebsite)
+        logDetails.existedIncomplete++
+        logDetails.urls.update.push({
+          url: url,
+          missingFields: getMissingFields(existingWebsite)
+        })
+      }
+    } else {
+      // URL 不存在，需要导入
+      needImportUrls.push({ url })
+      logDetails.newImport++
+      logDetails.urls.create.push({
+        url: url,
+        hasTitle: false,
+        hasDescription: false,
+        hasIconData: false
+      })
+    }
+  }
+
   monitor.endPhase()
 
-  // 开始标准化阶段
-  monitor.startPhase('normalization')
+  // ========== 打印详细统计报告 ==========
+  console.log('\n========== 📊 导入数据统计报告 ==========')
+  console.log(`总数：${logDetails.total} 个网站`)
+  console.log(`✅ 数据库中已存在且完整：${logDetails.existedComplete} 个（直接跳过）`)
+  console.log(`⚠️  数据库中已存在但不完整：${logDetails.existedIncomplete} 个（需要更新）`)
+  console.log(`🆕 新导入：${logDetails.newImport} 个`)
+  console.log('=========================================\n')
 
-  // 标准化数据
-  const normalizedWebsites = normalizeWebsites(enrichedWebsites)
+  if (logDetails.existedComplete > 0) {
+    console.log('📋 跳过的网站列表（已存在且完整）:')
+    logDetails.urls.skip.forEach((item, index) => {
+      console.log(`  ${index + 1}. ${item.url} - ${item.title}`)
+    })
+    console.log('')
+  }
 
-  // 结束标准化阶段
-  monitor.endPhase()
+  if (logDetails.existedIncomplete > 0) {
+    console.log('📋 需要更新的网站列表（已存在但不完整）:')
+    logDetails.urls.update.forEach((item, index) => {
+      console.log(`  ${index + 1}. ${item.url} - 缺失字段：${item.missingFields.join(', ')}`)
+    })
+    console.log('')
+  }
 
-  // 导入数据库
-  const result = await importWebsitesToDB(normalizedWebsites, config, monitor)
+  if (config.onProgress) {
+    config.onProgress({
+      phase: 'db_check',
+      processed: urls.length,
+      total: urls.length,
+      message: `数据库检查完成：${skipWebsites.length} 个已存在且完整，${needImportUrls.length} 个需要处理`
+    })
+  }
+  // ========== 数据库完整性检查结束 ==========
 
-  return result
+  // 对需要导入的网站进行分离和补全
+  let enrichedWebsites = []
+  if (needImportUrls.length > 0) {
+    // 分离完整和不完整的网站
+    const { complete: needComplete, incomplete: needIncomplete } = separateWebsites(needImportUrls)
+
+    console.log(`\n========== 🔍 需要处理的网站分析 ==========`)
+    console.log(`完整（无需插件补全）：${needComplete.length} 个`)
+    console.log(`不完整（需要插件补全）：${needIncomplete.length} 个`)
+    console.log('=========================================\n')
+
+    // 补全不完整的网站
+    if (needIncomplete.length > 0 && config.onIncomplete !== 'skip') {
+      // 开始补全阶段
+      monitor.startPhase('enrichment')
+
+      if (config.onProgress) {
+        config.onProgress({
+          phase: 'enriching',
+          processed: 0,
+          total: needIncomplete.length,
+          message: `准备补全 ${needIncomplete.length} 个不完整的网站...`
+        })
+      }
+
+      enrichedWebsites = await enrichWebsites(needIncomplete, config, config.onProgress)
+
+      // 结束补全阶段
+      monitor.endPhase()
+    }
+
+    // 合并需要导入的完整网站和补全后的网站
+    const allNeedImportWebsites = [...needComplete, ...enrichedWebsites]
+
+    // 标准化数据
+    monitor.startPhase('normalization')
+    const normalizedWebsites = normalizeWebsites(allNeedImportWebsites)
+    monitor.endPhase()
+
+    // 导入数据库
+    // 对于需要更新的网站（已存在但不完整），使用 update 模式
+    const dbConfig = {
+      ...config,
+      onDuplicate: 'update' // 强制更新已存在的网站
+    }
+    const result = await importWebsitesToDB(normalizedWebsites, dbConfig, monitor, existingUrlsMap)
+
+    // 合并跳过的网站到结果中
+    return {
+      ...result,
+      skipped: result.skipped + skipWebsites.length
+    }
+  } else {
+    // 所有网站都已存在于数据库且完整
+    console.log('\n========== ✅ 导入完成 ==========')
+    console.log(`所有 ${skipWebsites.length} 个网站都已存在于数据库且数据完整，无需任何操作`)
+    console.log('================================\n')
+
+    return {
+      success: 0,
+      failed: 0,
+      skipped: skipWebsites.length,
+      updated: 0,
+      errors: []
+    }
+  }
 }

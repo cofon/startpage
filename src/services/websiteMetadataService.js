@@ -69,27 +69,25 @@ export function normalizeWebsiteData(data) {
     data.name = extractSiteNameFromUrl(data.url)
   }
 
-  // 2. 如果 title 为空，使用 name 作为默认值
-  if (!data.title && data.name) {
-    data.title = data.name
-  }
+  // ========== 删除：不再自动用 name 填充 title ==========
+  // 理由：保持 title 为空，下次导入时可以重新获取元数据
+  // 有些网站可能暂时无法访问，过段时间又能访问了
+  // 显示逻辑会在 DisplayModule 中处理优先级：title > desc > name
 
-  // 3. 如果 description 为空，使用默认描述
-  if (!data.description) {
-    data.description = ''
-  }
+  // 2. description 保持为空（不自动填充）
+  // description 字段保持原样，由用户输入或插件获取
 
-  // 4. 如果 tags 为空，添加默认标签 'new'
+  // 3. 如果 tags 为空，添加默认标签 'new'
   if (!data.tags || !Array.isArray(data.tags) || data.tags.length === 0) {
     data.tags = ['new']
   }
 
-  // 3. 处理 markOrder
+  // 4. 处理 markOrder
   if (!data.markOrder) {
     data.markOrder = data.isMarked ? 0 : 0
   }
 
-  // 4. iconGenerateData 必须有值，与 iconData 无关
+  // 5. iconGenerateData 必须有值，与 iconData 无关
   if (!data.iconGenerateData) {
     // 如果有 name 则用 name 生成，否则用 URL 生成
     const iconSource = data.name || data.url
@@ -97,7 +95,7 @@ export function normalizeWebsiteData(data) {
     data.iconGenerateData = encodeSvg(svgIcon)
   }
 
-  // 5. 使用 createWebsiteObject 创建标准对象
+  // 6. 使用 createWebsiteObject 创建标准对象
   const result = createWebsiteObject({
     ...data,
     visitCount: 0,
@@ -193,7 +191,42 @@ export async function batchEnrichMetadata(websites, progressCallback) {
 }
 
 /**
-z * 检查 URL 是否已存在于数据库中
+ * URL 规范化处理
+ * - 移除末尾斜杠
+ * - 统一协议为 https（如果没有协议）
+ * - 移除 hash 和 search 参数
+ * @param {string} url - 要规范化的 URL
+ * @returns {string} 规范化后的 URL
+ */
+function normalizeUrl(url) {
+  if (!url) return ''
+
+  try {
+    // 确保有协议
+    let normalized = url
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized
+    }
+
+    // 创建 URL 对象以解析各个部分
+    const urlObj = new URL(normalized)
+
+    // 移除尾部斜杠
+    let pathname = urlObj.pathname
+    if (pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1)
+    }
+
+    // 重新构建 URL（不包含 hash 和 search）
+    return `${urlObj.protocol}//${urlObj.host}${pathname}`
+  } catch (error) {
+    console.warn('[URLChecker] URL 解析失败:', url, error)
+    return url
+  }
+}
+
+/**
+ * 检查 URL 是否已存在于数据库中（使用规范化后的 URL 比较）
  * @param {string} url - 要检查的 URL
  * @param {Array} allWebsites - 所有网站数组（从数据库查询）
  * @returns {{exists: boolean, websiteId?: number, websiteName?: string}}
@@ -203,7 +236,17 @@ function checkUrlExists(url, allWebsites) {
     return { exists: false }
   }
 
-  const existingWebsite = allWebsites.find(w => w.url === url && w.isActive)
+  // ========== 新增：URL 规范化处理 ==========
+  // 移除末尾斜杠，确保 https://www.bilibili.com 和 https://www.bilibili.com/ 被视为相同
+  const normalizedUrl = normalizeUrl(url)
+  
+  const existingWebsite = allWebsites.find(w => {
+    if (!w.isActive) return false
+    
+    // 对数据库中的 URL 也进行规范化
+    const normalizedExistingUrl = normalizeUrl(w.url)
+    return normalizedExistingUrl === normalizedUrl
+  })
 
   if (existingWebsite) {
     return {
@@ -228,6 +271,3 @@ export default {
   extractSiteNameFromUrl,
   extractRootDomain
 }
-
-// 同时提供命名导出，方便组件按需导入
-export { extractSiteNameFromUrl, extractRootDomain, checkUrlExists }
