@@ -91,11 +91,13 @@ async function handleImport(event) {
             }
           })
 
-          notificationStore.success(`导入成功！共 ${result.total} 个网站，成功 ${result.success} 个，失败 ${result.failed} 个`)
+          // 计算总数：成功 + 失败 + 跳过
+          const total = (result.success || 0) + (result.failed || 0) + (result.skipped || 0)
+          notificationStore.success(`导入成功！共 ${total} 个网站，成功 ${result.success} 个，失败 ${result.failed} 个${result.skipped > 0 ? `，跳过 ${result.skipped} 个` : ''}`)
 
           setTimeout(() => {
             window.location.reload()
-          }, 150000000)
+          }, 1500)
         } else {
           // 导入其他数据（设置、主题等）
           console.log('[CommandSettings] 导入其他数据...')
