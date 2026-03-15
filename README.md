@@ -561,7 +561,10 @@ async function handleImport(event) {
             window.location.reload()
           }, 1500)
           return
+          其他代码
+}
 1500 --> 15000000 修改成一个很大的值
+在第 100 行左右
 ```
 
 ###### 导入数据格式

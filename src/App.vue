@@ -198,6 +198,17 @@ async function toggleWebsiteMark(website) {
   handleWebsiteMarkToggled(searchStore, websiteStore, newIsMarked)
 }
 
+// 根据 displayMode 返回对应的页面类名
+function getPageClass() {
+  const mode = searchStore.displayMode
+  
+  if (mode === 'marked') return 'marked-mode'
+  if (mode === 'search') return 'search-mode'
+  if (mode === 'settings' || mode === 'help') return 'panel-mode'
+  
+  return ''
+}
+
 // 初始化应用
 onMounted(async () => {
   try {
@@ -239,14 +250,19 @@ onMounted(async () => {
   <div
     id="app"
     ref="appRef"
-    :class="settingStore.selectedThemeId + '-theme'"
+    :class="[
+      settingStore.selectedThemeId + '-theme',
+      getPageClass()
+    ]"
     :style="{ paddingTop: topPadding + 'px' }"
   >
     <!-- 通知容器 -->
     <NotificationContainer />
 
-    <!-- 搜索模块 -->
-    <SearchModule />
+    <!-- 搜索模块粘性包装器 -->
+    <div class="search-sticky-wrapper">
+      <SearchModule />
+    </div>
 
     <!-- 显示模块 -->
     <DisplayModule
@@ -276,6 +292,22 @@ onMounted(async () => {
   box-sizing: border-box; /* 确保 padding 包含在宽度内 */
   overflow-x: hidden; /* 防止水平溢出 */
   min-height: calc(100vh - 40px); /* 确保内容少时也占满视口（减去上下 padding） */
+}
+
+/* 搜索模块粘性布局 - 非 marked 模式时固定顶部 */
+.search-sticky-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--color-bg-page);
+}
+
+/* marked list 模式：禁用 sticky，恢复普通流 */
+#app.marked-mode .search-sticky-wrapper {
+  position: static;
 }
 
 /* 主题样式 */
