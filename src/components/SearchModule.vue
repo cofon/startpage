@@ -97,7 +97,10 @@ function handleEscKey() {
 .search-module {
   width: 100%;
   max-width: 800px;
-  margin-bottom: 30px;
+  /* margin-bottom: 30px; */
+  /* padding-bottom: 24px, 0; */
+  padding: 24px 0;
+  /* background-color: white */
 }
 
 .search-container {

@@ -34,7 +34,7 @@ const appRef = ref(null)
 // 计算顶部空白高度
 const topPadding = computed(() => {
   // 基础顶部空白
-  const basePadding = 24
+  const basePadding = 0
 
   // 只在显示 marked list 时根据行数动态调整
   if (searchStore.displayMode === 'marked') {
@@ -51,13 +51,13 @@ const topPadding = computed(() => {
       return 250
     }
     if (markedCount <= 21) {
-      return 220
+      return 180
     }
     if (markedCount <= 28) {
-      return 170
+      return 134
     }
     if (markedCount <= 35) {
-      return 100
+      return 64
     }
 
   }
@@ -65,6 +65,17 @@ const topPadding = computed(() => {
   // 其他模式（搜索、普通列表等）统一使用固定值 24px
   return basePadding
 })
+
+// 根据 displayMode 返回对应的页面类名
+function getPageClass() {
+  const mode = searchStore.displayMode
+
+  if (mode === 'marked') return 'marked-mode'
+  if (mode === 'search') return 'search-mode'
+  if (mode === 'settings' || mode === 'help') return 'panel-mode'
+
+  return ''
+}
 
 // 文字选择相关状态
 let mouseDownTime = 0
@@ -198,17 +209,6 @@ async function toggleWebsiteMark(website) {
   handleWebsiteMarkToggled(searchStore, websiteStore, newIsMarked)
 }
 
-// 根据 displayMode 返回对应的页面类名
-function getPageClass() {
-  const mode = searchStore.displayMode
-  
-  if (mode === 'marked') return 'marked-mode'
-  if (mode === 'search') return 'search-mode'
-  if (mode === 'settings' || mode === 'help') return 'panel-mode'
-  
-  return ''
-}
-
 // 初始化应用
 onMounted(async () => {
   try {
@@ -264,6 +264,9 @@ onMounted(async () => {
       <SearchModule />
     </div>
 
+    <!-- 非 marked 模式下的占位空白 -->
+    <div class="search-spacer"></div>
+
     <!-- 显示模块 -->
     <DisplayModule
       @website-click="handleWebsiteClick"
@@ -294,20 +297,47 @@ onMounted(async () => {
   min-height: calc(100vh - 40px); /* 确保内容少时也占满视口（减去上下 padding） */
 }
 
+/* 非 marked 模式：页面可滚动，搜索模块固定 */
+#app:not(.marked-mode) {
+  height: auto;
+  overflow-y: visible; /* 允许页面级滚动 */
+  padding-top: 0 !important; /* 移除非 marked 模式的顶部 padding，避免内容滚动到搜索模块上方 */
+}
+
 /* 搜索模块粘性布局 - 非 marked 模式时固定顶部 */
-.search-sticky-wrapper {
-  position: sticky;
-  top: 0;
+#app:not(.marked-mode) .search-sticky-wrapper {
+  position: fixed; /* 使用 fixed 代替 sticky，确保始终固定在视口顶部 */
+  top: 0px; /* 与 marked 模式的基础 padding 保持一致 */
+  left: 0;
+  right: 0;
   z-index: 1000;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
   background: var(--color-bg-page);
 }
 
-/* marked list 模式：禁用 sticky，恢复普通流 */
+/* 非 marked 模式下的占位空白 - 填补固定搜索模块的高度和顶部空白 */
+#app:not(.marked-mode) .search-spacer {
+  height: calc(24px + 60px + 24px); /* 顶部空白 24px + SearchModule 高度 60px + padding-bottom 24px */
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* marked list 模式：整体可滚动，搜索模块不固定 */
+#app.marked-mode {
+  overflow-y: auto; /* 容器自身可滚动 */
+  max-height: calc(100vh - 40px);
+}
+
 #app.marked-mode .search-sticky-wrapper {
-  position: static;
+  position: static; /* 恢复普通流 */
+  width: 100%; /* 确保占满父容器 */
+  display: flex;
+  justify-content: center; /* 居中对齐 */
+}
+
+#app.marked-mode .search-spacer {
+  display: none; /* marked 模式下隐藏占位 */
 }
 
 /* 主题样式 */
