@@ -580,7 +580,17 @@ async function handleImport(event) {
 
 ```{"urls":["url1","url2"]}```
 
+
+## 已完成工作
+
+#### 搜索框固定顶部
+- 当显示模块不是 marked list 时，搜索框固定在顶部
+- 滚动条滚动时，搜索框固定在顶部，不随滚动条滚动
+
+
 ## 未完成工作
+
+#### index.html 添加一个description
 
 #### 插件起始页数据传递机制：
 
@@ -589,10 +599,6 @@ async function handleImport(event) {
 - 实现批量请求
 - 优化错误处理
 - 添加超时机制
-
-#### 搜索框固定顶部
-- 当显示模块不是 marked list 时，搜索框固定在顶部
-- 滚动条滚动时，搜索框固定在顶部，不随滚动条滚动
 
 #### 默认页面兼容性
 - 搜索模块和marked list上下留白
@@ -662,4 +668,18 @@ async function handleImport(event) {
 - 不完整网站数量 列表
 - tags数据
 
+#### 工具
+- 添加工具面板
+- `--tools toolName` 添加工具
+- `--tools 图片转base64`
+- `--tools base64预览`
+- `--tools 计算器`
+- `--tools 颜色转换`
+- `--tools 颜色选择器`
+- `--tools 密码生成器`
+- `--tools 生成随机数`
+- `--tools 进制转换`
+- `--tools 时间转换`
+- `--tools 翻译`
+- `--tools 天气`
 
