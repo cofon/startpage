@@ -83,9 +83,14 @@ const allTags = ref([])
 // 加载所有标签
 async function loadAllTags() {
   try {
-    if (window.StartPageAPI && window.StartPageAPI.getAllTags) {
-      allTags.value = await window.StartPageAPI.getAllTags()
-    }
+    const allWebsites = await websiteStore.getAllWebsites()
+    const tagsSet = new Set()
+    allWebsites.forEach(website => {
+      if (website.tags && Array.isArray(website.tags)) {
+        website.tags.forEach(tag => tagsSet.add(tag))
+      }
+    })
+    allTags.value = Array.from(tagsSet).sort()
   } catch (error) {
     console.error('[AddWebsitePanel] 获取所有标签失败:', error)
   }

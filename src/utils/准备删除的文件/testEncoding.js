@@ -1,8 +1,6 @@
-/**
- * 测试脚本：验证编码修复是否生效
- * 使用方法：在浏览器 Console 中运行 await test4399Website()
- */
-export async function test4399Website() {
+// 此文件已删除 - 测试编码的脚本不再需要
+
+// 以下内容已清空
   console.log('========== 🧪 开始测试 4399 网站编码 ==========')
   
   const testUrl = 'https://www.4399.com/flash/210573_3.htm#index3-7'

@@ -1,26 +1,5 @@
-// 统一日志前缀
-const LOG_PREFIX = '[StartPageAPI]'
-
-// 日志工具函数
-function log(message, data) {
-  console.log(`${LOG_PREFIX} ${message}`, data)
-}
-
-function logError(message, error) {
-  console.error(`${LOG_PREFIX} ${message}`, error)
-}
-
-function logWarn(message, data) {
-  console.warn(`${LOG_PREFIX} ${message}`, data)
-}
-
-export function useStartPageAPI(db, websiteStore, searchStore) {
-  /**
-   * 初始化 StartPageAPI
-   */
-  async function initStartPageAPI() {
-    // ========== 一次性导入所有需要的模块 ==========
-    log('正在加载依赖模块...')
+// 此文件已删除 - 插件相关代码已全部移除
+// 不再需要 StartPageAPI，因为不再支持插件功能
     const [
       { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata, fetchMetadataFromLocalApi },
       { extractRootDomain, generateDefaultIcon }

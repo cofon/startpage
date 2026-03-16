@@ -7,7 +7,7 @@
 export * from './database'
 
 // 插件相关
-export * from './plugin'
+
 
 // 网站相关
 export * from './website'

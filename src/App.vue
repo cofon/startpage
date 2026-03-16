@@ -15,7 +15,6 @@ import {
 import SearchModule from './components/SearchModule.vue'
 import DisplayModule from './components/DisplayModule.vue'
 import WebsiteDialog from './components/WebsiteDialog.vue'
-import { useStartPageAPI } from './composables/useStartPageAPI'
 import NotificationContainer from './components/NotificationContainer.vue'
 
 // 初始化 stores
@@ -236,9 +235,7 @@ onMounted(async () => {
     await searchStore.loadEngineIcons()
     searchStore.init()
 
-    // ========== 初始化 StartPageAPI ==========
-    const { initStartPageAPI } = useStartPageAPI(db, websiteStore, searchStore)
-    await initStartPageAPI()
+
   } catch (error) {
     console.error('初始化应用失败:', error)
   }

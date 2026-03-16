@@ -78,96 +78,14 @@ export async function fetchMetadataFromLocalApi(url) {
   }
 }
 
-/**
- * 从插件获取网站元数据
- * @param {string} url - 网站 URL
- * @returns {Promise<Object|null>} 元数据对象 { title, description, iconData }
- */
-export async function fetchMetadataFromPlugin(url) {
-  console.log('[fetchMetadataFromPlugin] ========== 开始获取元数据 ==========')
-  console.log('[fetchMetadataFromPlugin] URL:', url)
 
-  try {
-    // 检查是否在扩展环境中（通过 content.js）
-    if (typeof window !== 'undefined' && window.chrome && window.chrome.runtime) {
-      // 直接在扩展环境中运行
-      const metadata = await chrome.runtime.sendMessage({
-        action: 'FETCH_METADATA',
-        url: url,
-        fromCurrentTab: false
-      })
-
-      if (metadata) {
-        console.log('[fetchMetadataFromPlugin] ✓ 成功获取元数据')
-        console.log('[fetchMetadataFromPlugin] - title:', metadata.title)
-        console.log('[fetchMetadataFromPlugin] - description:', metadata.description?.substring(0, 50))
-        console.log('[fetchMetadataFromPlugin] - iconData:', metadata.iconData?.substring(0, 50))
-        return metadata
-      } else {
-        console.warn('[fetchMetadataFromPlugin] ⚠️ 未能获取元数据')
-        return null
-      }
-    } else {
-      // 在起始页中运行，通过 content.js 转发
-      console.log('[fetchMetadataFromPlugin] 在起始页中运行，通过 content.js 转发')
-
-      // 创建一个 Promise 来等待响应
-      return new Promise((resolve, reject) => {
-        const requestId = Date.now() + '-' + Math.random()
-
-        // 创建超时定时器
-        const timeoutId = setTimeout(() => {
-          document.removeEventListener('StartPageAPI-MetadataResponse', responseHandler)
-          console.error('[fetchMetadataFromPlugin] ❌ 请求超时')
-          resolve(null)
-        }, 10000)
-
-        // 监听响应事件
-        const responseHandler = (e) => {
-          if (e.detail.requestId === requestId) {
-            clearTimeout(timeoutId)
-            document.removeEventListener('StartPageAPI-MetadataResponse', responseHandler)
-
-            if (e.detail.success && e.detail.result) {
-              console.log('[fetchMetadataFromPlugin] ✓ 成功获取元数据')
-              console.log('[fetchMetadataFromPlugin] - title:', e.detail.result.title)
-              console.log('[fetchMetadataFromPlugin] - description:', e.detail.result.description?.substring(0, 50))
-              console.log('[fetchMetadataFromPlugin] - iconData:', e.detail.result.iconData?.substring(0, 50))
-              resolve(e.detail.result)
-            } else {
-              console.warn('[fetchMetadataFromPlugin] ⚠️ 未能获取元数据')
-              resolve(null)
-            }
-          }
-        }
-
-        // 添加响应监听器
-        document.addEventListener('StartPageAPI-MetadataResponse', responseHandler)
-
-        // 发送请求到 content.js
-        const event = new CustomEvent('StartPageAPI-FetchMetadata', {
-          detail: {
-            url: url,
-            requestId: requestId
-          }
-        })
-
-        console.log('[fetchMetadataFromPlugin] 发送请求到 content.js')
-        document.dispatchEvent(event)
-      })
-    }
-  } catch (error) {
-    console.error('[fetchMetadataFromPlugin] ❌ 获取元数据失败:', error)
-    return null
-  }
-}
 
 /**
- * 通用的元数据获取函数（自动选择数据源）
- * 优先使用本地 API，如果失败则尝试插件
+ * 通用的元数据获取函数
+ * 使用本地 API (EdgeOne 边缘函数) 获取数据
  * @param {string} url - 网站 URL
  * @param {Object} options - 选项
- * @param {string} options.source - 数据源：'local-api' | 'plugin' | 'auto'
+ * @param {string} options.source - 数据源：'local-api' | 'auto'
  * @returns {Promise<Object|null>} 元数据对象
  */
 export async function fetchMetadata(url, options = {}) {
@@ -176,35 +94,8 @@ export async function fetchMetadata(url, options = {}) {
   console.log('[fetchMetadata] ========== 开始获取元数据 ==========');
   console.log('[fetchMetadata] 数据源模式:', source);
 
-  // 根据模式选择数据源
-  if (source === 'local-api') {
-    return await fetchMetadataFromLocalApi(url);
-  }
-
-  if (source === 'plugin') {
-    return await fetchMetadataFromPlugin(url);
-  }
-
-  // auto 模式：优先本地 API，失败后降级到插件
-  if (source === 'auto') {
-    try {
-      console.log('[fetchMetadata] 尝试从本地 API 获取...');
-      const metadata = await fetchMetadataFromLocalApi(url);
-      if (metadata) {
-        console.log('[fetchMetadata] ✓ 本地 API 获取成功');
-        return metadata;
-      }
-    } catch (error) {
-      console.warn('[fetchMetadata] 本地 API 失败，尝试插件方式...');
-    }
-
-    // 降级到插件
-    console.log('[fetchMetadata] 尝试从插件获取...');
-    return await fetchMetadataFromPlugin(url);
-  }
-
-  // 默认使用插件
-  return await fetchMetadataFromPlugin(url);
+  // 统一使用本地 API (EdgeOne 边缘函数)
+  return await fetchMetadataFromLocalApi(url);
 }
 
 /**
@@ -363,7 +254,7 @@ export function checkUrlExists(url, allWebsites) {
  * @param {Array} websites - 网站数组
  * @param {Function} progressCallback - 进度回调函数 (processed, total)
  * @param {Object} options - 选项
- * @param {string} options.source - 数据源：'local-api' | 'plugin' | 'auto'
+ * @param {string} options.source - 数据源：'local-api' | 'auto'
  * @returns {Promise<Array>} 补全后的网站数组
  */
 export async function batchEnrichMetadata(websites, progressCallback, options = {}) {
@@ -435,7 +326,6 @@ export default {
   checkUrlExists,
   fetchMetadata,
   fetchMetadataFromLocalApi,
-  fetchMetadataFromPlugin,
   extractSiteNameFromUrl,
   extractRootDomain
 }
