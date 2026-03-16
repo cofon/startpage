@@ -1,0 +1,361 @@
+
+
+边缘函数 
+免费额度：通常每月 10-100 万次请求（需确认最新政策）
+    免费版额度已确认：
+        请求次数：300 万次/月[7]。
+        单次运行限制：64 次 fetch、8 并发、默认 15 秒超时（可设至 300 秒）[5]。
+        写函数的时候注意调用，一次for循环的次数限制在64以内
+        比如for循环获取网站meta，200个网站分为4次获取，
+    如果一次超过64次fetch，这是智能客服给出的回复：
+        根据 EdgeOne 边缘函数的运行时限制，单次运行中最多发起 64 次 fetch 请求。若一次性发起 65 次 fetch，具体表现如下：
+        请求失败与异常抛出
+        超出限制的 fetch 请求（即第 65 次及后续请求）会直接失败，并抛出异常（如 FetchError 或类似错误）[1]。
+        错误信息通常包含请求次数超限的提示，例如 "Exceeded maximum fetch count (64)"。
+        已发起的请求不受影响
+        前 64 次 fetch 请求会正常执行，不受后续失败请求的影响[1]。
+        无特定错误码返回
+        异常类型为运行时错误，而非 HTTP 错误码（如 4xx/5xx）。需通过代码捕获异常处理[1]。
+        建议：
+        通过分批次或并发控制（如 Promise.all 限制并发数）避免触发限制[1]。
+        若业务必须超过 64 次请求，需拆分逻辑到多个边缘函数调用。
+
+        EdgeOne 免费版支持的 Node.js 版本包括：
+        14.21.3
+        16.20.2
+        18.20.4
+        20.18.0
+        22.11.0
+        这些版本可通过项目设置中的「Node.js 版本」选项进行选择[2][3]。
+    
+我要确认 EdgeOne 是否支持 package.json 安装依赖，edgeone免费版； 使用边缘计算获取数据之后，我要提起数据，如果可以安装  Cheerio  之类的工具我就不必写正则表达式了
+智能客服
+EdgeOne 免费版支持通过 package.json 安装依赖，具体说明如下：
+依赖安装机制
+默认会根据项目根目录的 package.json 自动执行 npm install 安装依赖[1]。
+支持的包管理器包括 npm、Yarn、pnpm（版本详见[1]）。
+支持安装 Cheerio 等工具
+您可以在项目中直接通过 package.json 添加 Cheerio 依赖，构建时会自动安装[1]。
+示例：在 package.json 的 dependencies 中添加 "cheerio": "^1.0.0" 即可。
+Node.js 版本兼容性
+免费版支持的 Node 版本包括 14.21.3、16.20.2、18.20.4、20.18.0、22.11.0 等[1]，可根据需要选择。
+如需进一步调整构建配置（如自定义安装命令），可在「项目设置 - 构建部署配置」中修改[1]。
+
+
+
+
+
+
+
+1. 边缘函数入口格式 EdgeOne 的边缘函数入口是哪种格式？ Cloudflare Workers 风格：export default { fetch(request) { ... } } Express 风格：export async function onRequest(context) { ... } 其他格式？
+
+EdgeOne 的边缘函数入口格式为 onRequest 风格，具体如下：
+
+基本格式
+需导出命名的 onRequest 函数（或特定 HTTP 方法如 onRequestGet），接收一个 context 对象并返回 Response：
+
+JAVASCRIPT
+// 示例：./edge-functions/api/hello.js
+export default function onRequest(context) {
+  return new Response('Hello from Edge Functions!');
+}
+// 示例：./edge-functions/api/hello.js
+export default function onRequest(context) {
+  return new Response('Hello from Edge Functions!');
+}
+支持动态路由参数通过 context.params 获取[4][6]。
+
+与 Cloudflare Workers 的区别
+
+EdgeOne 使用 onRequest(context) 而非 fetch(request)。
+context 包含请求对象、环境变量等属性（如 context.request、context.env）[6]。
+Express/Koa 框架适配
+若使用 Express/Koa，需将所有路由集中在一个文件（如 <a class="shortcut">default</a>.js）并导出实例：
+
+JAVASCRIPT
+// 示例：./node-functions/express/<a class="shortcut">default</a>.js
+import express from "express";
+const app = express();
+app.get("/", (req, res) => res.json({ message: "Hello" }));
+export default app;
+// 示例：./node-functions/express/<a class="shortcut">default</a>.js
+import express from "express";
+const app = express();
+app.get("/", (req, res) => res.json({ message: "Hello" }));
+export default app;
+[4]
+
+动态路由示例
+
+JAVASCRIPT
+// 文件路径：/edge-functions/api/users/[id].js
+export function onRequestGet(context) {
+  return new Response(`User ID: ${context.params.id}`);
+}
+// 文件路径：/edge-functions/api/users/[id].js
+export function onRequestGet(context) {
+  return new Response(`User ID: ${context.params.id}`);
+}
+[6]
+
+如需调试，可使用 edgeone pages dev 本地运行[4][6]。
+
+
+2. 边缘函数入口格式 EdgeOne 的边缘函数入口是哪种格式？ Cloudflare Workers 风格：export default { fetch(request) { ... } } Express 风格：export async function onRequest(context) { ... } 其他格式？
+
+EdgeOne 的边缘函数入口格式为 onRequest 风格，具体如下：
+
+基本格式
+需导出命名的 onRequest 函数（或特定 HTTP 方法如 onRequestGet），接收一个 context 对象并返回 Response：
+
+JAVASCRIPT
+// 示例：./edge-functions/api/hello.js
+export default function onRequest(context) {
+  return new Response('Hello from Edge Functions!');
+}
+// 示例：./edge-functions/api/hello.js
+export default function onRequest(context) {
+  return new Response('Hello from Edge Functions!');
+}
+支持动态路由参数通过 context.params 获取[4][6]。
+
+与 Cloudflare Workers 的区别
+
+EdgeOne 使用 onRequest(context) 而非 fetch(request)。
+context 包含请求对象、环境变量等属性（如 context.request、context.env）[6]。
+Express/Koa 框架适配
+若使用 Express/Koa，需将所有路由集中在一个文件（如 <a class="shortcut">default</a>.js）并导出实例：
+
+JAVASCRIPT
+// 示例：./node-functions/express/<a class="shortcut">default</a>.js
+import express from "express";
+const app = express();
+app.get("/", (req, res) => res.json({ message: "Hello" }));
+export default app;
+// 示例：./node-functions/express/<a class="shortcut">default</a>.js
+import express from "express";
+const app = express();
+app.get("/", (req, res) => res.json({ message: "Hello" }));
+export default app;
+[4]
+
+动态路由示例
+
+JAVASCRIPT
+// 文件路径：/edge-functions/api/users/[id].js
+export function onRequestGet(context) {
+  return new Response(`User ID: ${context.params.id}`);
+}
+// 文件路径：/edge-functions/api/users/[id].js
+export function onRequestGet(context) {
+  return new Response(`User ID: ${context.params.id}`);
+}
+[6]
+
+如需调试，可使用 edgeone pages dev 本地运行[4][6]
+
+
+
+3. 环境变量配置
+是否支持环境变量（如 API_KEY 等）？
+如何配置生产环境和开发环境的变量？
+是否需要 .env 文件还是通过 EdgeOne 控制台配置？
+
+EdgeOne 支持环境变量配置，具体规则如下：
+
+1. 支持环境变量
+边缘函数可通过 context.env 访问环境变量（如 API_KEY）[2][3]。
+支持通过控制台、CLI 或 API 管理变量，最多支持 64 个变量[2]。
+2. 配置方式
+控制台配置
+在 EdgeOne Pages 控制台直接添加或修改变量，适用于生产环境[3][4]。
+CLI 管理
+使用 edgeone pages env 命令操作变量（示例）：
+BASH
+# 添加变量
+edgeone pages env add API_KEY your_key_value
+# 拉取变量到本地文件
+edgeone pages env pull -f .env.prod
+# 添加变量
+edgeone pages env add API_KEY your_key_value
+# 拉取变量到本地文件
+edgeone pages env pull -f .env.prod
+[1][3]
+本地开发
+支持 .env 文件，但需通过 edgeone pages env pull 同步控制台变量到本地[1][3]。
+3. 多环境隔离
+通过不同文件（如 .env.prod 和 .env.dev）区分环境，部署时指定目标环境[1][3]。
+控制台变量需手动区分环境，无自动同步功能[2][4]。
+4. 敏感信息处理
+控制台和 CLI 均支持加密存储敏感变量[2][3]。
+本地 .env 文件需自行确保安全[1]。
+
+图：控制台环境变量配置界面[3][4]。
+
+总结：优先通过控制台或 CLI 管理生产变量，本地开发使用 .env 文件并同步控制台配置[1][2][3]。
+
+
+
+CORS 处理
+虽然服务器端请求没有 CORS 限制，但前端调用边缘函数时：
+
+是否需要显式配置 CORS 头？
+还是 EdgeOne 自动处理跨域
+
+EdgeOne 的边缘函数 CORS 处理规则如下：
+
+需显式配置 CORS 头
+
+前端调用边缘函数时，必须在函数代码中手动设置跨域响应头（如 Access-Control-Allow-Origin），否则浏览器会因同源策略拦截响应[2][4]。
+示例代码（需在边缘函数返回响应时添加）：
+JAVASCRIPT
+// 在边缘函数中设置允许的域名（或通配符 *）
+const headers = {
+  "Access-Control-Allow-Origin": "https://your-frontend-domain.com",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+};
+return new Response("data", { headers });
+// 在边缘函数中设置允许的域名（或通配符 *）
+const headers = {
+  "Access-Control-Allow-Origin": "https://your-frontend-domain.com",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+};
+return new Response("data", { headers });
+[2][5]
+自动处理限制
+
+EdgeOne 不会自动添加跨域头，需开发者自行实现[4]。
+若需动态匹配请求来源，可使用变量 ${http.request.headers["Origin"]} 作为 Access-Control-Allow-Origin 的值[2]。
+控制台辅助配置（非函数级）
+
+通过 EdgeOne 控制台的「规则引擎」可批量配置跨域头（适用于静态资源），但边缘函数仍需代码设置[2][5]。
+
+图：规则引擎中配置跨域响应头[2]。
+
+总结：必须通过代码或规则引擎显式配置 CORS 头，无全自动处理机制[2][4][5]。
+
+
+
+5. 日志和调试
+如何查看边缘函数的执行日志？
+是否有类似 Cloudflare 的"实时尾随日志"功能？
+
+根据搜索结果，EdgeOne 边缘函数的日志查看方式如下：
+
+1. 当前支持范围
+仅支持 Node Functions：目前 EdgeOne Pages 控制台仅提供对 Node Functions 的日志分析功能，暂未开放 Edge Functions 的日志查看[1]。
+后续扩展计划：官方文档提到将逐步支持其他服务（如 Edge Functions）的日志功能[1]。
+2. 日志查看方法（Node Functions）
+控制台检索
+登录 EdgeOne Pages 控制台 → 选择项目 → 进入“日志分析”页面，支持按状态（成功/失败/超时）、时间范围（15分钟至24小时）、关键字过滤日志[1]。
+
+
+自定义日志输出
+通过代码中的 console.log() 输出内容会显示在日志中，例如：
+
+JAVASCRIPT
+export const onRequestGet = async ({ request }) => {
+  console.log('请求URL:', request.url); // 自定义日志
+  return new Response('OK');
+}
+export const onRequestGet = async ({ request }) => {
+  console.log('请求URL:', request.url); // 自定义日志
+  return new Response('OK');
+}
+[1]
+
+3. 实时日志功能
+未明确支持实时尾随日志：当前文档未提及类似 Cloudflare 的实时尾随日志功能，仅支持查看历史日志（最多保留24小时）[1][4]。
+近24小时日志：可通过控制台查看“近24小时”或“实时”选项的日志，但可能受日志量影响延迟[4][5]。
+4. 日志结构与限制
+日志详情：包含请求ID、执行耗时、内存使用等信息，单条日志最大限制为5MB[1]。
+冷启动标记：平台会记录冷启动耗时（如 Coldstart: 236ms）[1]。
+如需进一步排查，建议通过控制台筛选或联系腾讯云确认 Edge Functions 日志的开放进度[1][4]。
+
+注：若需查看其他云函数（非 EdgeOne）日志，可参考 Serverless 控制台 的日志查询功能[4][5]。
+
+
+
+
+6. 缓存策略
+是否支持 EdgeOne 自带的缓存服务？
+Cache-Control 头是否会被 EdgeOne 识别并生效？
+是否有内置的 KV 存储用于缓存（减少重复 fetch）？
+
+EdgeOne 支持自带的缓存服务，具体规则如下：
+
+1. 缓存服务支持
+内容缓存：EdgeOne 边缘节点会根据配置的缓存规则（默认策略、不缓存或自定义时间）缓存文件，支持基于文件后缀、HTTP 头部（如 Cache-Control）等条件匹配[1][4]。
+冷热淘汰机制：长时间未请求的缓存文件可能被提前删除[1]。
+2. Cache-Control 头识别
+默认策略：节点会优先识别源站的 Cache-Control 头（如 max-age、no-cache），若无缓存头部则按文件后缀或自定义时间处理[1][4]。
+强制覆盖：开启“自定义缓存时间”的强制选项后，可忽略源站 Cache-Control 头[1]。
+3. 内置 KV 存储
+未提及 KV 存储：当前文档未说明 EdgeOne 是否提供类似 Workers KV 的内置存储，边缘函数需自行管理重复请求逻辑[1][4]。
+
+图：缓存规则优先级（规则引擎 > 全局策略）[1]。
+
+总结：
+
+支持缓存服务，依赖 Cache-Control 或自定义规则[1][4]。
+无明确内置 KV 存储，需通过代码或外部服务实现重复请求优化。
+
+
+
+
+EdgeOne 本地开发工具怎么打开 怎么使用
+EdgeOne 本地开发工具的打开和使用步骤如下：
+
+1. 安装 CLI
+在项目根目录执行以下命令安装 EdgeOne CLI：
+
+BASH
+npm install -g edgeone
+npm install -g edgeone
+安装后可通过 edgeone -v 验证版本[1]。
+
+2. 登录账号
+执行登录命令并选择站点（国内站建议选 China）：
+
+BASH
+edgeone login
+edgeone login
+登录后可通过 edgeone whoami 查看账号信息[1]。
+
+3. 初始化项目
+在项目根目录运行初始化命令，生成函数目录（edge-functions 或 node-functions）：
+
+BASH
+edgeone pages init
+edgeone pages init
+[1]
+
+4. 启动本地开发服务
+执行以下命令启动本地服务（默认端口 8088）：
+
+BASH
+edgeone pages dev
+edgeone pages dev
+前端页面和函数服务运行在同一端口，无需额外代理。
+通过 http://localhost:8088/ 访问前端页面，直接使用 Fetch API 调用函数[1]。
+5. 关联项目（可选）
+如需同步控制台环境变量或使用 KV 存储，执行关联命令：
+
+BASH
+edgeone pages link
+edgeone pages link
+输入项目名称完成关联[1]。
+
+6. 调试与部署
+调试：在代码中使用 console.log() 输出日志，终端实时显示[5]。
+部署：推送到 Git 远端触发自动构建，或通过 CLI 本地部署：
+BASH
+edgeone pages deploy
+edgeone pages deploy
+
+图：本地开发与部署流程[1][5]。
+
+注意：
+
+避免频繁重启 dev 服务（有启动次数限制）[1]。
+本地修改后推送到 Git 会自动触发线上更新[4]。

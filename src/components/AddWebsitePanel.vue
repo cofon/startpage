@@ -3,8 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
 import websiteMetadataService, {
-  fetchMetadataFromPlugin,
-} from '../utils/plugin/websiteMetadataService'
+  fetchMetadataFromLocalApi,
+} from '../services/websiteMetadataService'
 import { isValidUrl } from '../utils/website/websiteUtils'
 
 // ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
@@ -353,7 +353,7 @@ async function handleFetchMetadata() {
   try {
     notificationStore.info('正在获取网站信息...')
 
-    const metadata = await fetchMetadataFromPlugin(url)
+    const metadata = await fetchMetadataFromLocalApi(url)
 
     if (metadata) {
       // 覆盖填充 title、description、iconData（无论原来是否有值）

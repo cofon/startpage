@@ -22,10 +22,10 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
     // ========== 一次性导入所有需要的模块 ==========
     log('正在加载依赖模块...')
     const [
-      { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata, fetchMetadataFromPlugin },
+      { validateWebsite, normalizeWebsiteData, checkUrlExists, batchEnrichMetadata, fetchMetadataFromLocalApi },
       { extractRootDomain, generateDefaultIcon }
     ] = await Promise.all([
-      import('../utils/plugin/websiteMetadataService'),
+      import('../services/websiteMetadataService'),
       import('../utils/website/websiteUtils')
     ])
     log('依赖模块加载完成')
@@ -150,7 +150,7 @@ export function useStartPageAPI(db, websiteStore, searchStore) {
           if (!normalizedData.title || !normalizedData.description || !normalizedData.iconData) {
             log(`尝试从插件获取元数据：${normalizedData.url}`)
             try {
-              const metadata = await fetchMetadataFromPlugin(normalizedData.url)
+              const metadata = await fetchMetadataFromLocalApi(normalizedData.url)
               if (metadata) {
                 // 只补全缺失的字段
                 if (!normalizedData.title && metadata.title) {
