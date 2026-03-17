@@ -6,7 +6,7 @@ import { useSearchStore } from './stores/search'
 import { useNotificationStore } from './stores/notification'
 import db from './utils/database'
 import { defaultWebsites } from './data/defaultWebsites'
-import { normalizeWebsiteForDB } from './utils/website/websiteNormalizer'
+import { normalizeWebsiteForDB } from './utils/website/websiteUtils'
 import {
   handleWebsiteDeleted,
   handleWebsiteRestored,

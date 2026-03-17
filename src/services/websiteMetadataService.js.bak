@@ -17,7 +17,7 @@ import {
   extractRootDomain
 } from '../utils/website/websiteUtils'
 
-import { createWebsiteObject } from '../utils/website/websiteUtils'
+import { createWebsiteObject } from '../utils/website/websiteNormalizer'
 
 // ============================================
 // 配置：本地 API 服务地址
