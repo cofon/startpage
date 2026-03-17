@@ -10,6 +10,9 @@ export default async function onRequest(context) {
   const url = new URL(context.request.url);
   const targetUrl = url.searchParams.get('url');
 
+
+  // {"success":false,"error":"AbortSignal.timeout is not a function"}
+
   // CORS 预检请求处理
   if (context.request.method === 'OPTIONS') {
     return new Response(null, {
@@ -107,15 +110,15 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-  
+
   // Edge
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-  
+
   // Firefox
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
-  
+
   // Safari
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15'
 ];
@@ -149,6 +152,13 @@ async function getWebsiteMetadata(targetUrl) {
         await delay(randomDelay);
       }
 
+      // 创建超时控制的 AbortController
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log(`[Timeout] ⏰ 请求超时 (15 秒)，中止请求`);
+        controller.abort();
+      }, 15000);
+
       // 发送 HTTP 请求 - 增强版 headers
       const response = await fetch(targetUrl, {
         method: 'GET',
@@ -167,9 +177,12 @@ async function getWebsiteMetadata(targetUrl) {
           // 添加 Referer 模拟真实访问
           'Referer': new URL(targetUrl).origin
         },
-        signal: AbortSignal.timeout(15000), // 增加到 15 秒超时
+        signal: controller.signal,
         redirect: 'follow'
       });
+
+      // 清除超时定时器
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         // 对于 403、429 等错误，尝试重试

@@ -85,7 +85,11 @@ export async function getWebsiteMetadata(targetUrl) {
           // 添加 Referer 模拟真实访问
           'Referer': new URL(targetUrl).origin
         },
-        signal: AbortSignal.timeout(15000), // 增加到 15 秒超时
+        signal: (() => {
+          const controller = new AbortController();
+          setTimeout(() => controller.abort(), 15000);
+          return controller.signal;
+        })(),
         redirect: 'follow' // 自动跟随重定向
       });
     

@@ -19,6 +19,7 @@
 
 // 测试带有参数的 API
 // https://startpage-rjh1mdmj.edgeone.cool/api/hello?target=https://www.baidu.com
+// 测试通过，可以获取到 You sent the target URL: https://www.baidu.com
 export default function onRequest(context) {
   // 1. 获取完整的请求 URL 对象
   const { searchParams } = new URL(context.request.url);
