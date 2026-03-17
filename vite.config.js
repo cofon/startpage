@@ -20,7 +20,6 @@ export default defineConfig({
     cssCodeSplit: false,
     brotliSize: false,
     rollupOptions: {
-      inlineDynamicImports: true,
       output: {
         assetFileNames: 'assets/[name].[ext]',
       },
