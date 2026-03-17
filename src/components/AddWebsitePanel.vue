@@ -5,7 +5,7 @@ import { useNotificationStore } from '../stores/notification'
 import websiteMetadataService, {
   fetchMetadataFromLocalApi,
 } from '../services/websiteMetadataService'
-import { isValidUrl, checkUrlExists, normalizeWebsiteData, validateWebsite_1 as validateWebsite } from '../utils/website/websiteUtils'
+import { isValidUrl, checkUrlExists, normalizeWebsiteData, validateWebsite_1 as validateWebsite, extractSiteNameFromUrl } from '../utils/website/websiteUtils'
 
 // ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
 
@@ -225,7 +225,7 @@ async function processUrlChange(url) {
   // 判断条件：用户获取焦点输入过，则不需要填充（无论当前值是否为空），否则就填充
   if (!userHasEditedName) {
     // 需要填充 name：用户未手动编辑过
-    const siteName = websiteMetadataService.extractSiteNameFromUrl(url)
+    const siteName = extractSiteNameFromUrl(url)
     formData.value.name = siteName
     console.log('[processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充:', siteName)
   } else {
@@ -257,7 +257,7 @@ async function processUrlChange(url) {
     } else {
       const normalizedData = normalizeWebsiteData({
         url: url,
-        name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url),
+        name: formData.value.name || extractSiteNameFromUrl(url),
       })
 
       formData.value.iconGenerateData = normalizedData.iconGenerateData
@@ -268,7 +268,7 @@ async function processUrlChange(url) {
   } else {
     const normalizedData = normalizeWebsiteData({
       url: url,
-      name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url),
+      name: formData.value.name || extractSiteNameFromUrl(url),
     })
 
     formData.value.iconGenerateData = normalizedData.iconGenerateData

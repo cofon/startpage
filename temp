@@ -1,4 +1,4 @@
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------
 D:\vue\startpage\src\utils\website\websiteUtils.js
 
 验证URL是否有效，返回
@@ -32,8 +32,6 @@ export function createDefaultWebsiteData(url)
 
 从主机名中提取根域名，输入 www.baidu.com 输出 baidu.com，复合后缀无法处理，输入 www.abc.co.uk，输出 .co.uk
 export function extractRootDomain(hostname)
--------------------------------------------------------------------------------
-D:\vue\startpage\src\utils\website\websiteNormalizer.js
 
 创建标准网站对象，有些字段已经删除了，需要处理
 export function createWebsiteObject(data = {})
@@ -46,14 +44,38 @@ export function normalizeWebsitesForDB(websites)
 
 创建用于更新的网站对象（只包含需要更新的字段）
 export function createUpdateObject(website, updates = {})
--------------------------------------------------------------------------------
-D:\vue\startpage\src\utils\website\websiteImportUtils.js
 
 验证网站数据是否完整，必须有值的字段是否空值，需要修改，现在有些字段不是必须的了
 export function validateWebsite(website)
 
 填充网站的默认字段
 export function fillDefaultFields(website)
+
+标准化URL，输入 https://www.baidu.com/，输出 https://www.baidu.com
+function normalizeImportUrl(url)
+
+检查网站数据完整性（仅针对插件可补全的字段），判断是否需要 边缘函数API获取网站数据
+export function isWebsiteComplete(website)
+
+获取缺失的字段列表，针对title desc icon
+function getMissingFields(website)
+
+验证网站数据，验证可输入字段，不知道在哪用的
+export function validateWebsite(data) 
+
+标准化网站数据，不知道在哪用的
+export function normalizeWebsiteData(data)
+
+编码 SVG 为 Base64
+function encodeSvg(svg)
+
+URL 规范化处理
+function normalizeUrl(url)
+
+检查 URL 是否已存在于数据库中
+export function checkUrlExists(url, allWebsites)
+-------------------------------------------------------------------------
+D:\vue\startpage\src\utils\website\websiteImportUtils.js
 
 批量处理导入的网站数据，有效(完整)/无效网站分别放在有效/无效数组
 export function processImportWebsites(websites)
@@ -65,12 +87,9 @@ export function importSingleWebsite(website, websitesStore, onComplete)
 function addWebsiteToStore(website, websitesStore, onComplete)
 
 更新存储(状态管理)中的网站数据
-function updateWebsiteInStore(website, websitesStore, onComplete)
--------------------------------------------------------------------------------
+function addWebsiteToStore(website, websitesStore, onComplete)
+-------------------------------------------------------------------------
 D:\vue\startpage\src\services\importService.js
-
-标准化URL，输入 https://www.baidu.com/，输出 https://www.baidu.com
-function normalizeImportUrl(url)
 
 导入数据的主入口
 export async function importData(jsonData, options = {})
@@ -80,9 +99,6 @@ export function validateImportData(data)
 
 判断导入类型，'websites' | 'urls' | 'unknown'
 export function getImportType(data)
-
-检查网站数据完整性（仅针对插件可补全的字段），判断是否需要 边缘函数API获取网站数据
-export function isWebsiteComplete(website)
 
 分离完整和不完整的网站
 export function separateWebsites(websites)
@@ -99,12 +115,9 @@ export async function importWebsitesToDB(websites, config, monitor, existingUrls
 导入 websites 数据，另一个是导入urls
 async function importWebsites(websites, config, monitor)
 
-获取缺失的字段列表，针对title desc icon
-function getMissingFields(website)
-
 导入 urls 数据，另一个是导入websites，之后要把urls转为websites，合并操作
 async function importUrls(urls, config, monitor)
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------
 D:\vue\startpage\src\services\websiteMetadataService.js
 
 这个是获取网站title desc icon的services
@@ -117,21 +130,6 @@ export async function fetchMetadataFromLocalApi(url)
 通用的元数据获取函数, 内部调用 fetchMetadataFromLocalApi，以后要换成调用 edgeone边缘函数
 export async function fetchMetadata(url, options = {})
 
-验证网站数据，验证可输入字段，不知道在哪用的
-export function validateWebsite(data) 
-
-标准化网站数据，不知道在哪用的
-export function normalizeWebsiteData(data)
-
-编码 SVG 为 Base64
-function encodeSvg(svg)
-
-URL 规范化处理
-function normalizeUrl(url)
-
-检查 URL 是否已存在于数据库中
-export function checkUrlExists(url, allWebsites)
-
 批量补全网站元数据
 export async function batchEnrichMetadata(websites, progressCallback, options = {})
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------
