@@ -588,3 +588,258 @@ export function fillDefaultFields(website) {
     isHidden: website.isHidden !== undefined ? website.isHidden : false
   }
 }
+
+// ============================================
+// 第四部分：导入辅助工具（来自 importService.js）
+// ============================================
+
+/**
+ * URL 规范化处理（与 AddWebsitePanel 保持一致）
+ * - 移除末尾斜杠
+ * - 统一协议（如果没有协议）
+ * - 移除 hash 和 search 参数
+ * @param {string} url - 要规范化的 URL
+ * @returns {string} 规范化后的 URL
+ */
+export function normalizeImportUrl(url) {
+  if (!url) return ''
+
+  try {
+    // 确保有协议
+    let normalized = url
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized
+    }
+
+    // 创建 URL 对象以解析各个部分
+    const urlObj = new URL(normalized)
+
+    // 移除尾部斜杠
+    let pathname = urlObj.pathname
+    if (pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1)
+    }
+
+    // 重新构建 URL（不包含 hash 和 search）
+    return `${urlObj.protocol}//${urlObj.host}${pathname}`
+  } catch (error) {
+    console.warn('[WebsiteUtils] URL 规范化失败:', url, error)
+    return url
+  }
+}
+
+/**
+ * 检查网站数据完整性（仅针对插件可补全的字段）
+ * @param {Object} website - 网站数据
+ * @returns {boolean} 是否完整
+ */
+export function isWebsiteComplete(website) {
+  // 必须有 URL
+  if (!website.url || !isValidUrl(website.url)) {
+    return false
+  }
+
+  // ========== 优化：优化完整性判断逻辑 ==========
+  // 1. iconData 不纳入检查范围（因为缺失时可以用 iconGenerateData 替补）
+  // 2. title 和 description 只需要有一个有值即可（显示逻辑优先显示 title）
+
+  const hasTitle = website.title && website.title.trim() !== ''
+  const hasDescription = website.description && website.description.trim() !== ''
+
+  const hasTitleOrDescription = hasTitle || hasDescription
+
+  // 数据完整的标准：
+  // - URL 有效
+  // - title 或 description至少有一个
+  // （iconData 不检查，因为可以由 iconGenerateData 替补）
+  return hasTitleOrDescription
+}
+
+/**
+ * 获取缺失的字段列表，针对 title、description、icon
+ * @param {Object} website - 网站数据
+ * @returns {Array} 缺失字段数组
+ */
+export function getMissingFields(website) {
+  const missingFields = []
+
+  if (!website.title || website.title.trim() === '') {
+    missingFields.push('title')
+  }
+
+  if (!website.description || website.description.trim() === '') {
+    missingFields.push('description')
+  }
+
+  if (!website.iconData || website.iconData.trim() === '') {
+    missingFields.push('iconData')
+  }
+
+  return missingFields
+}
+
+// ============================================
+// 第五部分：数据验证和标准化工具（来自 websiteMetadataService.js）
+// ============================================
+
+/**
+ * 编码 SVG 为 Base64
+ * @param {string} svg - SVG 字符串
+ * @returns {string} Base64 编码的 SVG 数据 URL
+ */
+export function encodeSvg(svg) {
+  if (!svg) return ''
+  if (svg.startsWith('data:image/svg+xml;base64,') || svg.startsWith('data:image/svg+xml;utf8,')) {
+    return svg
+  }
+  const encodedSvg = encodeURIComponent(svg)
+    .replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))
+  return `data:image/svg+xml;base64,${btoa(encodedSvg)}`
+}
+
+/**
+ * URL 规范化处理
+ * @param {string} url - 要规范化的 URL
+ * @returns {string} 规范化后的 URL
+ */
+export function normalizeUrl(url) {
+  if (!url) return ''
+
+  try {
+    let normalized = url
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized
+    }
+
+    const urlObj = new URL(normalized)
+    let pathname = urlObj.pathname
+    if (pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1)
+    }
+
+    return `${urlObj.protocol}//${urlObj.host}${pathname}`
+  } catch (error) {
+    console.warn('[WebsiteUtils] URL 解析失败:', url, error)
+    return url
+  }
+}
+
+/**
+ * 标准化网站数据
+ * @param {Object} data - 原始网站数据
+ * @returns {Object} 标准化的网站对象
+ */
+export function normalizeWebsiteData(data) {
+  // 1. 如果 name 为空，从 URL 提取
+  if (!data.name && data.url) {
+    data.name = extractSiteNameFromUrl(data.url)
+  }
+
+  // 2. 如果 tags 为空，添加默认标签 'new'
+  if (!data.tags || !Array.isArray(data.tags) || data.tags.length === 0) {
+    data.tags = ['new']
+  }
+
+  // 3. 处理 markOrder
+  if (!data.markOrder) {
+    data.markOrder = data.isMarked ? 0 : 0
+  }
+
+  // 4. iconGenerateData 必须有值，与 iconData 无关
+  if (!data.iconGenerateData) {
+    // 如果有 name 则用 name 生成，否则用 URL 生成
+    const iconSource = data.name || data.url
+    const svgIcon = generateDefaultIcon(iconSource)
+    data.iconGenerateData = encodeSvg(svgIcon)
+  }
+
+  // 5. 使用 createWebsiteObject 创建标准对象
+  const result = createWebsiteObject({
+    ...data,
+    visitCount: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  })
+
+  return result
+}
+
+/**
+ * 检查 URL 是否已存在于数据库中
+ * @param {string} url - 要检查的 URL
+ * @param {Array} allWebsites - 所有网站数组
+ * @returns {Object} { exists: boolean, websiteId?: string, websiteName?: string, website?: Object }
+ */
+export function checkUrlExists(url, allWebsites) {
+  if (!allWebsites || !Array.isArray(allWebsites)) {
+    return { exists: false }
+  }
+
+  const normalizedUrl = normalizeUrl(url)
+
+  const existingWebsite = allWebsites.find(w => {
+    if (!w.isActive) return false
+
+    const normalizedExistingUrl = normalizeUrl(w.url)
+    return normalizedExistingUrl === normalizedUrl
+  })
+
+  if (existingWebsite) {
+    return {
+      exists: true,
+      websiteId: existingWebsite.id,
+      websiteName: existingWebsite.name,
+      website: existingWebsite
+    }
+  } else {
+    return {
+      exists: false
+    }
+  }
+}
+
+// ============================================
+// 第六部分：数据验证工具（来自 websiteMetadataService.js）
+// ============================================
+
+/**
+ * 验证网站数据（增强版）
+ * @param {Object} data - 待验证的网站数据
+ * @returns {Object} { valid: boolean, errors: string[] }
+ */
+export function validateWebsite_1(data) {
+  const errors = []
+
+  // 1. URL 验证（必填）
+  if (!data.url) {
+    errors.push('URL 为必填字段')
+  } else if (!isValidUrl(data.url)) {
+    errors.push('URL 格式不正确')
+  }
+
+  // 2. name/title/description至少有一个不为空
+  const hasName = data.name && data.name.trim() !== ''
+  const hasTitle = data.title && data.title.trim() !== ''
+  const hasDescription = data.description && data.description.trim() !== ''
+
+  if (!hasName && !hasTitle && !hasDescription) {
+    errors.push('网站名称、标题或描述必须填写至少一项')
+  }
+
+  // 3. iconData/iconGenerateData至少有一个不为空
+  const hasValidIconData = data.iconData &&
+    (data.iconData.startsWith('data:image/') || data.iconData.length > 0)
+
+  const hasValidIconGenerateData = data.iconGenerateData &&
+    (data.iconGenerateData.startsWith('data:image/svg') || data.iconGenerateData.length > 0)
+
+  // 批量导入时放宽要求，允许后续自动生成
+  if (!hasValidIconData && !hasValidIconGenerateData) {
+    // 静默处理，允许后续自动生成
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  }
+}

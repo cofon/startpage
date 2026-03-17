@@ -13,46 +13,10 @@
  */
 
 // 导入依赖（按需引入）
-import { isValidUrl } from '../utils/website/websiteUtils'
-import { normalizeWebsiteData } from '../services/websiteMetadataService'
+import { normalizeImportUrl, isWebsiteComplete, getMissingFields, normalizeWebsiteData } from '../utils/website/websiteUtils'
 import { fetchMetadataFromLocalApi } from '../services/websiteMetadataService'
 import db from '../utils/database'
 import { PerformanceMonitor, BatchProcessor, MemoryOptimizer } from '../utils/performanceMonitor'
-
-/**
- * URL 规范化处理（与 AddWebsitePanel 保持一致）
- * - 移除末尾斜杠
- * - 统一协议（如果没有协议）
- * - 移除 hash 和 search 参数
- * @param {string} url - 要规范化的 URL
- * @returns {string} 规范化后的 URL
- */
-function normalizeImportUrl(url) {
-  if (!url) return ''
-
-  try {
-    // 确保有协议
-    let normalized = url
-    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
-      normalized = 'https://' + normalized
-    }
-
-    // 创建 URL 对象以解析各个部分
-    const urlObj = new URL(normalized)
-
-    // 移除尾部斜杠
-    let pathname = urlObj.pathname
-    if (pathname.endsWith('/')) {
-      pathname = pathname.slice(0, -1)
-    }
-
-    // 重新构建 URL（不包含 hash 和 search）
-    return `${urlObj.protocol}//${urlObj.host}${pathname}`
-  } catch (error) {
-    console.warn('[ImportService] URL 规范化失败:', url, error)
-    return url
-  }
-}
 
 /**
  * 导入数据的主入口
@@ -165,35 +129,6 @@ export function getImportType(data) {
   return validation.type
 }
 
-/**
- * 检查网站数据完整性（仅针对插件可补全的字段）
- * 这个函数名现在不合适了，因为要判断的逻辑已经发生了变化
- * 之前要判断 url name title description iconData 的完整性
- * 现在只需要判断 url title|description 的完整性
- * @param {Object} website - 网站数据
- * @returns {boolean} 是否完整
- */
-export function isWebsiteComplete(website) {
-  // 必须有 URL
-  if (!website.url || !isValidUrl(website.url)) {
-    return false
-  }
-
-  // ========== 修改：优化完整性判断逻辑 ==========
-  // 1. iconData 不纳入检查范围（因为缺失时可以用 iconGenerateData 替补）
-  // 2. title 和 description 只需要有一个有值即可（显示逻辑优先显示 title）
-
-  const hasTitle = website.title && website.title.trim() !== ''
-  const hasDescription = website.description && website.description.trim() !== ''
-
-  const hasTitleOrDescription = hasTitle || hasDescription
-
-  // 数据完整的标准：
-  // - URL 有效
-  // - title 或 description至少有一个
-  // （iconData 不检查，因为可以由 iconGenerateData 替补）
-  return hasTitleOrDescription
-}
 
 /**
  * 分离完整和不完整的网站
@@ -587,19 +522,6 @@ async function importWebsites(websites, config, monitor) {
       errors: []
     }
   }
-}
-
-/**
- * 获取缺失的字段列表
- * @param {Object} website - 网站对象
- * @returns {string[]} 缺失字段数组
- */
-function getMissingFields(website) {
-  const missing = []
-  if (!website.title || !website.title.trim()) missing.push('title')
-  if (!website.description || !website.description.trim()) missing.push('description')
-  if (!website.iconData || !website.iconData.trim()) missing.push('iconData')
-  return missing
 }
 
 /**

@@ -5,7 +5,7 @@ import { useNotificationStore } from '../stores/notification'
 import websiteMetadataService, {
   fetchMetadataFromLocalApi,
 } from '../services/websiteMetadataService'
-import { isValidUrl } from '../utils/website/websiteUtils'
+import { isValidUrl, checkUrlExists, normalizeWebsiteData, validateWebsite_1 as validateWebsite } from '../utils/website/websiteUtils'
 
 // ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
 
@@ -203,7 +203,7 @@ async function processUrlChange(url) {
   console.log('[processUrlChange] ✓ 域名完整，开始智能填充...')
 
   // ========== 检查 URL 是否已存在（使用规范化后的 URL 比较） ==========
-  const urlCheckResult = websiteMetadataService.checkUrlExists(url, websiteStore.websites)
+  const urlCheckResult = checkUrlExists(url, websiteStore.websites)
   
   if (urlCheckResult.exists) {
     console.warn(
@@ -255,7 +255,7 @@ async function processUrlChange(url) {
         existingWebsiteWithSameRoot.name,
       )
     } else {
-      const normalizedData = websiteMetadataService.normalizeWebsiteData({
+      const normalizedData = normalizeWebsiteData({
         url: url,
         name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url),
       })
@@ -266,7 +266,7 @@ async function processUrlChange(url) {
       console.log('[processUrlChange] - 未找到相同根域名的网站，已生成新 SVG')
     }
   } else {
-    const normalizedData = websiteMetadataService.normalizeWebsiteData({
+    const normalizedData = normalizeWebsiteData({
       url: url,
       name: formData.value.name || websiteMetadataService.extractSiteNameFromUrl(url),
     })
@@ -313,7 +313,7 @@ async function regenerateSvgFromName(name) {
     }
     
     // 调用 normalizeWebsiteData 重新生成 SVG
-    const normalizedData = websiteMetadataService.normalizeWebsiteData({
+    const normalizedData = normalizeWebsiteData({
       url: url,
       name: name.trim(),
     })
@@ -480,14 +480,14 @@ async function handleSubmit() {
     }
 
     // 验证数据
-    const validation = websiteMetadataService.validateWebsite(websiteData)
+    const validation = validateWebsite(websiteData)
     if (!validation.valid) {
       notificationStore.warning(validation.errors.join(', '))
       return
     }
 
     // 标准化数据
-    const normalizedData = websiteMetadataService.normalizeWebsiteData(websiteData)
+    const normalizedData = normalizeWebsiteData(websiteData)
 
     // 添加到 store（store 内部会保存到数据库）
     await websiteStore.addWebsite(normalizedData)
