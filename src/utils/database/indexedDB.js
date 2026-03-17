@@ -3,7 +3,7 @@
  * 负责管理网站和设置的数据库操作
  */
 
-import { importSingleWebsite } from '../website/websiteImportUtils'
+import { importSingleWebsite } from '../../services/importService'
 
 const DB_NAME = 'StartPageDB'
 const DB_VERSION = 7

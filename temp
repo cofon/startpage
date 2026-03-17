@@ -77,17 +77,7 @@ export function checkUrlExists(url, allWebsites)
 -------------------------------------------------------------------------
 D:\vue\startpage\src\utils\website\websiteImportUtils.js
 
-批量处理导入的网站数据，有效(完整)/无效网站分别放在有效/无效数组
-export function processImportWebsites(websites)
-
-处理单个网站的导入
-export function importSingleWebsite(website, websitesStore, onComplete)
-
-将网站添加到store(状态管理)
-function addWebsiteToStore(website, websitesStore, onComplete)
-
-更新存储(状态管理)中的网站数据
-function addWebsiteToStore(website, websitesStore, onComplete)
+可以删除了
 -------------------------------------------------------------------------
 D:\vue\startpage\src\services\importService.js
 
@@ -117,6 +107,18 @@ async function importWebsites(websites, config, monitor)
 
 导入 urls 数据，另一个是导入websites，之后要把urls转为websites，合并操作
 async function importUrls(urls, config, monitor)
+
+批量处理导入的网站数据，有效(完整)/无效网站分别放在有效/无效数组
+export function processImportWebsites(websites)
+
+处理单个网站的导入
+export function importSingleWebsite(website, websitesStore, onComplete)
+
+将网站添加到store(状态管理)
+function addWebsiteToStore(website, websitesStore, onComplete)
+
+更新存储(状态管理)中的网站数据
+function addWebsiteToStore(website, websitesStore, onComplete)
 -------------------------------------------------------------------------
 D:\vue\startpage\src\services\websiteMetadataService.js
 
