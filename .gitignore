@@ -39,3 +39,9 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# bak
+bak*
+
+# temp
+temp*

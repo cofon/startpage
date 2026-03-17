@@ -1,0 +1,150 @@
+这是控制台打印信息：
+CommandSettings.vue:69 [CommandSettings] 解析导入数据: {urls: Array(2)}
+CommandSettings.vue:78 [CommandSettings] 检测到网站数据，使用 importService 导入...
+performanceMonitor.js:36 [性能监控] 开始监控
+performanceMonitor.js:63 [性能监控] 开始阶段: validation
+performanceMonitor.js:75 [性能监控] 完成阶段: validation (0.20ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: db_check
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'db_check', processed: 0, total: 2, message: '正在检查数据库中已存在的网站...'}
+performanceMonitor.js:75 [性能监控] 完成阶段: db_check (2.60ms)
+importService.js:436 
+========== 📊 导入数据统计报告 ==========
+importService.js:437 总数：2 个网站
+importService.js:438 ✅ 数据库中已存在且完整：0 个（直接跳过）
+importService.js:439 ⚠️  数据库中已存在但不完整：0 个（需要更新）
+importService.js:440 🆕 新导入：2 个
+importService.js:441 =========================================
+
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'db_check', processed: 2, total: 2, message: '数据库检查完成：0 个已存在且完整，2 个需要处理'}
+importService.js:475 
+========== 🔍 需要处理的网站分析 ==========
+importService.js:476 完整（无需插件补全）：0 个
+importService.js:477 不完整（需要插件补全）：2 个
+importService.js:478 =========================================
+
+performanceMonitor.js:63 [性能监控] 开始阶段: enrichment
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'enriching', processed: 0, total: 2, message: '准备补全 2 个不完整的网站...'}
+importService.js:184 [ImportService] 🔍 尝试获取元数据：https://www.zhihu.com/question/458194643/answer/2016081727181858057
+websiteMetadataService.js:28 [fetchMetadataFromLocalApi] ========== 开始获取元数据 ==========
+websiteMetadataService.js:29 [fetchMetadataFromLocalApi] 📍 数据来源: Node API (EdgeOne 边缘函数)
+websiteMetadataService.js:30 [fetchMetadataFromLocalApi] URL: https://www.zhihu.com/question/458194643/answer/2016081727181858057
+websiteMetadataService.js:31 [fetchMetadataFromLocalApi] API 地址: http://localhost:3000
+websiteMetadataService.js:35 [fetchMetadataFromLocalApi] 请求 API: http://localhost:3000/api/get-metadata?url=https%3A%2F%2Fwww.zhihu.com%2Fquestion%2F458194643%2Fanswer%2F2016081727181858057
+importService.js:184 [ImportService] 🔍 尝试获取元数据：http://www.dzkbw.com/books/rjb/gaoyi-shuxue/
+websiteMetadataService.js:28 [fetchMetadataFromLocalApi] ========== 开始获取元数据 ==========
+websiteMetadataService.js:29 [fetchMetadataFromLocalApi] 📍 数据来源: Node API (EdgeOne 边缘函数)
+websiteMetadataService.js:30 [fetchMetadataFromLocalApi] URL: http://www.dzkbw.com/books/rjb/gaoyi-shuxue/
+websiteMetadataService.js:31 [fetchMetadataFromLocalApi] API 地址: http://localhost:3000
+websiteMetadataService.js:35 [fetchMetadataFromLocalApi] 请求 API: http://localhost:3000/api/get-metadata?url=http%3A%2F%2Fwww.dzkbw.com%2Fbooks%2Frjb%2Fgaoyi-shuxue%2F
+websiteMetadataService.js:49 [fetchMetadataFromLocalApi] 响应结果: {success: true, data: {…}}
+websiteMetadataService.js:59 [fetchMetadataFromLocalApi] ✓ 成功获取元数据 (来源: Node API)
+websiteMetadataService.js:60 [fetchMetadataFromLocalApi] - title: 人教版高一数学电子课本
+websiteMetadataService.js:61 [fetchMetadataFromLocalApi] - description: 人教版高一数学电子课本由电子课本导航网搜集整理，高一数学电子课本仅供广大师生朋友网上备课用，欢迎在线
+websiteMetadataService.js:62 [fetchMetadataFromLocalApi] - iconData: base64 格式
+importService.js:191 [ImportService] ✓ 已补全 title: 人教版高一数学电子课本
+importService.js:195 [ImportService] ✓ 已补全 description
+importService.js:199 [ImportService] ✓ 已补全 iconData (长度：5741)
+websiteMetadataService.js:37  GET http://localhost:3000/api/get-metadata?url=https%3A%2F%2Fwww.zhihu.com%2Fquestion%2F458194643%2Fanswer%2F2016081727181858057 500 (Internal Server Error)
+fetchMetadataFromLocalApi @ websiteMetadataService.js:37
+(匿名) @ importService.js:185
+enrichWebsites @ importService.js:182
+importWebsites @ importService.js:494
+await in importWebsites
+importData @ importService.js:74
+reader.onload @ CommandSettings.vue:80
+FileReader
+handleImport @ CommandSettings.vue:115
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+websiteMetadataService.js:71 [fetchMetadataFromLocalApi] ❌ 获取元数据失败: HTTP 500: Internal Server Error
+fetchMetadataFromLocalApi @ websiteMetadataService.js:71
+await in fetchMetadataFromLocalApi
+(匿名) @ importService.js:185
+enrichWebsites @ importService.js:182
+importWebsites @ importService.js:494
+await in importWebsites
+importData @ importService.js:74
+reader.onload @ CommandSettings.vue:80
+FileReader
+handleImport @ CommandSettings.vue:115
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+importService.js:203 [ImportService] ⚠️ 无法获取元数据：https://www.zhihu.com/question/458194643/answer/2016081727181858057
+(匿名) @ importService.js:203
+await in (匿名)
+enrichWebsites @ importService.js:182
+importWebsites @ importService.js:494
+await in importWebsites
+importData @ importService.js:74
+reader.onload @ CommandSettings.vue:80
+FileReader
+handleImport @ CommandSettings.vue:115
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+importService.js:215 [ImportService] ✗ 已添加 "meta_failed" 标签到：https://www.zhihu.com/question/458194643/answer/2016081727181858057
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'enriching', processed: 2, total: 2, message: '正在补全网站元数据... (2/2)'}
+performanceMonitor.js:75 [性能监控] 完成阶段: enrichment (4143.90ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: normalization
+performanceMonitor.js:75 [性能监控] 完成阶段: normalization (0.70ms)
+performanceMonitor.js:63 [性能监控] 开始阶段: database
+indexedDB.js:137 [IndexedDB.addWebsite] 准备添加网站: https://www.zhihu.com/question/458194643/answer/2016081727181858057 zhihu
+indexedDB.js:155 [IndexedDB.addWebsite] 执行 store.add...
+indexedDB.js:137 [IndexedDB.addWebsite] 准备添加网站: http://www.dzkbw.com/books/rjb/gaoyi-shuxue/ dzkbw
+indexedDB.js:155 [IndexedDB.addWebsite] 执行 store.add...
+indexedDB.js:161 [IndexedDB.addWebsite] 添加成功，ID: 1045
+indexedDB.js:161 [IndexedDB.addWebsite] 添加成功，ID: 1046
+CommandSettings.vue:84 [CommandSettings] 导入进度: {phase: 'importing', processed: 2, total: 2, message: '正在导入网站到数据库... (2/2)'}
+performanceMonitor.js:75 [性能监控] 完成阶段: database (3.80ms)
+performanceMonitor.js:149 [性能监控] 性能报告
+performanceMonitor.js:150 总耗时: 4.15秒
+performanceMonitor.js:153 内存使用:
+performanceMonitor.js:154   初始: 69.68 MB
+performanceMonitor.js:155   峰值: 69.922287940979 MB
+performanceMonitor.js:156   最终: 69.92 MB
+performanceMonitor.js:159 操作统计:
+performanceMonitor.js:160   总数: 2
+performanceMonitor.js:161   成功: 2
+performanceMonitor.js:162   失败: 0
+performanceMonitor.js:163   成功率: 100.00%
+performanceMonitor.js:165 各阶段耗时:
+performanceMonitor.js:167   validation: 0.20ms (0 个操作)
+performanceMonitor.js:167   db_check: 2.60ms (0 个操作)
+performanceMonitor.js:167   enrichment: 4143.90ms (0 个操作)
+performanceMonitor.js:167   normalization: 0.70ms (0 个操作)
+performanceMonitor.js:167   database: 3.80ms (2 个操作)
+CommandSettings.vue:90 [CommandSettings] 导入完成: {success: 2, failed: 0, skipped: 0, updated: 0, errors: Array(0)}
+
+
+这是终端 PS D:\vue\startpage\edge-functions> node .\server.js 的打印信息：
+
+[API] 2026-03-17T08:27:28.569Z - 请求 URL: https://www.zhihu.com/question/458194643/answer/2016081727181858057
+[Metadata] 开始获取：https://www.zhihu.com/question/458194643/answer/2016081727181858057
+
+[API] 2026-03-17T08:27:28.573Z - 请求 URL: http://www.dzkbw.com/books/rjb/gaoyi-shuxue/
+[Metadata] 开始获取：http://www.dzkbw.com/books/rjb/gaoyi-shuxue/
+[HTTP] ✅ 响应状态：200
+[Charset] 从响应头检测到：GB2312
+[Decode] ✅ HTML 长度：27688 字符
+[Title] ✅ 从<title>标签获取
+[Desc] ✅ 从 meta description 获取
+[Icon] ℹ️ 使用默认 favicon: http://www.dzkbw.com/favicon.ico
+[Result] ✅ 提取成功:
+  - Title: 人教版高一数学电子课本
+  - Description: 人教版高一数学电子课本由电子课本导航网搜集整理，高一数学电子课本仅供广大师生朋友网上备课用，欢迎在线...
+  - Icon URL: http://www.dzkbw.com/favicon.ico
+[Icon Fetch] 开始下载图标：http://www.dzkbw.com/favicon.ico
+[Icon Fetch] ✅ 图标下载成功，类型：image/x-icon, 大小：4286 bytes
+[Icon] ✅ 图标已转换为 base64 (长度：5741)
+[API] ✅ 成功返回元数据
+[HTTP] ⚠️ 可能触发反爬 (403)，准备重试...
+[HTTP] 响应内容：    <!DOCTYPE html><html lang="en"><head><meta id="zh-zse-ck" charset="UTF-8" content="QqGE1ERphCHU6EVO2dhVVR2utdiSt5gQUv63kKd5YAY2Tvp+Hp26r56pyukJ/SXTqfQ6Nwp8IdjP1GocfN7orCcg26GcbG5pQoSx9ZT1f/3Cw31JE
+[Retry #2] 等待 1663ms 后重试...
+[HTTP] ⚠️ 可能触发反爬 (403)，准备重试...
+[HTTP] 响应内容：    <!DOCTYPE html><html lang="en"><head><meta id="zh-zse-ck" charset="UTF-8" content="bx0BQOUoVLfSH2n8oqrq53a8Eu/1LvhvnW3ZJNtuZjLRR34vLxVGhvdos68pt76qVnUezi9YhWOQh/7xFlS+CuRc0VJPUw/MclrHdCd9bBXu1Ub8P
+[Retry #3] 等待 2293ms 后重试...
+[HTTP] ⚠️ 可能触发反爬 (403)，准备重试...
+[HTTP] 响应内容：    <!DOCTYPE html><html lang="en"><head><meta id="zh-zse-ck" charset="UTF-8" content="sl6zbiqbD3wgLcm/JdxUOeLW1SIOQgmPEge3aDJrvsVYNHgJDH5G69AOYSNZeu+w1oJqgfy5uwc4IMHabUZb7gJXLFw1SdqMbxQZSZjbtaWFjb4Y0
+[API] ❌ 获取失败：HTTP 403: Forbidden

@@ -99,58 +99,126 @@ export default async function onRequest(context) {
 // ============================================
 import * as cheerio from 'cheerio';
 
+/**
+ * User-Agent 池 - 定期轮换以规避反爬
+ */
+const USER_AGENTS = [
+  // Chrome
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  
+  // Edge
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+  
+  // Firefox
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
+  
+  // Safari
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15'
+];
+
+/**
+ * 获取随机的 User-Agent
+ */
+function getRandomUserAgent() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
+/**
+ * 延迟函数
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function getWebsiteMetadata(targetUrl) {
   console.log(`[Metadata] 开始获取：${targetUrl}`);
 
-  try {
-    // 发送 HTTP 请求
-    const response = await fetch(targetUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'max-age=0'
-      },
-      signal: AbortSignal.timeout(10000), // 10 秒超时
-      redirect: 'follow'
-    });
+  const maxRetries = 3;
+  let lastError = null;
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // 添加随机延迟（1-3 秒），避免请求过于频繁
+      if (attempt > 1) {
+        const randomDelay = 1000 + Math.random() * 2000;
+        console.log(`[Retry #${attempt}] 等待 ${Math.round(randomDelay)}ms 后重试...`);
+        await delay(randomDelay);
+      }
+
+      // 发送 HTTP 请求 - 增强版 headers
+      const response = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': getRandomUserAgent(),
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Cache-Control': 'max-age=0',
+          // 添加 Referer 模拟真实访问
+          'Referer': new URL(targetUrl).origin
+        },
+        signal: AbortSignal.timeout(15000), // 增加到 15 秒超时
+        redirect: 'follow'
+      });
+
+      if (!response.ok) {
+        // 对于 403、429 等错误，尝试重试
+        if ([403, 429, 503].includes(response.status)) {
+          console.warn(`[HTTP] ⚠️ 可能触发反爬 (${response.status})，准备重试...`);
+          lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+          continue; // 重试
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log(`[HTTP] ✅ 响应状态：${response.status}`);
+
+      // 解码 HTML
+      const html = await decodeHtml(response);
+      console.log(`[Decode] ✅ HTML 长度：${html.length} 字符`);
+
+      // 使用 Cheerio 解析 HTML
+      const $ = cheerio.load(html);
+
+      // 提取元数据
+      const metadata = {
+        url: targetUrl,
+        title: extractTitle($, targetUrl),
+        description: extractDescription($),
+        iconUrl: extractIcon($, targetUrl)
+      };
+
+      console.log(`[Result] ✅ 提取成功:`);
+      console.log(`  - Title: ${metadata.title?.substring(0, 50)}${metadata.title?.length > 50 ? '...' : ''}`);
+      console.log(`  - Description: ${metadata.description?.substring(0, 50)}${metadata.description?.length > 50 ? '...' : ''}`);
+      console.log(`  - Icon: ${metadata.iconUrl}`);
+
+      return metadata;
+
+    } catch (error) {
+      console.error(`[Error] ❌ 第 ${attempt} 次尝试失败：${error.message}`);
+      lastError = error;
+
+      // 如果是最后一次尝试仍然失败
+      if (attempt === maxRetries) {
+        console.error(`[Error] ❌ 所有重试均失败，放弃获取`);
+        break;
+      }
     }
-
-    console.log(`[HTTP] ✅ 响应状态：${response.status}`);
-
-    // 解码 HTML
-    const html = await decodeHtml(response);
-    console.log(`[Decode] ✅ HTML 长度：${html.length} 字符`);
-
-    // 使用 Cheerio 解析 HTML
-    const $ = cheerio.load(html);
-
-    // 提取元数据
-    const metadata = {
-      url: targetUrl,
-      title: extractTitle($, targetUrl),
-      description: extractDescription($),
-      iconUrl: extractIcon($, targetUrl)
-    };
-
-    console.log(`[Result] ✅ 提取成功:`);
-    console.log(`  - Title: ${metadata.title?.substring(0, 50)}${metadata.title?.length > 50 ? '...' : ''}`);
-    console.log(`  - Description: ${metadata.description?.substring(0, 50)}${metadata.description?.length > 50 ? '...' : ''}`);
-    console.log(`  - Icon: ${metadata.iconUrl}`);
-
-    return metadata;
-
-  } catch (error) {
-    console.error(`[Error] ❌ 获取失败：${error.message}`);
-    throw error;
   }
+
+  // 所有重试都失败后抛出错误
+  throw lastError || new Error('获取元数据失败');
 }
 
 // ============================================

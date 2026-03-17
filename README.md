@@ -586,19 +586,20 @@ async function handleImport(event) {
 #### 搜索框固定顶部
 - 当显示模块不是 marked list 时，搜索框固定在顶部
 - 滚动条滚动时，搜索框固定在顶部，不随滚动条滚动
+- index.html 添加一个description
 
-
-## 未完成工作
-
-#### index.html 添加一个description
-
-#### 插件起始页数据传递机制：
-
+#### 插件消息传递
+- 这个不用做了，插件删除了
+- 不过之后可能还要加回来
+- 因为edgeone边缘函数获取反爬虫的网站数据极为不便
+- 插件起始页数据传递机制：
 - 统一消息机制
 - 使用 Promise + requestId
 - 实现批量请求
 - 优化错误处理
 - 添加超时机制
+
+## 未完成工作
 
 #### 默认页面兼容性
 - 搜索模块和marked list上下留白
@@ -682,4 +683,6 @@ async function handleImport(event) {
 - `--tools 时间转换`
 - `--tools 翻译`
 - `--tools 天气`
+
+
 
