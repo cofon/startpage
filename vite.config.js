@@ -3,30 +3,15 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './', // 使用相对路径，以便构建后的文件可以直接通过浏览器打开
   plugins: [
     vue(),
     vueDevTools(),
-    viteSingleFile(),
   ],
   build: {
     target: 'esnext',
-    assetsInlineLimit: 100000000,
-    chunkSizeWarningLimit: 100000000,
-    cssCodeSplit: false,
-    brotliSize: false,
-    rollupOptions: {
-      output: {
-        assetFileNames: 'assets/[name].[ext]',
-      },
-    },
-  },
-  define: {
-    __VITE_PRELOAD__: 'false',
   },
   resolve: {
     alias: {
