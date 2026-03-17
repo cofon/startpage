@@ -41,7 +41,7 @@ __screenshots__/
 *.timestamp-*-*.mjs
 
 # bak
-bak*
+bak
 
 # temp
-temp*
+temp
