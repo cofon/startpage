@@ -78,8 +78,6 @@ export async function fetchMetadataFromLocalApi(url) {
   }
 }
 
-
-
 /**
  * 通用的元数据获取函数
  * 使用本地 API (EdgeOne 边缘函数) 获取数据

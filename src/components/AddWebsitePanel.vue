@@ -83,7 +83,7 @@ const allTags = ref([])
 // 加载所有标签
 async function loadAllTags() {
   try {
-    const allWebsites = await websiteStore.getAllWebsites()
+    const allWebsites = websiteStore.websites || []
     const tagsSet = new Set()
     allWebsites.forEach(website => {
       if (website.tags && Array.isArray(website.tags)) {

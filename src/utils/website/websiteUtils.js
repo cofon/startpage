@@ -32,9 +32,9 @@ export function isValidUrl(urlString) {
 
     // 验证协议：支持 http、https、file
     if (!['http:', 'https:', 'file:'].includes(urlObj.protocol)) {
-      return { 
-        valid: false, 
-        error: 'URL 必须使用 HTTP、HTTPS 或 FILE 协议' 
+      return {
+        valid: false,
+        error: 'URL 必须使用 HTTP、HTTPS 或 FILE 协议'
       }
     }
 
@@ -55,10 +55,10 @@ export function isValidUrl(urlString) {
 
     // 支持 localhost 和本地 IP 地址
     const hostname = urlObj.hostname.toLowerCase()
-    
+
     // 允许的本地主机名
     const allowedLocalHostnames = ['localhost', '127.0.0.1', '0.0.0.0']
-    
+
     // 如果是本地主机名，直接通过
     if (allowedLocalHostnames.includes(hostname)) {
       return { valid: true }
@@ -78,7 +78,7 @@ export function isValidUrl(urlString) {
     // 4. 每个标签不能以连字符开头或结尾
     // 5. TLD 必须是 2-63 个字母（符合 DNS 规范）
     const domainPattern = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,63}$/
-    
+
     if (domainPattern.test(hostname)) {
       return { valid: true }
     }
@@ -98,8 +98,8 @@ export function isValidUrlSimple(url) {
 
 /**
  * 从 URL 中提取域名
- * @param {string} url - 网站 URL
- * @returns {string} 域名（如：baidu.com）
+ * @param {string} url - 网站 URL(如：https://www.baidu.com)
+ * @returns {string} 域名（如：www.baidu.com）
  */
 export function extractDomain(url) {
   try {
@@ -152,6 +152,8 @@ export function generateDefaultIcon(name) {
   let displayName = name
   try {
     if (name.startsWith('http://') || name.startsWith('https://')) {
+      // 上边有的 extractSiteNameFromUrl 函数做的就是这个事情
+      // 之后要用 extractSiteName 函数替代下面两行代码
       const urlObj = new URL(name)
       displayName = urlObj.hostname.replace(/^www\./, '')
     }
@@ -161,6 +163,8 @@ export function generateDefaultIcon(name) {
 
   // 取首字母大写
   const firstLetter = displayName.charAt(0).toUpperCase()
+
+  // 以下是生成SVG的逻辑，是不是应该把下边代码分拆独立出来
 
   // 根据域名哈希选择背景色（避免相同首字母无法区分）
   const colorPalette = [

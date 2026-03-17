@@ -101,6 +101,7 @@ export async function importData(jsonData, options = {}) {
   const importType = config.mode === 'auto' ? validation.type : config.mode
 
   // 根据类型执行不同的导入逻辑
+  // 这个逻辑之后要改，把URLs 转换成 websites，然后统一处理
   let result
   if (importType === 'websites') {
     result = await importWebsites(jsonData.websites, config, monitor)
@@ -434,7 +435,7 @@ async function importWebsites(websites, config, monitor) {
     // ========== 新增：URL 规范化处理 ==========
     // 对导入的 URL 进行规范化，确保 https://www.bilibili.com 和 https://www.bilibili.com/ 被视为相同
     const normalizedImportUrl = normalizeImportUrl(website.url)
-    
+
     // 在 existingUrlsMap 中查找时，需要遍历所有键并进行规范化比较
     let existingWebsite = null
     for (const [dbUrl, dbWebsite] of existingUrlsMap.entries()) {
@@ -645,7 +646,7 @@ async function importUrls(urls, config, monitor) {
     // ========== 新增：URL 规范化处理 ==========
     // 对导入的 URL 进行规范化，确保 https://www.bilibili.com 和 https://www.bilibili.com/ 被视为相同
     const normalizedImportUrl = normalizeImportUrl(url)
-    
+
     // 在 existingUrlsMap 中查找时，需要遍历所有键并进行规范化比较
     let existingWebsite = null
     for (const [dbUrl, dbWebsite] of existingUrlsMap.entries()) {

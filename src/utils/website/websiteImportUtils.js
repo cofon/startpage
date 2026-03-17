@@ -88,7 +88,7 @@ export function importSingleWebsite(website, websitesStore, onComplete) {
   // 填充默认字段
   const websiteToImport = fillDefaultFields(website)
 
-  // 第二步：检查 URL 是否已存在（优先级最高）
+  // 第二步：检查 URL 是否已存在于数据库（优先级最高）
   const urlIndexReq = websitesStore.index('url').get(websiteToImport.url)
   urlIndexReq.onsuccess = () => {
     if (urlIndexReq.result) {
