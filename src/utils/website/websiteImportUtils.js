@@ -3,48 +3,7 @@
  * 用于处理导入数据时对网站的预处理逻辑
  */
 
-/**
- * 验证网站数据是否完整
- * @param {Object} website - 网站数据对象
- * @returns {boolean} - 是否完整
- */
-export function validateWebsite(website) {
-  // 验证URL是否存在
-  if (!website || !website.url) {
-    return false
-  }
-
-  // 验证必需字段是否都有值
-  const hasName = website.name && website.name.trim() !== ''
-  const hasTitle = website.title && website.title.trim() !== ''
-  const hasDescription = website.description && website.description.trim() !== ''
-  const hasIconData = website.iconData && website.iconData.trim() !== ''
-  const hasIconGenerateData = website.iconGenerateData && website.iconGenerateData.trim() !== ''
-
-  // 数据完整的标准：name、title、description、iconData、iconGenerateData 都有值
-  return hasName && hasTitle && hasDescription && hasIconData && hasIconGenerateData
-}
-
-/**
- * 填充网站的默认字段
- * @param {Object} website - 网站数据对象
- * @returns {Object} - 处理后的网站数据
- */
-export function fillDefaultFields(website) {
-  return {
-    ...website,
-    name: website.name || '',
-    title: website.title || '',
-    description: website.description || '',
-    iconData: website.iconData || '',
-    iconGenerateData: website.iconGenerateData || '',
-    tags: Array.isArray(website.tags) ? website.tags : ['new'],
-    isMarked: website.isMarked !== undefined ? website.isMarked : false,
-    markOrder: website.markOrder !== undefined ? website.markOrder : 0,
-    isActive: website.isActive !== undefined ? website.isActive : true,
-    isHidden: website.isHidden !== undefined ? website.isHidden : false
-  }
-}
+import { validateWebsite, fillDefaultFields } from './websiteUtils'
 
 /**
  * 批量处理导入的网站数据
