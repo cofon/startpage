@@ -13,3 +13,6 @@ dist
 dist-ssr
 coverage
 *.local
+
+# Edge Functions (migrated to Node Functions)
+edge-functions/
