@@ -58,7 +58,6 @@ const topPadding = computed(() => {
     if (markedCount <= 35) {
       return 64
     }
-
   }
 
   // 其他模式（搜索、普通列表等）统一使用固定值 24px
@@ -234,23 +233,17 @@ onMounted(async () => {
     // ========== 4. 加载搜索引擎图标 ==========
     await searchStore.loadEngineIcons()
     searchStore.init()
-
-
   } catch (error) {
     console.error('初始化应用失败:', error)
   }
 })
-
 </script>
 
 <template>
   <div
     id="app"
     ref="appRef"
-    :class="[
-      settingStore.selectedThemeId + '-theme',
-      getPageClass()
-    ]"
+    :class="[settingStore.selectedThemeId + '-theme', getPageClass()]"
     :style="{ paddingTop: topPadding + 'px' }"
   >
     <!-- 通知容器 -->
@@ -315,7 +308,9 @@ onMounted(async () => {
 
 /* 非 marked 模式下的占位空白 - 填补固定搜索模块的高度和顶部空白 */
 #app:not(.marked-mode) .search-spacer {
-  height: calc(24px + 60px + 24px); /* 顶部空白 24px + SearchModule 高度 60px + padding-bottom 24px */
+  height: calc(
+    24px + 60px + 24px
+  ); /* 顶部空白 24px + SearchModule 高度 60px + padding-bottom 24px */
   width: 100%;
   flex-shrink: 0;
 }
@@ -348,5 +343,25 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+</style>
+
+<style>
+/* 隐藏 EdgeOne 水印 */
+#edgeone-watermark {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  z-index: -1 !important;
+}
+
+/* 确保水印的关闭按钮也被隐藏 */
+#edgeone-watermark-close {
+  display: none !important;
 }
 </style>
