@@ -8,18 +8,18 @@
 import { extractRootDomain } from '../utils/website/websiteUtils'
 
 // ============================================
-// EdgeOne API 配置
+// Node Functions API 配置
 // ============================================
-const EDGEONE_API_URL = import.meta.env.VITE_EDGEONE_API_URL || 'https://startpage-rjh1mdmj.edgeone.cool'
+const EDGEONE_API_URL = import.meta.env.VITE_EDGEONE_API_URL || '/'
 
 /**
- * 从 EdgeOne 边缘函数获取网站元数据
+ * 从 Node Functions 获取网站元数据
  * @param {string} url - 网站 URL
  * @returns {Promise<Object|null>} 元数据对象 { title, description, iconData }
  */
 export async function fetchMetadata(url) {
   console.log('[fetchMetadata] ========== 开始获取元数据 ==========')
-  console.log('[fetchMetadata] 数据来源：EdgeOne 边缘函数')
+  console.log('[fetchMetadata] 数据来源：Node Functions')
   console.log('[fetchMetadata] URL:', url)
   console.log('[fetchMetadata] API 地址:', EDGEONE_API_URL)
 
@@ -30,8 +30,8 @@ export async function fetchMetadata(url) {
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     })
 
     if (!response.ok) {
@@ -45,7 +45,7 @@ export async function fetchMetadata(url) {
       const metadata = {
         title: result.data.title || '',
         description: result.data.description || '',
-        iconData: result.data.iconData || ''
+        iconData: result.data.iconData || '',
       }
 
       console.log('[fetchMetadata] ✓ 成功获取元数据')
@@ -120,7 +120,10 @@ function addMetaFailedTag(website) {
   if (!website.tags) {
     website.tags = []
   } else if (typeof website.tags === 'string') {
-    website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
+    website.tags = website.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t)
   }
 
   if (!website.tags.includes('meta_failed')) {
@@ -131,5 +134,5 @@ function addMetaFailedTag(website) {
 export default {
   fetchMetadata,
   batchEnrichMetadata,
-  extractRootDomain
+  extractRootDomain,
 }
