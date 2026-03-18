@@ -23,7 +23,10 @@ async function testGetMetadata() {
   console.log('\n=== 测试获取元数据 ===');
   const testUrls = [
     'https://www.baidu.com',
-    'https://www.bilibili.com'
+    'https://www.bilibili.com',
+    'https://www.github.com',
+    'https://www.google.com',
+    'https://www.zhihu.com/question/658541660/answer/2015922509149643068'
   ];
 
   for (const url of testUrls) {
