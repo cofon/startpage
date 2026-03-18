@@ -282,12 +282,16 @@ async function getWebsiteMetadata(targetUrl) {
       };
 
       console.log(`[Icon] 开始下载并转换图标为 base64...`);
+      console.log(`[Icon] iconUrl: ${metadata.iconUrl}`);
+      
       try {
         // 下载图标并转换为 base64
         metadata.iconData = await downloadAndConvertToBase64(metadata.iconUrl);
         console.log(`[Icon] ✅ 转换成功，base64 长度：${metadata.iconData?.length || 0}`);
       } catch (iconError) {
-        console.warn(`[Icon] ⚠️ 图标转换失败：${iconError.message}，将返回 iconUrl`);
+        console.error(`[Icon] ❌ 图标转换失败：`, iconError);
+        console.error(`[Icon] 错误堆栈：`, iconError.stack);
+        console.warn(`[Icon] ⚠️ 将返回 null 作为 iconData`);
         metadata.iconData = null;
       }
 
@@ -625,15 +629,17 @@ function extractJsonLd($) {
  */
 async function downloadAndConvertToBase64(iconUrl) {
   if (!iconUrl) {
-    console.log(`[Icon] ⚠️ 没有提供 iconUrl，跳过转换`);
+    console.log(`[Icon] ⚠️ iconUrl 为空，跳过转换`);
     return null;
   }
 
   try {
+    console.log(`[Icon] 开始下载图标：${iconUrl}`);
+    
     // 创建超时控制的 AbortController（5 秒超时）
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.log(`[Icon] ⏰ 下载超时 (5 秒)，中止请求`);
+      console.error(`[Icon] ⏰ 下载超时 (5 秒)，中止请求`);
       controller.abort();
     }, 5000);
 
@@ -645,18 +651,22 @@ async function downloadAndConvertToBase64(iconUrl) {
     const response = await fetch(iconUrl, {
       method: 'GET',
       headers: {
-        'User-Agent': getRandomUserAgent(), // 使用随机 UA
-        'Accept': 'image/*,*/*;q=0.9', // 接受所有图片格式
-        'Cache-Control': 'max-age=86400' // 允许缓存 1 天
+        'User-Agent': getRandomUserAgent(),
+        'Accept': 'image/*,*/*;q=0.9',
+        'Cache-Control': 'max-age=86400'
       },
       signal: controller.signal,
-      redirect: 'follow' // 自动跟随重定向
+      redirect: 'follow'
     });
 
     clearTimeout(timeoutId);
 
+    console.log(`[Icon] HTTP 响应状态：${response.status}`);
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+      console.error(`[Icon] ❌ HTTP 错误：${errorMsg}`);
+      throw new Error(errorMsg);
     }
 
     // 获取响应的 Content-Type
@@ -673,7 +683,9 @@ async function downloadAndConvertToBase64(iconUrl) {
     }
 
     // 将 ArrayBuffer 转换为 base64
+    console.log(`[Icon] 开始转换为 base64...`);
     const base64 = arrayBufferToBase64(arrayBuffer);
+    console.log(`[Icon] base64 长度：${base64.length}`);
 
     // 添加 data URI scheme 前缀
     const base64Data = `data:${contentType};base64,${base64}`;
@@ -683,6 +695,7 @@ async function downloadAndConvertToBase64(iconUrl) {
 
   } catch (error) {
     console.error(`[Icon] ❌ 下载转换失败：${error.message}`);
+    console.error(`[Icon] 错误堆栈：${error.stack}`);
     throw error;
   }
 }

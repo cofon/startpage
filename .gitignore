@@ -11,40 +11,5 @@ node_modules
 .DS_Store
 dist
 dist-ssr
-dist*
-dist*/
 coverage
 *.local
-.env
-.env.*
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-*.tsbuildinfo
-
-.eslintcache
-
-# Cypress
-/cypress/videos/
-/cypress/screenshots/
-
-# Vitest
-__screenshots__/
-
-# Vite
-*.timestamp-*-*.mjs
-
-# dir
-bak
-docs
-
-# temp
-temp

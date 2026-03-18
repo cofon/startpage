@@ -14,7 +14,7 @@
 
 // 导入依赖（按需引入）
 import { normalizeImportUrl, isWebsiteComplete, getMissingFields, normalizeWebsiteData, validateWebsite, fillDefaultFields } from '../utils/website/websiteUtils'
-import { fetchMetadataFromLocalApi } from '../services/websiteMetadataService'
+import { fetchMetadata } from '../services/websiteMetadataService'
 import db from '../utils/database'
 import { PerformanceMonitor, BatchProcessor, MemoryOptimizer } from '../utils/performanceMonitor'
 
@@ -182,7 +182,7 @@ export async function enrichWebsites(websites, config, progressCallback) {
       batch.map(async (website) => {
         try {
           console.log(`[ImportService] 🔍 尝试获取元数据：${website.url}`)
-          const metadata = await fetchMetadataFromLocalApi(website.url)
+          const metadata = await fetchMetadata(website.url)
 
           if (metadata) {
             // ✅ 成功：只补全插件负责的 3 个字段（title、description、iconData）
