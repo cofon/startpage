@@ -37,6 +37,10 @@ async function testGetMetadata() {
         console.log('  - Title:', result.data.title?.substring(0, 50));
         console.log('  - Description:', result.data.description?.substring(0, 50));
         console.log('  - Icon:', result.data.iconUrl);
+        console.log('  - IconData:', result.data.iconData ? '✓ 已获取' : '✗ 未获取');
+        if (result.data.iconData) {
+          console.log('  - IconData 长度:', result.data.iconData.length);
+        }
       } else {
         console.error('✗ API 返回失败:', result.error);
       }
