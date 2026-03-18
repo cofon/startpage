@@ -1,9 +1,0 @@
-
-浏览器地址栏输入：
-https://startpage-rjh1mdmj.edgeone.cool/api/get-metadata?url=https://www.baidu.com
-
-返回：
-{"success":false,"error":"AbortSignal.timeout is not a function"}
-
-浏览器控制台报错：
-/api/get-metadata?url=https://www.baidu.com:1  GET https://startpage-rjh1mdmj.edgeone.cool/api/get-metadata?url=https://www.baidu.com 500 (Internal Error)

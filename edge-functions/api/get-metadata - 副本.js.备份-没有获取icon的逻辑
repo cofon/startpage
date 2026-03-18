@@ -1,14 +1,14 @@
 /**
  * EdgeOne 边缘函数 - 获取网站元数据
- *
+ * 
  * 功能说明：
  * 1. 接收前端传来的 URL 参数
  * 2. 通过 fetch 请求目标网站
  * 3. 解析 HTML 提取标题、描述、图标等元数据
  * 4. 返回 JSON 格式的元数据给前端
- *
+ * 
  * API: GET /api/get-metadata?url=<website_url>
- *
+ * 
  * @param {Object} context - EdgeOne 运行时的上下文对象，包含请求信息
  * @returns {Response} JSON 响应对象
  */
@@ -17,6 +17,8 @@ export default async function onRequest(context) {
   const url = new URL(context.request.url);
   const targetUrl = url.searchParams.get('url'); // 获取目标网站 URL 参数
 
+
+  // {"success":false,"error":"AbortSignal.timeout is not a function"}
 
   // ============================================
   // CORS 预检请求处理
@@ -114,11 +116,9 @@ export default async function onRequest(context) {
 // ============================================
 import * as cheerio from 'cheerio'; // jQuery 风格的 HTML 解析库
 
-// Buffer 是 Node.js 全局对象，EdgeOne 边缘函数运行在 Node.js 环境
-
 /**
  * User-Agent 池 - 用于模拟不同浏览器
- *
+ * 
  * 作用：
  * 1. 避免被目标网站识别为爬虫
  * 2. 定期轮换不同的浏览器标识
@@ -144,7 +144,7 @@ const USER_AGENTS = [
 
 /**
  * 获取随机的 User-Agent
- *
+ * 
  * @returns {string} 随机选择的 User-Agent 字符串
  */
 function getRandomUserAgent() {
@@ -153,7 +153,7 @@ function getRandomUserAgent() {
 
 /**
  * 延迟函数 - 用于重试前的等待
- *
+ * 
  * @param {number} ms - 延迟毫秒数
  * @returns {Promise} 在指定毫秒后 resolve 的 Promise
  */
@@ -163,14 +163,14 @@ function delay(ms) {
 
 /**
  * 获取网站元数据的核心函数
- *
+ * 
  * 执行流程：
  * 1. 使用 fetch 请求目标网站
  * 2. 处理响应和编码
  * 3. 使用 cheerio 解析 HTML
  * 4. 提取 title、description、icon 等信息
  * 5. 支持重试机制（最多 3 次）
- *
+ * 
  * @param {string} targetUrl - 目标网站 URL
  * @returns {Promise<Object>} 包含元数据的对象
  */
@@ -209,31 +209,31 @@ async function getWebsiteMetadata(targetUrl) {
         headers: {
           // 随机 User-Agent，模拟真实浏览器
           'User-Agent': getRandomUserAgent(),
-
+          
           // 声明可接受的内容类型（包括 gzip 压缩）
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-
+          
           // 语言偏好：优先中文
           'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-
+          
           // 压缩方式
           'Accept-Encoding': 'gzip, deflate, br',
-
+          
           // 保持长连接
           'Connection': 'keep-alive',
-
+          
           // 要求使用 HTTPS
           'Upgrade-Insecure-Requests': '1',
-
+          
           // Fetch 规范相关头，模拟浏览器行为
           'Sec-Fetch-Dest': 'document',
           'Sec-Fetch-Mode': 'navigate',
           'Sec-Fetch-Site': 'none',
           'Sec-Fetch-User': '?1',
-
+          
           // 缓存控制
           'Cache-Control': 'max-age=0',
-
+          
           // 添加 Referer 模拟真实访问（来自同源）
           'Referer': new URL(targetUrl).origin
         },
@@ -277,26 +277,14 @@ async function getWebsiteMetadata(targetUrl) {
         url: targetUrl, // 原始 URL
         title: extractTitle($, targetUrl), // 网页标题
         description: extractDescription($), // 网页描述
-        iconUrl: extractIcon($, targetUrl), // 网站图标 URL（用于调试和降级）
-        iconData: null // 网站图标的 base64 字符串（新增）
+        iconUrl: extractIcon($, targetUrl) // 网站图标 URL
       };
-
-      console.log(`[Icon] 开始下载并转换图标为 base64...`);
-      try {
-        // 下载图标并转换为 base64
-        metadata.iconData = await downloadAndConvertToBase64(metadata.iconUrl);
-        console.log(`[Icon] ✅ 转换成功，base64 长度：${metadata.iconData?.length || 0}`);
-      } catch (iconError) {
-        console.warn(`[Icon] ⚠️ 图标转换失败：${iconError.message}，将返回 iconUrl`);
-        metadata.iconData = null;
-      }
 
       // 输出提取结果日志
       console.log(`[Result] ✅ 提取成功:`);
       console.log(`  - Title: ${metadata.title?.substring(0, 50)}${metadata.title?.length > 50 ? '...' : ''}`);
       console.log(`  - Description: ${metadata.description?.substring(0, 50)}${metadata.description?.length > 50 ? '...' : ''}`);
-      console.log(`  - Icon URL: ${metadata.iconUrl}`);
-      console.log(`  - Icon Base64: ${metadata.iconData ? `${metadata.iconData.substring(0, 50)}...` : 'null'}`);
+      console.log(`  - Icon: ${metadata.iconUrl}`);
 
       return metadata; // 返回提取的元数据
 
@@ -322,12 +310,12 @@ async function getWebsiteMetadata(targetUrl) {
 // ============================================
 /**
  * 根据响应的字符编码正确解码 HTML 内容
- *
+ * 
  * 检测优先级：
  * 1. HTTP 响应头的 Content-Type 中的 charset
  * 2. HTML <meta>标签中的 charset 声明
  * 3. 默认 UTF-8
- *
+ * 
  * @param {Response} response - fetch 响应对象
  * @returns {Promise<string>} 解码后的 HTML 文本
  */
@@ -367,11 +355,11 @@ async function decodeHtml(response) {
 
 /**
  * 从 Content-Type 响应头中提取 charset
- *
+ * 
  * 示例：
  * - "text/html; charset=utf-8" → "utf-8"
  * - "text/html" → null
- *
+ * 
  * @param {string} contentType - Content-Type 头
  * @returns {string|null} 字符集名称或 null
  */
@@ -384,11 +372,11 @@ function extractCharset(contentType) {
 
 /**
  * 从 HTML 的<meta>标签中检测字符集
- *
+ * 
  * 支持两种格式：
  * 1. <meta charset="utf-8">
  * 2. <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
- *
+ * 
  * @param {string} html - HTML 片段（通常是前 1KB）
  * @returns {string|null} 检测到的字符集或 null
  */
@@ -413,7 +401,7 @@ function detectCharsetFromMeta(html) {
 // ============================================
 /**
  * 多层渐进式提取网页标题
- *
+ * 
  * 优先级顺序：
  * 1. <title>标签
  * 2. og:title (Open Graph)
@@ -421,7 +409,7 @@ function detectCharsetFromMeta(html) {
  * 4. JSON-LD 结构化数据
  * 5. <h1>标签
  * 6. URL hostname（兜底）
- *
+ * 
  * @param {CheerioAPI} $ - Cheerio 实例
  * @param {string} baseUrl - 基础 URL
  * @returns {string} 提取的标题
@@ -477,7 +465,7 @@ function extractTitle($, baseUrl) {
 // ============================================
 /**
  * 多层渐进式提取网页描述
- *
+ * 
  * 优先级顺序：
  * 1. meta name="description"
  * 2. og:description
@@ -485,7 +473,7 @@ function extractTitle($, baseUrl) {
  * 4. JSON-LD description
  * 5. 第一个<p>标签（50-300 字符限制）
  * 6. keywords（兜底）
- *
+ * 
  * @param {CheerioAPI} $ - Cheerio 实例
  * @returns {string} 提取的描述信息
  */
@@ -542,14 +530,14 @@ function extractDescription($) {
 // ============================================
 /**
  * 按优先级提取网站图标 URL
- *
+ * 
  * 优先级顺序：
  * 1. rel="icon"
  * 2. rel="shortcut icon"
  * 3. rel="apple-touch-icon"
  * 4. rel="mask-icon"
  * 5. /favicon.ico（默认兜底）
- *
+ * 
  * @param {CheerioAPI} $ - Cheerio 实例
  * @param {string} baseUrl - 基础 URL，用于转换相对路径
  * @returns {string} 图标的绝对 URL
@@ -585,14 +573,15 @@ function extractIcon($, baseUrl) {
 // ============================================
 /**
  * 提取并解析 JSON-LD 结构化数据
- *
+ * 
  * JSON-LD 是一种语义网技术，用于在网页中嵌入结构化数据
  * 常见于搜索引擎优化（SEO）和社交媒体卡片
- *
+ * 
  * @param {CheerioAPI} $ - Cheerio 实例
  * @returns {Object|null} 解析后的 JSON 对象或 null
  */
 function extractJsonLd($) {
+  // 查找 type="application/ld+json" 的<script>标签
   const script = $('script[type="application/ld+json"]').html();
   if (!script) return null; // 没有找到 JSON-LD 脚本
 
@@ -606,124 +595,4 @@ function extractJsonLd($) {
     console.warn(`[JSON-LD] ⚠️ 解析失败：${e.message}`);
     return null;
   }
-}
-
-// ============================================
-// 辅助函数：下载图标并转换为 Base64
-// ============================================
-/**
- * 下载网站图标并转换为 base64 编码字符串
- *
- * 执行流程：
- * 1. 使用 fetch 请求图标资源
- * 2. 获取图标的原始字节流（ArrayBuffer）
- * 3. 将 ArrayBuffer 转换为 base64 字符串
- * 4. 添加 MIME 类型前缀（data:image/x-icon;base64,）
- *
- * @param {string} iconUrl - 图标的 URL
- * @returns {Promise<string|null>} base64 编码的图标字符串，失败时返回 null
- */
-async function downloadAndConvertToBase64(iconUrl) {
-  if (!iconUrl) {
-    console.log(`[Icon] ⚠️ 没有提供 iconUrl，跳过转换`);
-    return null;
-  }
-
-  try {
-    // 创建超时控制的 AbortController（5 秒超时）
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.log(`[Icon] ⏰ 下载超时 (5 秒)，中止请求`);
-      controller.abort();
-    }, 5000);
-
-    // 检测图标文件类型（根据 URL 扩展名）
-    const mimeType = detectIconMimeType(iconUrl);
-    console.log(`[Icon] 检测到 MIME 类型：${mimeType}`);
-
-    // 发送请求下载图标
-    const response = await fetch(iconUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': getRandomUserAgent(), // 使用随机 UA
-        'Accept': 'image/*,*/*;q=0.9', // 接受所有图片格式
-        'Cache-Control': 'max-age=86400' // 允许缓存 1 天
-      },
-      signal: controller.signal,
-      redirect: 'follow' // 自动跟随重定向
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    // 获取响应的 Content-Type
-    const contentType = response.headers.get('content-type') || mimeType;
-    console.log(`[Icon] 响应 Content-Type: ${contentType}`);
-
-    // 获取原始字节流
-    const arrayBuffer = await response.arrayBuffer();
-    console.log(`[Icon] 获取到 ${arrayBuffer.byteLength} 字节的图标数据`);
-
-    // 限制图标大小（最大 1MB），避免过大
-    if (arrayBuffer.byteLength > 1024 * 1024) {
-      console.warn(`[Icon] ⚠️ 图标文件过大 (${arrayBuffer.byteLength} bytes)，可能不适合 base64 编码`);
-    }
-
-    // 将 ArrayBuffer 转换为 base64
-    const base64 = arrayBufferToBase64(arrayBuffer);
-
-    // 添加 data URI scheme 前缀
-    const base64Data = `data:${contentType};base64,${base64}`;
-    console.log(`[Icon] ✅ 成功转换为 base64，总长度：${base64Data.length}`);
-
-    return base64Data;
-
-  } catch (error) {
-    console.error(`[Icon] ❌ 下载转换失败：${error.message}`);
-    throw error;
-  }
-}
-
-/**
- * 根据图标 URL 检测 MIME 类型
- *
- * @param {string} url - 图标 URL
- * @returns {string} MIME 类型
- */
-function detectIconMimeType(url) {
-  try {
-    const urlObj = new URL(url.toLowerCase());
-    const pathname = urlObj.pathname.toLowerCase();
-
-    // 根据文件扩展名判断
-    if (pathname.endsWith('.png')) return 'image/png';
-    if (pathname.endsWith('.jpg') || pathname.endsWith('.jpeg')) return 'image/jpeg';
-    if (pathname.endsWith('.gif')) return 'image/gif';
-    if (pathname.endsWith('.svg') || pathname.endsWith('.svg+xml')) return 'image/svg+xml';
-    if (pathname.endsWith('.webp')) return 'image/webp';
-
-    // 默认返回 x-icon（适用于 .ico 和未知格式）
-    return 'image/x-icon';
-  } catch {
-    return 'image/x-icon';
-  }
-}
-
-/**
- * 将 ArrayBuffer 转换为 base64 字符串
- *
- * EdgeOne 边缘函数运行在 Node.js 环境，需使用 Buffer API
- * 而不是浏览器的 btoa() 方法
- *
- * @param {ArrayBuffer} buffer - 原始字节流
- * @returns {string} base64 编码字符串
- */
-function arrayBufferToBase64(buffer) {
-  // Node.js 环境使用 Buffer 进行 base64 编码
-  // eslint-disable-next-line no-undef
-  const buf = Buffer.from(buffer);
-  return buf.toString('base64');
 }

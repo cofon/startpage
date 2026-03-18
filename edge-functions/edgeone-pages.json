@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "functions": {
+    "/api/hello": {
+      "entry": "api/hello.js"
+    },
+    "/api/get-metadata": {
+      "entry": "api/get-metadata.js"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

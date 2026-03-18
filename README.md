@@ -581,6 +581,26 @@ async function handleImport(event) {
 ```{"urls":["url1","url2"]}```
 
 
+###### 边缘函数测试
+- 项目根目录创建 edge-functions 文件夹
+- edge- functions 文件夹下创建 api 文件夹
+- edge-functions 文件夹下创建 get-metadata.js 文件
+- git add commit push, edgeone自动构建, 构建完成后浏览器输入下边地址测试
+- https://startpage-rjh1mdmj.edgeone.cool/api/get-metadata?url=https://www.baidu.com
+- 返回数据类似下方：
+```
+{
+  "success":true,
+  "data": {
+    "url":"https://www.baidu.com",
+    "title":"百度一下，你就知道",
+    "description":"全球领先的中文搜索引擎、致力于让网民更便捷地获取信息，找到所求。百度超过千亿的中文网页数据库，可以瞬间找到相关的搜索结果。",
+    "iconUrl":"https://www.baidu.com/favicon.ico",
+    "iconData":"data:image/png;base64,xxx..."
+  }
+}
+```
+
 ## 已完成工作
 
 #### 搜索框固定顶部

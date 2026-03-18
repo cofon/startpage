@@ -15,23 +15,77 @@ import {
 } from '../utils/website/websiteUtils'
 
 // ============================================
-// 配置：本地 API 服务地址
+// 配置：API 服务地址
 // ============================================
+/**
+ * 环境变量配置说明：
+ * 配置文件位置：项目根目录下的 .env 文件
+ * 
+ * 可用的环境变量：
+ * - VITE_API_MODE: API 模式配置 ('local' | 'edgeone' | 'auto')
+ * - VITE_LOCAL_API_URL: 本地开发 API 地址
+ * - VITE_EDGEONE_API_URL: EdgeOne 边缘函数 API 地址
+ * 
+ * 模式说明：
+ * - 'local': 本地测试环境 (http://localhost:3000)
+ * - 'edgeone': EdgeOne 边缘函数（生产环境）
+ * - 'auto': 自动切换（生产环境使用EdgeOne，其他环境使用本地）
+ */
+const API_MODE = import.meta.env.VITE_API_MODE || 'local';
+
+// 本地开发 API 地址
 const LOCAL_API_BASE_URL = import.meta.env.VITE_LOCAL_API_URL || 'http://localhost:3000';
 
+// EdgeOne 边缘函数 API 地址（需根据实际情况配置）
+const EDGEONE_API_BASE_URL = import.meta.env.VITE_EDGEONE_API_URL || '';
+
 /**
- * 从本地 API 获取网站元数据
+ * 获取当前 API 基础 URL
+ * @returns {string} API 基础 URL
+ */
+function getApiBaseUrl() {
+  // 如果是 auto 模式，根据环境自动判断
+  if (API_MODE === 'auto') {
+    const isProduction = import.meta.env.MODE === 'production';
+    console.log('[getApiBaseUrl] 自动模式 - 当前环境:', import.meta.env.MODE);
+    
+    if (isProduction && EDGEONE_API_BASE_URL) {
+      console.log('[getApiBaseUrl] ✓ 使用 EdgeOne API (生产环境)');
+      return EDGEONE_API_BASE_URL;
+    } else {
+      console.log('[getApiBaseUrl] ✓ 使用本地 API (开发环境)');
+      return LOCAL_API_BASE_URL;
+    }
+  }
+  
+  // 显式指定 edgeone 模式
+  if (API_MODE === 'edgeone' && EDGEONE_API_BASE_URL) {
+    console.log('[getApiBaseUrl] ✓ 使用 EdgeOne API (强制模式)');
+    return EDGEONE_API_BASE_URL;
+  }
+  
+  // 默认使用本地 API
+  console.log('[getApiBaseUrl] ✓ 使用本地 API (默认)');
+  return LOCAL_API_BASE_URL;
+}
+
+/**
+ * 从 API 获取网站元数据
  * @param {string} url - 网站 URL
  * @returns {Promise<Object|null>} 元数据对象 { title, description, iconData }
  */
 export async function fetchMetadataFromLocalApi(url) {
+  const baseUrl = getApiBaseUrl();
+  const isEdgeOne = baseUrl === EDGEONE_API_BASE_URL && EDGEONE_API_BASE_URL;
+  
   console.log('[fetchMetadataFromLocalApi] ========== 开始获取元数据 ==========')
-  console.log('[fetchMetadataFromLocalApi] 📍 数据来源: Node API (EdgeOne 边缘函数)')
+  console.log('[fetchMetadataFromLocalApi] 📍 数据来源:', isEdgeOne ? 'EdgeOne 边缘函数（生产环境）' : '本地 API (开发环境)')
   console.log('[fetchMetadataFromLocalApi] URL:', url)
-  console.log('[fetchMetadataFromLocalApi] API 地址:', LOCAL_API_BASE_URL)
+  console.log('[fetchMetadataFromLocalApi] API 地址:', baseUrl)
+  console.log('[fetchMetadataFromLocalApi] API 模式:', API_MODE)
 
   try {
-    const apiUrl = `${LOCAL_API_BASE_URL}/api/get-metadata?url=${encodeURIComponent(url)}`;
+    const apiUrl = `${baseUrl}/api/get-metadata?url=${encodeURIComponent(url)}`;
     console.log('[fetchMetadataFromLocalApi] 请求 API:', apiUrl);
 
     const response = await fetch(apiUrl, {
@@ -56,7 +110,8 @@ export async function fetchMetadataFromLocalApi(url) {
         iconData: result.data.iconData || ''
       };
 
-      console.log('[fetchMetadataFromLocalApi] ✓ 成功获取元数据 (来源: Node API)');
+      console.log('[fetchMetadataFromLocalApi] ✓ 成功获取元数据', 
+        `(来源：${isEdgeOne ? 'EdgeOne 边缘函数' : '本地 API'})`);
       console.log('[fetchMetadataFromLocalApi] - title:', metadata.title);
       console.log('[fetchMetadataFromLocalApi] - description:', metadata.description?.substring(0, 50));
       console.log('[fetchMetadataFromLocalApi] - iconData:', metadata.iconData ?
