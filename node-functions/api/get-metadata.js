@@ -91,12 +91,22 @@ export default async function onRequest(context) {
       }
     );
   } catch (error) {
-    // 错误处理：记录日志并返回错误响应
+    // 错误处理：记录详细日志并返回错误响应
     console.error(`[NodeFunction] ❌ 获取失败：${error.message}`);
+    console.error(`[NodeFunction] 错误堆栈：${error.stack}`);
+    console.error(`[NodeFunction] 目标 URL：${targetUrl}`);
+    
+    // 针对知乎的特殊处理
+    if (targetUrl.includes('zhihu.com')) {
+      console.error(`[NodeFunction] 知乎可能有特殊的反爬机制`);
+    }
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message,
+        details: error.stack ? error.stack.substring(0, 500) : '',
+        url: targetUrl
       }),
       {
         status: 500, // HTTP 500 Internal Server Error
@@ -157,6 +167,83 @@ function getRandomUserAgent() {
  */
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 处理知乎特殊页面的函数
+ * 
+ * 知乎的内容页有特殊的反爬机制和数据结构
+ * @param {string} html - HTML 内容
+ * @param {string} targetUrl - 目标 URL
+ * @returns {Object} 提取的元数据
+ */
+function processZhihuPage(html, targetUrl) {
+  console.log(`[Zhihu] 开始处理知乎页面...`);
+  
+  try {
+    // 尝试从 HTML 中提取 JSON 数据
+    const jsonMatch = html.match(/window\.initialState\s*=\s*(\{[\s\S]*?\});/);
+    
+    if (jsonMatch) {
+      console.log(`[Zhihu] 找到 initialState JSON 数据`);
+      try {
+        const initialState = JSON.parse(jsonMatch[1]);
+        
+        // 提取标题和描述
+        let title = '';
+        let description = '';
+        
+        // 检查不同的知乎页面类型
+        if (initialState.entities && initialState.entities.answers) {
+          // 回答页面
+          const answerId = Object.keys(initialState.entities.answers)[0];
+          if (answerId) {
+            const answer = initialState.entities.answers[answerId];
+            title = answer.excerpt || '';
+            description = answer.content || '';
+          }
+        } else if (initialState.entities && initialState.entities.questions) {
+          // 问题页面
+          const questionId = Object.keys(initialState.entities.questions)[0];
+          if (questionId) {
+            const question = initialState.entities.questions[questionId];
+            title = question.title || '';
+            description = question.detail || '';
+          }
+        }
+        
+        if (title) {
+          console.log(`[Zhihu] 从 JSON 数据中提取到标题：${title.substring(0, 50)}`);
+          return {
+            title: title,
+            description: description.substring(0, 300), // 限制描述长度
+            iconUrl: 'https://www.zhihu.com/favicon.ico'
+          };
+        }
+      } catch (jsonError) {
+        console.error(`[Zhihu] JSON 解析失败：${jsonError.message}`);
+      }
+    }
+    
+    // 如果 JSON 提取失败，使用常规方法
+    console.log(`[Zhihu] JSON 提取失败，使用常规方法`);
+    const $ = cheerio.load(html);
+    
+    return {
+      title: extractTitle($, targetUrl),
+      description: extractDescription($),
+      iconUrl: extractIcon($, targetUrl)
+    };
+    
+  } catch (error) {
+    console.error(`[Zhihu] 处理失败：${error.message}`);
+    // 返回默认值
+    return {
+      title: '知乎 - 有问题，就会有答案',
+      description: '知乎是中文互联网知名的问答社区',
+      iconUrl: 'https://www.zhihu.com/favicon.ico'
+    };
+  }
 }
 
 /**
@@ -233,10 +320,18 @@ async function getWebsiteMetadata(targetUrl) {
           'Cache-Control': 'max-age=0',
 
           // 添加 Referer 模拟真实访问（来自同源）
-          'Referer': new URL(targetUrl).origin
+          'Referer': new URL(targetUrl).origin,
+          
+          // 额外的头部信息，增强浏览器模拟
+          'DNT': '1', // Do Not Track
+          'X-Requested-With': 'XMLHttpRequest',
+          
+          // 针对知乎的特殊头部
+          'X-Zse-83': '3_2.0'
         },
         signal: controller.signal, // 绑定超时控制信号
-        redirect: 'follow' // 自动跟随重定向
+        redirect: 'follow', // 自动跟随重定向
+        credentials: 'include' // 包含凭证（cookies）
       });
 
       // 清除超时定时器（请求成功后）
@@ -264,20 +359,30 @@ async function getWebsiteMetadata(targetUrl) {
       console.log(`[Decode] ✅ HTML 长度：${html.length} 字符`);
 
       // ============================================
-      // 使用 Cheerio 加载并解析 HTML
-      // ============================================
-      const $ = cheerio.load(html);
-
-      // ============================================
       // 提取各项元数据
       // ============================================
-      const metadata = {
+      let metadata = {
         url: targetUrl, // 原始 URL
-        title: extractTitle($, targetUrl), // 网页标题
-        description: extractDescription($), // 网页描述
-        iconUrl: extractIcon($, targetUrl), // 网站图标 URL（用于调试和降级）
+        title: '',
+        description: '',
+        iconUrl: '',
         iconData: null // 网站图标的 base64 字符串（新增）
       };
+
+      // 检查是否是知乎页面
+      if (targetUrl.includes('zhihu.com')) {
+        console.log(`[Metadata] 检测到知乎 URL，使用特殊处理`);
+        const zhihuData = processZhihuPage(html, targetUrl);
+        metadata.title = zhihuData.title;
+        metadata.description = zhihuData.description;
+        metadata.iconUrl = zhihuData.iconUrl;
+      } else {
+        // 使用常规方法解析
+        const $ = cheerio.load(html);
+        metadata.title = extractTitle($, targetUrl);
+        metadata.description = extractDescription($);
+        metadata.iconUrl = extractIcon($, targetUrl);
+      }
 
       console.log(`[Icon] 开始下载并转换图标为 base64...`);
       console.log(`[Icon] iconUrl: ${metadata.iconUrl}`);
