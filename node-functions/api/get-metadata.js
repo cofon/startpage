@@ -95,12 +95,12 @@ export default async function onRequest(context) {
     console.error(`[NodeFunction] ❌ 获取失败：${error.message}`);
     console.error(`[NodeFunction] 错误堆栈：${error.stack}`);
     console.error(`[NodeFunction] 目标 URL：${targetUrl}`);
-    
+
     // 针对知乎的特殊处理
     if (targetUrl.includes('zhihu.com')) {
       console.error(`[NodeFunction] 知乎可能有特殊的反爬机制`);
     }
-    
+
     return new Response(
       JSON.stringify({
         success: false,
@@ -133,10 +133,14 @@ import * as cheerio from 'cheerio'; // jQuery 风格的 HTML 解析库
  * 3. 涵盖主流浏览器（Chrome、Edge、Firefox、Safari）
  */
 const USER_AGENTS = [
-  // Chrome 浏览器
+  // Chrome 浏览器 - Windows
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+
+  // Chrome 浏览器 - Mac
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
 
   // Edge 浏览器
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
@@ -147,7 +151,11 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
 
   // Safari 浏览器
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15'
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15',
+
+  // 移动设备
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
 ];
 
 /**
@@ -171,7 +179,7 @@ function delay(ms) {
 
 /**
  * 处理知乎特殊页面的函数
- * 
+ *
  * 知乎的内容页有特殊的反爬机制和数据结构
  * @param {string} html - HTML 内容
  * @param {string} targetUrl - 目标 URL
@@ -179,20 +187,20 @@ function delay(ms) {
  */
 function processZhihuPage(html, targetUrl) {
   console.log(`[Zhihu] 开始处理知乎页面...`);
-  
+
   try {
     // 尝试从 HTML 中提取 JSON 数据
     const jsonMatch = html.match(/window\.initialState\s*=\s*(\{[\s\S]*?\});/);
-    
+
     if (jsonMatch) {
       console.log(`[Zhihu] 找到 initialState JSON 数据`);
       try {
         const initialState = JSON.parse(jsonMatch[1]);
-        
+
         // 提取标题和描述
         let title = '';
         let description = '';
-        
+
         // 检查不同的知乎页面类型
         if (initialState.entities && initialState.entities.answers) {
           // 回答页面
@@ -211,7 +219,7 @@ function processZhihuPage(html, targetUrl) {
             description = question.detail || '';
           }
         }
-        
+
         if (title) {
           console.log(`[Zhihu] 从 JSON 数据中提取到标题：${title.substring(0, 50)}`);
           return {
@@ -224,17 +232,17 @@ function processZhihuPage(html, targetUrl) {
         console.error(`[Zhihu] JSON 解析失败：${jsonError.message}`);
       }
     }
-    
+
     // 如果 JSON 提取失败，使用常规方法
     console.log(`[Zhihu] JSON 提取失败，使用常规方法`);
     const $ = cheerio.load(html);
-    
+
     return {
       title: extractTitle($, targetUrl),
       description: extractDescription($),
       iconUrl: extractIcon($, targetUrl)
     };
-    
+
   } catch (error) {
     console.error(`[Zhihu] 处理失败：${error.message}`);
     // 返回默认值
@@ -321,13 +329,17 @@ async function getWebsiteMetadata(targetUrl) {
 
           // 添加 Referer 模拟真实访问（来自同源）
           'Referer': new URL(targetUrl).origin,
-          
+
           // 额外的头部信息，增强浏览器模拟
           'DNT': '1', // Do Not Track
           'X-Requested-With': 'XMLHttpRequest',
-          
+          'X-Forwarded-For': `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+          'X-Real-IP': `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+
           // 针对知乎的特殊头部
-          'X-Zse-83': '3_2.0'
+          'X-Zse-83': '3_2.0',
+          'X-Zst-81': Math.floor(Date.now() / 1000).toString(),
+          'Cookie': 'abtest=0; _xsrf=token123456; z_c0=token.123456; d_c0=token.789012; Hm_lvt_98beee57fd2ef70ccdd5ca52b9740c49=1620000000; Hm_lpvt_98beee57fd2ef70ccdd5ca52b9740c49=1620000000'
         },
         signal: controller.signal, // 绑定超时控制信号
         redirect: 'follow', // 自动跟随重定向
@@ -426,7 +438,58 @@ async function getWebsiteMetadata(targetUrl) {
     }
   }
 
-  // 所有重试都失败后抛出最后的错误
+  // 所有重试都失败后，如果是知乎页面，尝试降级方案
+  if (targetUrl.includes('zhihu.com')) {
+    console.log(`[Zhihu] 所有重试失败，尝试降级方案...`);
+    try {
+      // 尝试获取知乎首页
+      const zhihuHomeUrl = 'https://www.zhihu.com';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const homeResponse = await fetch(zhihuHomeUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': getRandomUserAgent(),
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Referer': zhihuHomeUrl
+        },
+        signal: controller.signal,
+        redirect: 'follow'
+      });
+
+      clearTimeout(timeoutId);
+
+      if (homeResponse.ok) {
+        const homeHtml = await decodeHtml(homeResponse);
+        const $ = cheerio.load(homeHtml);
+
+        // 提取知乎首页的基本信息
+        const metadata = {
+          url: targetUrl,
+          title: '知乎 - 有问题，就会有答案',
+          description: '知乎是中文互联网知名的问答社区，高质量的问答内容和创作者社区。',
+          iconUrl: 'https://www.zhihu.com/favicon.ico',
+          iconData: null
+        };
+
+        // 尝试下载图标
+        try {
+          metadata.iconData = await downloadAndConvertToBase64(metadata.iconUrl);
+        } catch (e) {
+          console.error(`[Zhihu] 图标下载失败: ${e.message}`);
+        }
+
+        console.log(`[Zhihu] 降级方案成功，返回知乎基本信息`);
+        return metadata;
+      }
+    } catch (e) {
+      console.error(`[Zhihu] 降级方案失败: ${e.message}`);
+    }
+  }
+
+  // 如果降级方案也失败，抛出最后的错误
   throw lastError || new Error('获取元数据失败');
 }
 
