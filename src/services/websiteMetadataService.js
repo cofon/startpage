@@ -24,7 +24,11 @@ export async function fetchMetadata(url) {
   console.log('[fetchMetadata] API 地址:', EDGEONE_API_URL)
 
   try {
-    const apiUrl = `${EDGEONE_API_URL}/api/get-metadata?url=${encodeURIComponent(url)}`
+    // 构建正确的 API URL，避免双斜杠问题
+    const apiUrl =
+      EDGEONE_API_URL === '/'
+        ? `/api/get-metadata?url=${encodeURIComponent(url)}`
+        : `${EDGEONE_API_URL}/api/get-metadata?url=${encodeURIComponent(url)}`
     console.log('[fetchMetadata] 请求 API:', apiUrl)
 
     const response = await fetch(apiUrl, {
