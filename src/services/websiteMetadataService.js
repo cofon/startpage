@@ -26,51 +26,6 @@ export async function fetchMetadata(url) {
   console.log('[fetchMetadata] 环境：', IS_DEV ? '开发环境' : '生产环境')
 
   try {
-    // 本地开发环境的模拟数据
-    if (IS_DEV) {
-      console.log('[fetchMetadata] 使用本地模拟数据')
-
-      // 针对知乎的特殊处理
-      if (url.includes('zhihu.com')) {
-        console.log('[fetchMetadata] 知乎URL，使用智能模拟数据')
-
-        // 基于URL路径生成模拟数据
-        const urlPath = new URL(url).pathname
-        let title = '知乎 - 有问题，就会有答案'
-        let description = '知乎是中文互联网知名的问答社区，高质量的问答内容和创作者社区。'
-
-        // 根据URL路径生成更具体的模拟数据
-        if (urlPath.includes('/question/')) {
-          // 提取问题ID
-          const questionIdMatch = urlPath.match(/\/question\/(\d+)/)
-          if (questionIdMatch) {
-            title = `知乎问题 - 问题ID: ${questionIdMatch[1]}`
-            description = '这是一个知乎问题页面，包含用户的提问和回答。'
-          }
-        } else if (urlPath.includes('/answer/')) {
-          // 提取回答ID
-          const answerIdMatch = urlPath.match(/\/answer\/(\d+)/)
-          if (answerIdMatch) {
-            title = `知乎回答 - 回答ID: ${answerIdMatch[1]}`
-            description = '这是一个知乎回答页面，包含用户的详细回答内容。'
-          }
-        }
-
-        const metadata = {
-          title: title,
-          description: description,
-          iconData: '', // 模拟无图标数据
-        }
-
-        console.log('[fetchMetadata] ✓ 成功获取元数据（智能模拟）')
-        console.log('[fetchMetadata] - title:', metadata.title)
-        console.log('[fetchMetadata] - description:', metadata.description?.substring(0, 50))
-        console.log('[fetchMetadata] - iconData:', metadata.iconData ? 'base64 格式' : '无')
-
-        return metadata
-      }
-    }
-
     // 构建正确的 API URL，避免双斜杠问题
     const apiUrl =
       EDGEONE_API_URL === '/'
@@ -111,18 +66,8 @@ export async function fetchMetadata(url) {
     }
   } catch (error) {
     console.error('[fetchMetadata] ❌ 获取元数据失败:', error.message)
-
-    // 本地开发环境的容错处理
-    if (IS_DEV) {
-      console.log('[fetchMetadata] 本地开发环境容错处理')
-      const metadata = {
-        title: new URL(url).hostname,
-        description: '',
-        iconData: '',
-      }
-      return metadata
-    }
-
+    // 任何环境都不使用容错机制，直接返回null
+    // 这样在批量处理时会添加meta_failed标签
     return null
   }
 }
