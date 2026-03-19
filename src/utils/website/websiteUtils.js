@@ -95,7 +95,7 @@ export function isValidUrl(urlString) {
 
     // 特殊处理：www.xxx 格式（如 www.ba、www.bai）应该被判定为无效
     const parts = hostname.split('.')
-    if (parts.length === 2 && parts[0] === 'www' ) {
+    if (parts.length === 2 && parts[0] === 'www') {
       return { valid: false, error: '域名格式不正确，顶级域名长度不足' }
     }
 
@@ -708,7 +708,19 @@ export function normalizeImportUrl(url) {
 }
 
 /**
- * 检查网站数据完整性（仅针对插件可补全的字段）
+ * 检查网站数据完整性
+ * 所有用户可编辑字段
+ * - url
+ * - name
+ * - title
+ * - description
+ * - iconData
+ * - iconGenerateData
+ * - tags
+ * 除了iconData其他字段都要检查
+ * 有些网站可能确实获取不到完整的数据
+ * 例如：一些网站的只有title，没有提供description
+ * 这种情况下，我们仍然认为网站数据完整的
  * @param {Object} website - 网站数据
  * @returns {boolean} 是否完整
  */
@@ -718,20 +730,34 @@ export function isWebsiteComplete(website) {
     return false
   }
 
-  // ========== 优化：优化完整性判断逻辑 ==========
-  // 1. iconData 不纳入检查范围（因为缺失时可以用 iconGenerateData 替补）
-  // 2. title 和 description 只需要有一个有值即可（显示逻辑优先显示 title）
+  // 必须有 name
+  if (!website.name || website.name.trim() === '') {
+    return false
+  }
 
+  // title 或 description 至少有一个
   const hasTitle = website.title && website.title.trim() !== ''
   const hasDescription = website.description && website.description.trim() !== ''
-
   const hasTitleOrDescription = hasTitle || hasDescription
+  if (!hasTitleOrDescription) {
+    return false
+  }
 
-  // 数据完整的标准：
-  // - URL 有效
-  // - title 或 description至少有一个
-  // （iconData 不检查，因为可以由 iconGenerateData 替补）
-  return hasTitleOrDescription
+  // 必须有 iconGenerateData
+  if (!website.iconGenerateData || website.iconGenerateData.trim() === '') {
+    return false
+  }
+
+  // 必须有 tags
+  if (
+    !website.tags ||
+    (Array.isArray(website.tags) && website.tags.length === 0) ||
+    (typeof website.tags === 'string' && website.tags.trim() === '')
+  ) {
+    return false
+  }
+
+  return true
 }
 
 /**
