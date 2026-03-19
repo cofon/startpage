@@ -8,7 +8,6 @@ import {
   isValidUrl,
   checkUrlExists,
   normalizeWebsiteData,
-  validateWebsite_1 as validateWebsite,
   extractSiteNameFromUrl,
   extractRootDomain,
 } from '../utils/website/websiteUtils'
@@ -536,7 +535,7 @@ async function handleSubmit() {
       return
     }
 
-    // 2. 检查 URL 是否已存在
+    // 2. 检查 URL 是否已存在(于数据库中)
     const existingWebsite = websiteStore.websites.find(
       (w) => w.url === formData.value.url && w.isActive,
     )
@@ -597,12 +596,13 @@ async function handleSubmit() {
       console.log('[handleSubmit] ✓ tags 为空，已自动添加 "new"')
     }
 
+    // 上边已经验证了，不需要再调用验证函数
     // 验证数据
-    const validation = validateWebsite(websiteData)
-    if (!validation.valid) {
-      notificationStore.warning(validation.errors.join(', '))
-      return
-    }
+    // const validation = validateWebsite(websiteData)
+    // if (!validation.valid) {
+    //   notificationStore.warning(validation.errors.join(', '))
+    //   return
+    // }
 
     // 标准化数据
     const normalizedData = normalizeWebsiteData(websiteData)

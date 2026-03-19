@@ -22,43 +22,37 @@ async function handleImport(event) {
         // 使用 importService 统一处理导入逻辑
         const { importData } = await import('../services/importService')
 
-        // 检查是否是网站数据（websites 或 urls）
-        const isWebsiteData = data.websites || data.urls
+        console.log('[ImportDataPanel] 使用 importService 统一导入...')
 
-        if (isWebsiteData) {
-          console.log('[ImportDataPanel] 检测到网站数据，使用 importService 导入...')
-
-          const result = await importData(data, {
-            mode: 'auto',
-            onIncomplete: 'enrich',
-            onProgress: (progress) => {
-              console.log('[ImportDataPanel] 导入进度:', progress)
-              if (progress.phase === 'enriching') {
-                notificationStore.info(progress.message)
-              }
-            },
-            onComplete: (result) => {
-              console.log('[ImportDataPanel] 导入完成:', result)
+        const result = await importData(data, {
+          mode: 'auto',
+          onIncomplete: 'enrich',
+          onProgress: (progress) => {
+            console.log('[ImportDataPanel] 导入进度:', progress)
+            if (progress.phase === 'enriching') {
+              notificationStore.info(progress.message)
             }
-          })
+          },
+          onComplete: (result) => {
+            console.log('[ImportDataPanel] 导入完成:', result)
+          },
+        })
 
-          // 计算总数：成功 + 失败 + 跳过
-          const total = (result.success || 0) + (result.failed || 0) + (result.skipped || 0)
-          notificationStore.success(`导入成功！共 ${total} 个网站，成功 ${result.success} 个，失败 ${result.failed} 个${result.skipped > 0 ? `，跳过 ${result.skipped} 个` : ''}`)
+        // 计算总数：成功 + 失败 + 跳过
+        const total = (result.success || 0) + (result.failed || 0) + (result.skipped || 0)
 
-          setTimeout(() => {
-            window.location.reload()
-          }, 150000000)
+        // 根据导入结果显示不同的成功消息
+        if (total > 0) {
+          notificationStore.success(
+            `导入成功！共 ${total} 个网站，成功 ${result.success} 个，失败 ${result.failed} 个${result.skipped > 0 ? `，跳过 ${result.skipped} 个` : ''}`,
+          )
         } else {
-          // 导入其他数据（设置、主题等）
-          console.log('[ImportDataPanel] 导入其他数据...')
-          const db = await import('../utils/database')
-          await db.default.importData(data)
           notificationStore.success('导入成功！页面即将刷新...')
-          setTimeout(() => {
-            window.location.reload()
-          }, 1000)
         }
+
+        setTimeout(() => {
+          window.location.reload()
+        }, 15000000000)
       } catch (error) {
         console.error('解析导入文件失败:', error)
         notificationStore.error('导入文件格式错误: ' + error.message)

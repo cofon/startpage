@@ -13,7 +13,12 @@
  */
 
 // 导入依赖（按需引入）
-import { normalizeImportUrl, isWebsiteComplete, getMissingFields, normalizeWebsiteData, validateWebsite, fillDefaultFields } from '../utils/website/websiteUtils'
+import {
+  normalizeImportUrl,
+  isWebsiteComplete,
+  getMissingFields,
+  normalizeWebsiteData,
+} from '../utils/website/websiteUtils'
 import { fetchMetadata } from '../services/websiteMetadataService'
 import db from '../utils/database'
 import { PerformanceMonitor, BatchProcessor, MemoryOptimizer } from '../utils/performanceMonitor'
@@ -44,7 +49,7 @@ export async function importData(jsonData, options = {}) {
     batchSize: options.batchSize || 20,
     timeout: options.timeout || 10000,
     onProgress: options.onProgress || (() => {}),
-    onComplete: options.onComplete || (() => {})
+    onComplete: options.onComplete || (() => {}),
   }
 
   // 开始验证阶段
@@ -64,17 +69,35 @@ export async function importData(jsonData, options = {}) {
   // 判断导入类型
   const importType = config.mode === 'auto' ? validation.type : config.mode
 
-  // 根据类型执行不同的导入逻辑
-  // 将URLs 转换成 websites，然后统一处理
-  let result
-  if (importType === 'websites') {
+  // 导入结果
+  let result = {
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    updated: 0,
+    errors: [],
+  }
+
+  // 优先处理 websites 数据
+  if (importType === 'websites' || importType === 'urls') {
+    if (importType === 'urls') {
+      jsonData.websites = urlsToWebsites(jsonData.urls)
+    }
     result = await importWebsites(jsonData.websites, config, monitor)
-  } else if (importType === 'urls') {
-    jsonData.websites = urlsToWebsites(jsonData.urls)
-    result = await importWebsites(jsonData.websites, config, monitor)
-  } else {
-    monitor.end()
-    throw new Error('无法识别的导入类型')
+  }
+
+  // 处理其他数据类型
+  await importOtherData(jsonData, config, monitor)
+
+  // 如果没有 websites 数据，设置一个默认结果
+  if (importType === 'other') {
+    result = {
+      success: 0,
+      failed: 0,
+      skipped: 0,
+      updated: 0,
+      errors: [],
+    }
   }
 
   // 结束监控并打印报告
@@ -100,21 +123,26 @@ export function validateImportData(data) {
     return { valid: false, type: 'unknown', errors }
   }
 
-  // 检查是否包含必填字段
+  // 检查是否包含任何有效数据
   const hasWebsites = data.websites && Array.isArray(data.websites)
   const hasUrls = data.urls && Array.isArray(data.urls)
+  const hasThemes = data.themes && Array.isArray(data.themes)
+  const hasSearchEngines = data.searchEngines && Array.isArray(data.searchEngines)
+  const hasSettings = data.settings && typeof data.settings === 'object'
 
-  if (!hasWebsites && !hasUrls) {
-    errors.push('数据格式错误：必须包含 websites 或 urls 字段')
+  if (!hasWebsites && !hasUrls && !hasThemes && !hasSearchEngines && !hasSettings) {
+    errors.push('数据格式错误：必须包含 websites、urls、themes、searchEngines 或 settings 字段')
     return { valid: false, type: 'unknown', errors }
   }
 
-  // 确定导入类型
+  // 确定导入类型（优先考虑 websites）
   let type = 'unknown'
   if (hasWebsites) {
     type = 'websites'
   } else if (hasUrls) {
     type = 'urls'
+  } else if (hasThemes || hasSearchEngines || hasSettings) {
+    type = 'other'
   }
 
   return { valid: true, type, errors }
@@ -126,7 +154,7 @@ export function validateImportData(data) {
  * @returns {Array} 网站对象数组
  */
 function urlsToWebsites(urls) {
-  return urls.map(url => ({ url }))
+  return urls.map((url) => ({ url }))
 }
 
 /**
@@ -138,7 +166,6 @@ export function getImportType(data) {
   const validation = validateImportData(data)
   return validation.type
 }
-
 
 /**
  * 分离完整和不完整的网站
@@ -206,7 +233,10 @@ export async function enrichWebsites(websites, config, progressCallback) {
             if (!website.tags) {
               website.tags = []
             } else if (typeof website.tags === 'string') {
-              website.tags = website.tags.split(',').map(t => t.trim()).filter(t => t)
+              website.tags = website.tags
+                .split(',')
+                .map((t) => t.trim())
+                .filter((t) => t)
             }
 
             // 添加标签（避免重复）
@@ -222,7 +252,7 @@ export async function enrichWebsites(websites, config, progressCallback) {
           // 返回原始数据，后续会使用默认值
           return website
         }
-      })
+      }),
     )
 
     // 更新进度
@@ -232,7 +262,7 @@ export async function enrichWebsites(websites, config, progressCallback) {
         phase: 'enriching',
         processed,
         total,
-        message: `正在补全网站元数据... (${processed}/${total})`
+        message: `正在补全网站元数据... (${processed}/${total})`,
       })
     }
   }
@@ -246,7 +276,7 @@ export async function enrichWebsites(websites, config, progressCallback) {
  * @returns {Array} 标准化后的网站数组
  */
 export function normalizeWebsites(websites) {
-  return websites.map(website => normalizeWebsiteData(website))
+  return websites.map((website) => normalizeWebsiteData(website))
 }
 
 /**
@@ -266,17 +296,15 @@ export async function importWebsitesToDB(websites, config, monitor, existingUrls
     failed: 0,
     skipped: 0,
     updated: 0,
-    errors: []
+    errors: [],
   }
 
   // 如果没有传入 existingUrlsMap，则获取所有现有网站
-  const existingUrls = existingUrlsMap
-    ? new Set(existingUrlsMap.keys())
-    : new Set()
+  const existingUrls = existingUrlsMap ? new Set(existingUrlsMap.keys()) : new Set()
 
   if (!existingUrlsMap) {
     const existingWebsites = await db.getAllWebsites()
-    existingUrls.add(...existingWebsites.map(w => w.url))
+    existingUrls.add(...existingWebsites.map((w) => w.url))
   }
 
   // 检查内存使用
@@ -292,10 +320,10 @@ export async function importWebsitesToDB(websites, config, monitor, existingUrls
           phase: 'importing',
           processed: progress.processed,
           total: progress.total,
-          message: `正在导入网站到数据库... (${progress.processed}/${progress.total})`
+          message: `正在导入网站到数据库... (${progress.processed}/${progress.total})`,
         })
       }
-    }
+    },
   })
 
   // 处理导入
@@ -324,7 +352,7 @@ export async function importWebsitesToDB(websites, config, monitor, existingUrls
       result.failed++
       result.errors.push({
         url: website.url,
-        error: error.message || '未知错误'
+        error: error.message || '未知错误',
       })
       monitor.recordFailure()
     }
@@ -351,13 +379,13 @@ async function importWebsites(websites, config, monitor) {
       phase: 'db_check',
       processed: 0,
       total: websites.length,
-      message: `正在检查数据库中已存在的网站...`
+      message: `正在检查数据库中已存在的网站...`,
     })
   }
 
   // 获取数据库中所有现有网站
   const existingWebsitesInDB = await db.getAllWebsites()
-  const existingUrlsMap = new Map(existingWebsitesInDB.map(w => [w.url, w]))
+  const existingUrlsMap = new Map(existingWebsitesInDB.map((w) => [w.url, w]))
 
   // 分类处理
   const skipWebsites = [] // 数据库中已存在且完整，直接跳过
@@ -372,13 +400,14 @@ async function importWebsites(websites, config, monitor) {
     urls: {
       skip: [],
       update: [],
-      create: []
-    }
+      create: [],
+    },
   }
 
   for (const website of websites) {
     // ========== 新增：URL 规范化处理 ==========
-    // 对导入的 URL 进行规范化，确保 https://www.bilibili.com 和 https://www.bilibili.com/ 被视为相同
+    // 对导入的 URL 进行规范化
+    // https://www.bilibili.com/ --> https://www.bilibili.com
     const normalizedImportUrl = normalizeImportUrl(website.url)
 
     // 在 existingUrlsMap 中查找时，需要遍历所有键并进行规范化比较
@@ -403,7 +432,7 @@ async function importWebsites(websites, config, monitor) {
         logDetails.urls.skip.push({
           url: website.url,
           title: existingWebsite.title,
-          reason: '数据库已存在且完整'
+          reason: '数据库已存在且完整',
         })
       } else {
         // 数据库中数据不完整，需要更新
@@ -414,7 +443,7 @@ async function importWebsites(websites, config, monitor) {
         logDetails.existedIncomplete++
         logDetails.urls.update.push({
           url: website.url,
-          missingFields: getMissingFields(existingWebsite)
+          missingFields: getMissingFields(existingWebsite),
         })
       }
     } else {
@@ -425,7 +454,7 @@ async function importWebsites(websites, config, monitor) {
         url: website.url,
         hasTitle: !!website.title,
         hasDescription: !!website.description,
-        hasIconData: !!website.iconData
+        hasIconData: !!website.iconData,
       })
     }
   }
@@ -461,7 +490,7 @@ async function importWebsites(websites, config, monitor) {
       phase: 'db_check',
       processed: websites.length,
       total: websites.length,
-      message: `数据库检查完成：${skipWebsites.length} 个已存在且完整，${needImportWebsites.length} 个需要处理`
+      message: `数据库检查完成：${skipWebsites.length} 个已存在且完整，${needImportWebsites.length} 个需要处理`,
     })
   }
   // ========== 数据库完整性检查结束 ==========
@@ -470,7 +499,8 @@ async function importWebsites(websites, config, monitor) {
   let enrichedWebsites = []
   if (needImportWebsites.length > 0) {
     // 分离完整和不完整的网站
-    const { complete: needComplete, incomplete: needIncomplete } = separateWebsites(needImportWebsites)
+    const { complete: needComplete, incomplete: needIncomplete } =
+      separateWebsites(needImportWebsites)
 
     console.log(`\n========== 🔍 需要处理的网站分析 ==========`)
     console.log(`完整（无需插件补全）：${needComplete.length} 个`)
@@ -487,7 +517,7 @@ async function importWebsites(websites, config, monitor) {
           phase: 'enriching',
           processed: 0,
           total: needIncomplete.length,
-          message: `准备补全 ${needIncomplete.length} 个不完整的网站...`
+          message: `准备补全 ${needIncomplete.length} 个不完整的网站...`,
         })
       }
 
@@ -509,14 +539,14 @@ async function importWebsites(websites, config, monitor) {
     // 对于需要更新的网站（已存在但不完整），使用 update 模式
     const dbConfig = {
       ...config,
-      onDuplicate: 'update' // 强制更新已存在的网站
+      onDuplicate: 'update', // 强制更新已存在的网站
     }
     const result = await importWebsitesToDB(normalizedWebsites, dbConfig, monitor, existingUrlsMap)
 
     // 合并跳过的网站到结果中
     return {
       ...result,
-      skipped: result.skipped + skipWebsites.length
+      skipped: result.skipped + skipWebsites.length,
     }
   } else {
     // 所有网站都已存在于数据库且完整
@@ -529,122 +559,77 @@ async function importWebsites(websites, config, monitor) {
       failed: 0,
       skipped: skipWebsites.length,
       updated: 0,
-      errors: []
+      errors: [],
     }
   }
 }
 
-
-
 /**
- * 处理单个网站的导入
- * @param {Object} website - 网站数据对象
- * @param {Object} websitesStore - IndexedDB 的 websites 存储对象
- * @param {Function} onComplete - 完成回调函数
- * @returns {void}
+ * 导入其他数据类型（themes、searchEngines、settings）
+ * @param {Object} jsonData - 解析后的 JSON 数据
+ * @param {Object} config - 配置选项
+ * @param {Object} monitor - 性能监控器
+ * @returns {Promise<void>}
  */
-export function importSingleWebsite(website, websitesStore, onComplete) {
-  // ========== 处理单个网站的导入开始 ==========
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log('=========================')
-  console.log(`处理网站：${website.url} - ${website.title}`)
-  console.log('=========================')
+async function importOtherData(jsonData, config, monitor) {
+  // 开始处理其他数据阶段
+  monitor.startPhase('other_data')
 
-  // 第一步：验证网站数据
-  if (!validateWebsite(website)) {
-    console.warn('跳过无效网站：缺少 url 字段', website)
-    onComplete()
-    return
+  if (config.onProgress) {
+    config.onProgress({
+      phase: 'other_data',
+      processed: 0,
+      total: 3, // 最多三种其他数据类型
+      message: `开始处理其他数据类型...`,
+    })
   }
 
-  // 填充默认字段
-  const websiteToImport = fillDefaultFields(website)
-
-  // 第二步：检查 URL 是否已存在于数据库（优先级最高）
-  const urlIndexReq = websitesStore.index('url').get(websiteToImport.url)
-  urlIndexReq.onsuccess = () => {
-    if (urlIndexReq.result) {
-      // URL 已存在，更新网站数据
-      const existingWebsite = urlIndexReq.result
-      // 保留原有 ID，更新其他字段
-      const updatedWebsite = {
-        ...existingWebsite,
-        ...websiteToImport,
-        id: existingWebsite.id,  // 确保使用原有 ID
-        updatedAt: new Date()  // 更新时间戳
+  // 处理 themes
+  if (jsonData.themes && Array.isArray(jsonData.themes)) {
+    console.log(`[ImportService] 🎨 处理 ${jsonData.themes.length} 个主题`)
+    try {
+      for (const theme of jsonData.themes) {
+        await db.addTheme(theme)
       }
-      // 更新网站
-      updateWebsiteInStore(updatedWebsite, websitesStore, onComplete)
-      return
-    }
-
-    // URL 不存在，继续处理
-    if (websiteToImport.id) {
-      // 有 ID，检查 ID 是否冲突
-      const idReq = websitesStore.get(websiteToImport.id)
-      idReq.onsuccess = () => {
-        if (idReq.result) {
-          // ID 已存在，删除 ID 让数据库自动生成新的
-          delete websiteToImport.id
-        }
-        // 添加网站
-        addWebsiteToStore(websiteToImport, websitesStore, onComplete)
-      }
-      idReq.onerror = () => {
-        console.error('检查网站 ID 失败:', websiteToImport.id)
-        onComplete()
-      }
-    } else {
-      // 没有 ID，直接添加
-      addWebsiteToStore(websiteToImport, websitesStore, onComplete)
+      console.log(`[ImportService] ✅ 主题导入完成`)
+    } catch (error) {
+      console.error(`[ImportService] ❌ 主题导入失败:`, error)
     }
   }
 
-  urlIndexReq.onerror = () => {
-    console.error('检查 URL 失败:', websiteToImport.url)
-    onComplete()
+  // 处理 searchEngines
+  if (jsonData.searchEngines && Array.isArray(jsonData.searchEngines)) {
+    console.log(`[ImportService] 🔍 处理 ${jsonData.searchEngines.length} 个搜索引擎`)
+    try {
+      for (const engine of jsonData.searchEngines) {
+        await db.addSearchEngine(engine)
+      }
+      console.log(`[ImportService] ✅ 搜索引擎导入完成`)
+    } catch (error) {
+      console.error(`[ImportService] ❌ 搜索引擎导入失败:`, error)
+    }
   }
-}
 
-/**
- * 将网站添加到存储
- * @param {Object} website - 网站数据对象
- * @param {Object} websitesStore - IndexedDB 的 websites 存储对象
- * @param {Function} onComplete - 完成回调函数
- * @returns {void}
- */
-function addWebsiteToStore(website, websitesStore, onComplete) {
-  const addReq = websitesStore.add(website)
-  addReq.onsuccess = () => {
-    onComplete()
+  // 处理 settings
+  if (jsonData.settings && typeof jsonData.settings === 'object') {
+    console.log(`[ImportService] ⚙️ 处理设置数据`)
+    try {
+      await db.saveSettings(jsonData.settings)
+      console.log(`[ImportService] ✅ 设置导入完成`)
+    } catch (error) {
+      console.error(`[ImportService] ❌ 设置导入失败:`, error)
+    }
   }
-  addReq.onerror = () => {
-    console.error('添加网站失败:', website)
-    onComplete()
-  }
-}
 
-/**
- * 更新存储中的网站数据
- * @param {Object} website - 网站数据对象
- * @param {Object} websitesStore - IndexedDB 的 websites 存储对象
- * @param {Function} onComplete - 完成回调函数
- * @returns {void}
- */
-function updateWebsiteInStore(website, websitesStore, onComplete) {
-  const updateReq = websitesStore.put(website)
-  updateReq.onsuccess = () => {
-    onComplete()
+  if (config.onProgress) {
+    config.onProgress({
+      phase: 'other_data',
+      processed: 3,
+      total: 3,
+      message: `其他数据类型处理完成`,
+    })
   }
-  updateReq.onerror = () => {
-    console.error('更新网站失败:', website)
-    onComplete()
-  }
+
+  // 结束处理其他数据阶段
+  monitor.endPhase()
 }

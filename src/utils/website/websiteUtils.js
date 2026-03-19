@@ -510,7 +510,7 @@ export function extractRootDomain(hostname) {
 
   // 检查是否是复合后缀
   if (parts.length >= 3) {
-    const lastThreeParts = parts.slice(-3).join('.')
+    // const lastThreeParts = parts.slice(-3).join('.')
     const lastTwoParts = parts.slice(-2).join('.')
 
     // 检查是否匹配已知的复合后缀
@@ -625,27 +625,27 @@ export function createUpdateObject(website, updates = {}) {
 // 第三部分：导入辅助工具（来自 websiteImportUtils.js）
 // ============================================
 
-/**
- * 验证网站数据是否完整
- * @param {Object} website - 网站数据对象
- * @returns {boolean} - 是否完整
- */
-export function validateWebsite(website) {
-  // 验证 URL 是否存在
-  if (!website || !website.url) {
-    return false
-  }
+// /**
+//  * 验证网站数据是否完整
+//  * @param {Object} website - 网站数据对象
+//  * @returns {boolean} - 是否完整
+//  */
+// export function validateWebsite(website) {
+//   // 验证 URL 是否存在
+//   if (!website || !website.url) {
+//     return false
+//   }
 
-  // 验证必需字段是否都有值
-  const hasName = website.name && website.name.trim() !== ''
-  const hasTitle = website.title && website.title.trim() !== ''
-  const hasDescription = website.description && website.description.trim() !== ''
-  const hasIconData = website.iconData && website.iconData.trim() !== ''
-  const hasIconGenerateData = website.iconGenerateData && website.iconGenerateData.trim() !== ''
+//   // 验证必需字段是否都有值
+//   const hasName = website.name && website.name.trim() !== ''
+//   const hasTitle = website.title && website.title.trim() !== ''
+//   const hasDescription = website.description && website.description.trim() !== ''
+//   const hasIconData = website.iconData && website.iconData.trim() !== ''
+//   const hasIconGenerateData = website.iconGenerateData && website.iconGenerateData.trim() !== ''
 
-  // 数据完整的标准：name、title、description、iconData、iconGenerateData 都有值
-  return hasName && hasTitle && hasDescription && hasIconData && hasIconGenerateData
-}
+//   // 数据完整的标准：name、title、description、iconData、iconGenerateData 都有值
+//   return hasName && hasTitle && hasDescription && hasIconData && hasIconGenerateData
+// }
 
 /**
  * 填充网站的默认字段
@@ -909,44 +909,44 @@ export function checkUrlExists(url, allWebsites) {
 // ============================================
 
 /**
- * 验证网站数据（增强版）
+ * 验证网站数据
+ * 验证字段：URL、name/title/description、iconData/iconGenerateData、tags
  * @param {Object} data - 待验证的网站数据
  * @returns {Object} { valid: boolean, errors: string[] }
  */
-export function validateWebsite_1(data) {
-  const errors = []
+// export function validateWebsite(data) {
+//   const errors = []
 
-  // 1. URL 验证（必填）
-  if (!data.url) {
-    errors.push('URL 为必填字段')
-  } else if (!isValidUrl(data.url)) {
-    errors.push('URL 格式不正确')
-  }
+//   // 1. URL 验证（必填）
+//   if (!data.url) {
+//     errors.push('URL 为必填字段')
+//   } else if (!isValidUrl(data.url)) {
+//     errors.push('URL 格式不正确')
+//   }
 
-  // 2. name/title/description至少有一个不为空
-  const hasName = data.name && data.name.trim() !== ''
-  const hasTitle = data.title && data.title.trim() !== ''
-  const hasDescription = data.description && data.description.trim() !== ''
+//   // 2. name/title/description至少有一个不为空
+//   const hasName = data.name && data.name.trim() !== ''
+//   const hasTitle = data.title && data.title.trim() !== ''
+//   const hasDescription = data.description && data.description.trim() !== ''
 
-  if (!hasName && !hasTitle && !hasDescription) {
-    errors.push('网站名称、标题或描述必须填写至少一项')
-  }
+//   if (!hasName && !hasTitle && !hasDescription) {
+//     errors.push('网站名称、标题或描述必须填写至少一项')
+//   }
 
-  // 3. iconData/iconGenerateData至少有一个不为空
-  const hasValidIconData =
-    data.iconData && (data.iconData.startsWith('data:image/') || data.iconData.length > 0)
+//   // 3. iconData/iconGenerateData至少有一个不为空
+//   const hasValidIconData =
+//     data.iconData && (data.iconData.startsWith('data:image/') || data.iconData.length > 0)
 
-  const hasValidIconGenerateData =
-    data.iconGenerateData &&
-    (data.iconGenerateData.startsWith('data:image/svg') || data.iconGenerateData.length > 0)
+//   const hasValidIconGenerateData =
+//     data.iconGenerateData &&
+//     (data.iconGenerateData.startsWith('data:image/svg') || data.iconGenerateData.length > 0)
 
-  // 批量导入时放宽要求，允许后续自动生成
-  if (!hasValidIconData && !hasValidIconGenerateData) {
-    // 静默处理，允许后续自动生成
-  }
+//   if (!hasValidIconData && !hasValidIconGenerateData) {
+//     errors.push('图标数据（iconData）或生成数据（iconGenerateData）必须填写至少一项')
+//   }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  }
-}
+//   return {
+//     valid: errors.length === 0,
+//     errors,
+//   }
+// }
