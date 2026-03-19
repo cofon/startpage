@@ -1,9 +1,17 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
+import { useSearchStore } from '../stores/search'
 import websiteMetadataService, { fetchMetadata } from '../services/websiteMetadataService'
-import { isValidUrl, checkUrlExists, normalizeWebsiteData, validateWebsite_1 as validateWebsite, extractSiteNameFromUrl } from '../utils/website/websiteUtils'
+import {
+  isValidUrl,
+  checkUrlExists,
+  normalizeWebsiteData,
+  validateWebsite_1 as validateWebsite,
+  extractSiteNameFromUrl,
+  extractRootDomain,
+} from '../utils/website/websiteUtils'
 
 // ========== 所有工具函数都通过 websiteMetadataService 访问 ==========
 
@@ -11,6 +19,7 @@ const emit = defineEmits(['close'])
 
 const websiteStore = useWebsiteStore()
 const notificationStore = useNotificationStore()
+const searchStore = useSearchStore()
 
 // 表单数据
 const formData = ref({
@@ -18,7 +27,7 @@ const formData = ref({
   title: '',
   url: '',
   description: '',
-  tags: '',
+  tags: 'new',
   isMarked: false,
   isActive: true,
   isHidden: false,
@@ -41,6 +50,25 @@ const urlExists = ref(false)
 // URL 验证状态：'invalid' | 'exists' | 'valid'
 const urlValidationState = ref('invalid')
 
+// 输入框可编辑状态
+const isEditable = ref({
+  name: false,
+  title: false,
+  description: false,
+  iconData: false,
+  iconGenerateData: false,
+  tags: false,
+})
+
+// 按钮可点击状态
+const isButtonEnabled = ref({
+  fetchMetadata: false,
+  submit: false,
+})
+
+// URL输入框焦点状态
+const urlInputFocused = ref(false)
+
 // 监听 name 输入框获得焦点，标记用户开始手动编辑
 function handleNameFocus() {
   userHasEditedName = true
@@ -55,18 +83,19 @@ watch(
     if (userHasEditedName && newVal) {
       console.log('[AddWebsitePanel] 用户已手动编辑 name，保留值:', newVal)
     }
-    
+
     // 检测 name 第一个字符是否变化，如果变化则重新生成 SVG
     const newFirstChar = newVal && newVal.trim() ? newVal.trim()[0] : ''
     if (newFirstChar !== lastNameFirstChar) {
       console.log('[AddWebsitePanel] name 首字符变化:', lastNameFirstChar, '->', newFirstChar)
       lastNameFirstChar = newFirstChar
-      
-      // 只有当 URL 有效时才重新生成 SVG
-      if (formData.value.url && urlValidationState.value === 'valid') {
-        regenerateSvgFromName(newVal)
-      }
+
+      // 重新生成 SVG
+      regenerateSvgFromName(newVal)
     }
+
+    // 更新提交按钮状态
+    updateSubmitButtonState()
   },
 )
 
@@ -83,9 +112,9 @@ async function loadAllTags() {
   try {
     const allWebsites = websiteStore.websites || []
     const tagsSet = new Set()
-    allWebsites.forEach(website => {
+    allWebsites.forEach((website) => {
       if (website.tags && Array.isArray(website.tags)) {
-        website.tags.forEach(tag => tagsSet.add(tag))
+        website.tags.forEach((tag) => tagsSet.add(tag))
       }
     })
     allTags.value = Array.from(tagsSet).sort()
@@ -142,10 +171,17 @@ async function processUrlChange(url) {
 
   if (!url || url.trim() === '') {
     console.log('[processUrlChange] URL 为空，清空表单')
+    formData.value.name = ''
+    formData.value.title = ''
+    formData.value.description = ''
     formData.value.iconData = ''
     formData.value.iconGenerateData = ''
+    // 保持 tags 为 'new'
+    formData.value.tags = 'new'
     urlValidationState.value = 'invalid'
     urlExists.value = false
+    isButtonEnabled.value.fetchMetadata = false
+    updateSubmitButtonState()
     return
   }
 
@@ -153,8 +189,17 @@ async function processUrlChange(url) {
   const validation = isValidUrl(url)
   if (!validation.valid) {
     console.log('[processUrlChange] URL 格式验证失败:', validation.error)
+    formData.value.name = ''
+    formData.value.title = ''
+    formData.value.description = ''
+    formData.value.iconData = ''
+    formData.value.iconGenerateData = ''
+    // 保持 tags 为 'new'
+    formData.value.tags = 'new'
     urlValidationState.value = 'invalid'
     urlExists.value = false
+    isButtonEnabled.value.fetchMetadata = false
+    updateSubmitButtonState()
     return
   }
 
@@ -169,7 +214,16 @@ async function processUrlChange(url) {
     console.log('[processUrlChange] 解析的主机名:', hostname)
   } catch {
     console.log('[processUrlChange] URL 解析失败，跳过处理')
+    formData.value.name = ''
+    formData.value.title = ''
+    formData.value.description = ''
+    formData.value.iconData = ''
+    formData.value.iconGenerateData = ''
+    // 保持 tags 为 'new'
+    formData.value.tags = 'new'
     urlValidationState.value = 'invalid'
+    isButtonEnabled.value.fetchMetadata = false
+    updateSubmitButtonState()
     return
   }
 
@@ -185,15 +239,27 @@ async function processUrlChange(url) {
     console.log('[processUrlChange] ✓ 检测到本地地址，继续处理')
   } else {
     // 对于普通域名，检查是否完整
+    const parts = hostname.split('.')
     const hasValidDomain =
       hostname.includes('.') &&
       !hostname.startsWith('.') &&
       !hostname.endsWith('.') &&
+      parts.length >= 2 &&
+      parts[parts.length - 1].length >= 2 && // TLD至少2个字符
       hostname.length > 4
 
     if (!hasValidDomain) {
       console.log('[processUrlChange] 域名不完整，跳过处理')
+      formData.value.name = ''
+      formData.value.title = ''
+      formData.value.description = ''
+      formData.value.iconData = ''
+      formData.value.iconGenerateData = ''
+      // 保持 tags 为 'new'
+      formData.value.tags = 'new'
       urlValidationState.value = 'invalid'
+      isButtonEnabled.value.fetchMetadata = false
+      updateSubmitButtonState()
       return
     }
   }
@@ -202,7 +268,7 @@ async function processUrlChange(url) {
 
   // ========== 检查 URL 是否已存在（使用规范化后的 URL 比较） ==========
   const urlCheckResult = checkUrlExists(url, websiteStore.websites)
-  
+
   if (urlCheckResult.exists) {
     console.warn(
       '[processUrlChange] ⚠️ URL 已存在，现有网站:',
@@ -210,48 +276,63 @@ async function processUrlChange(url) {
       'ID:',
       urlCheckResult.websiteId,
     )
+    formData.value.name = ''
+    formData.value.title = ''
+    formData.value.description = ''
+    formData.value.iconData = ''
+    formData.value.iconGenerateData = ''
+    // 保持 tags 为 'new'
+    formData.value.tags = 'new'
     urlValidationState.value = 'exists'
     urlExists.value = true
+    isButtonEnabled.value.fetchMetadata = false
+    updateSubmitButtonState()
   } else {
     urlValidationState.value = 'valid'
     urlExists.value = false
-  }
+    isButtonEnabled.value.fetchMetadata = true
 
-  // ========== 智能填充策略：只填充空值，不覆盖已有数据 ==========
+    // 1. 网站名称：只有当用户没有手动编辑过时才自动填充
+    if (!userHasEditedName) {
+      const siteName = extractSiteNameFromUrl(url)
+      formData.value.name = siteName
+      console.log('[processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充:', siteName)
+    }
 
-  // 1. 网站名称：只有当用户没有手动编辑过时才自动填充
-  // 判断条件：用户获取焦点输入过，则不需要填充（无论当前值是否为空），否则就填充
-  if (!userHasEditedName) {
-    // 需要填充 name：用户未手动编辑过
-    const siteName = extractSiteNameFromUrl(url)
-    formData.value.name = siteName
-    console.log('[processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充:', siteName)
-  } else {
-    // 不需要填充：用户已手动编辑过（即使删除了内容也不填充）
-    console.log('[processUrlChange] - name 不需要填充（用户已手动编辑过）:', formData.value.name)
-  }
+    // 2. SVG 图标：优先复用已有网站的 SVG，没有才生成新的
+    const rootDomain = extractRootDomain(hostname)
+    console.log('[processUrlChange] 提取的根域名:', rootDomain)
 
-  // 2. SVG 图标：优先复用已有网站的 SVG，没有才生成新的
-  const rootDomain = websiteMetadataService.extractRootDomain(hostname)
-  console.log('[processUrlChange] 提取的根域名:', rootDomain)
+    if (rootDomain) {
+      const existingWebsiteWithSameRoot = websiteStore.websites.find((website) => {
+        try {
+          const websiteHostname = new URL(website.url).hostname
+          const websiteRootDomain = extractRootDomain(websiteHostname)
+          return websiteRootDomain === rootDomain && website.iconGenerateData
+        } catch {
+          return false
+        }
+      })
 
-  if (rootDomain) {
-    const existingWebsiteWithSameRoot = websiteStore.websites.find((website) => {
-      try {
-        const websiteHostname = new URL(website.url).hostname
-        const websiteRootDomain = websiteMetadataService.extractRootDomain(websiteHostname)
-        return websiteRootDomain === rootDomain && website.iconGenerateData
-      } catch {
-        return false
+      if (existingWebsiteWithSameRoot && existingWebsiteWithSameRoot.iconGenerateData) {
+        formData.value.iconGenerateData = existingWebsiteWithSameRoot.iconGenerateData
+        console.log(
+          '[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:',
+          existingWebsiteWithSameRoot.name,
+        )
+      } else {
+        const normalizedData = normalizeWebsiteData({
+          url: url,
+          name: formData.value.name || extractSiteNameFromUrl(url),
+        })
+
+        formData.value.iconGenerateData = normalizedData.iconGenerateData
+        formData.value.tags = Array.isArray(normalizedData.tags)
+          ? normalizedData.tags.join(', ')
+          : ''
+
+        console.log('[processUrlChange] - 未找到相同根域名的网站，已生成新 SVG')
       }
-    })
-
-    if (existingWebsiteWithSameRoot && existingWebsiteWithSameRoot.iconGenerateData) {
-      formData.value.iconGenerateData = existingWebsiteWithSameRoot.iconGenerateData
-      console.log(
-        '[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:',
-        existingWebsiteWithSameRoot.name,
-      )
     } else {
       const normalizedData = normalizeWebsiteData({
         url: url,
@@ -261,22 +342,17 @@ async function processUrlChange(url) {
       formData.value.iconGenerateData = normalizedData.iconGenerateData
       formData.value.tags = Array.isArray(normalizedData.tags) ? normalizedData.tags.join(', ') : ''
 
-      console.log('[processUrlChange] - 未找到相同根域名的网站，已生成新 SVG')
+      console.log('[processUrlChange] - 无法提取根域名，已生成新 SVG')
     }
-  } else {
-    const normalizedData = normalizeWebsiteData({
-      url: url,
-      name: formData.value.name || extractSiteNameFromUrl(url),
-    })
 
-    formData.value.iconGenerateData = normalizedData.iconGenerateData
-    formData.value.tags = Array.isArray(normalizedData.tags) ? normalizedData.tags.join(', ') : ''
+    // 3. 其他字段保持为空
+    formData.value.title = ''
+    formData.value.description = ''
+    formData.value.iconData = ''
 
-    console.log('[processUrlChange] - 无法提取根域名，已生成新 SVG')
+    // 更新提交按钮状态
+    updateSubmitButtonState()
   }
-
-  // 3. 图标输入框保持为空
-  formData.value.iconData = ''
 
   console.log('[processUrlChange] ========== URL 变化处理完成 ==========')
 }
@@ -291,17 +367,33 @@ function handleUrlInput(event) {
 }
 
 /**
+ * 更新提交按钮状态
+ */
+function updateSubmitButtonState() {
+  const urlValid = urlValidationState.value === 'valid'
+  const hasName = formData.value.name && formData.value.name.trim() !== ''
+  const hasIconGenerateData =
+    formData.value.iconGenerateData && formData.value.iconGenerateData.trim() !== ''
+  const hasTags = formData.value.tags && formData.value.tags.trim() !== ''
+
+  isButtonEnabled.value.submit = urlValid && hasName && hasIconGenerateData && hasTags
+  console.log('[updateSubmitButtonState] 提交按钮状态:', isButtonEnabled.value.submit)
+}
+
+/**
  * 根据 name 重新生成 SVG 图标
  * @param {string} name - 网站名称
  */
 async function regenerateSvgFromName(name) {
   console.log('[regenerateSvgFromName] 开始根据 name 重新生成 SVG，name:', name)
-  
+
   if (!name || !name.trim()) {
-    console.log('[regenerateSvgFromName] name 为空，跳过 SVG 生成')
+    console.log('[regenerateSvgFromName] name 为空，清空 SVG')
+    formData.value.iconGenerateData = ''
+    updateSubmitButtonState()
     return
   }
-  
+
   try {
     // 使用当前的 URL 和新的 name 重新生成 SVG
     const url = formData.value.url
@@ -309,13 +401,13 @@ async function regenerateSvgFromName(name) {
       console.log('[regenerateSvgFromName] URL 为空，跳过 SVG 生成')
       return
     }
-    
+
     // 调用 normalizeWebsiteData 重新生成 SVG
     const normalizedData = normalizeWebsiteData({
       url: url,
       name: name.trim(),
     })
-    
+
     // 更新 iconGenerateData 和 tags
     formData.value.iconGenerateData = normalizedData.iconGenerateData
     if (normalizedData.tags && Array.isArray(normalizedData.tags)) {
@@ -324,11 +416,18 @@ async function regenerateSvgFromName(name) {
         formData.value.tags = normalizedData.tags.join(', ')
       }
     }
-    
+
     console.log('[regenerateSvgFromName] ✓ SVG 重新生成成功')
+    updateSubmitButtonState()
   } catch (error) {
     console.error('[regenerateSvgFromName] ❌ SVG 重新生成失败:', error)
   }
+}
+
+// 处理 URL 获得焦点事件
+function handleUrlFocus() {
+  console.log('[handleUrlFocus] URL 输入框获得焦点')
+  urlInputFocused.value = true
 }
 
 // 处理 URL 失去焦点事件（只验证，不获取 meta）
@@ -356,6 +455,14 @@ async function handleFetchMetadata() {
   try {
     notificationStore.info('正在获取网站信息...')
 
+    // 所有输入框变为可编辑状态
+    isEditable.value.name = true
+    isEditable.value.title = true
+    isEditable.value.description = true
+    isEditable.value.iconData = true
+    isEditable.value.iconGenerateData = true
+    isEditable.value.tags = true
+
     const metadata = await fetchMetadata(url)
 
     if (metadata) {
@@ -371,16 +478,21 @@ async function handleFetchMetadata() {
       notificationStore.success('✓ 获取成功！')
       console.log('[handleFetchMetadata] ✓ Meta 数据获取成功')
     } else {
-      // 获取失败：添加 "meta_failed" tag
-      const currentTags = formData.value.tags
+      // 获取失败：处理标签
+      let currentTags = formData.value.tags
         .split(',')
         .map((t) => t.trim())
         .filter((t) => t)
 
+      // 移除 new 标签
+      currentTags = currentTags.filter((tag) => tag !== 'new')
+
+      // 添加 meta_failed 标签（如果不存在）
       if (!currentTags.includes('meta_failed')) {
         currentTags.push('meta_failed')
-        formData.value.tags = currentTags.join(', ')
       }
+
+      formData.value.tags = currentTags.join(', ')
 
       notificationStore.error('✗ 获取失败，已添加 "meta_failed" 标签')
       console.log('[handleFetchMetadata] ✗ Meta 数据获取失败')
@@ -388,18 +500,26 @@ async function handleFetchMetadata() {
   } catch (error) {
     console.error('[handleFetchMetadata] ❌ 获取元数据失败:', error)
 
-    // 获取失败：添加 "meta_failed" tag
-    const currentTags = formData.value.tags
+    // 获取失败：处理标签
+    let currentTags = formData.value.tags
       .split(',')
       .map((t) => t.trim())
       .filter((t) => t)
 
+    // 移除 new 标签
+    currentTags = currentTags.filter((tag) => tag !== 'new')
+
+    // 添加 meta_failed 标签（如果不存在）
     if (!currentTags.includes('meta_failed')) {
       currentTags.push('meta_failed')
-      formData.value.tags = currentTags.join(', ')
     }
 
+    formData.value.tags = currentTags.join(', ')
+
     notificationStore.error('Failed to fetch: ' + (error.message || 'Unknown error'))
+  } finally {
+    // 更新提交按钮状态
+    updateSubmitButtonState()
   }
 }
 
@@ -498,7 +618,8 @@ async function handleSubmit() {
     // 重置用户编辑标记
     userHasEditedName = false
 
-    emit('close')
+    // 重置搜索框，回到主页
+    searchStore.clearQuery()
   } catch (error) {
     console.error('[handleSubmit] ❌ 添加网站失败:', error)
     notificationStore.error('添加网站失败：' + (error.message || '未知错误'))
@@ -507,7 +628,8 @@ async function handleSubmit() {
 
 // 取消
 function handleCancel() {
-  emit('close')
+  // 重置搜索框，回到主页
+  searchStore.clearQuery()
 }
 </script>
 
@@ -523,29 +645,37 @@ function handleCancel() {
           type="url"
           class="form-input"
           :class="{
-            'url-invalid': urlValidationState === 'invalid',
-            'url-exists': urlValidationState === 'exists',
-            'url-valid': urlValidationState === 'valid',
+            'url-invalid': urlValidationState === 'invalid' && formData.url.trim(),
+            'url-exists': urlValidationState === 'exists' && formData.url.trim(),
+            'url-valid': urlValidationState === 'valid' && formData.url.trim(),
           }"
           placeholder="https://example.com"
           maxlength="500"
           @input="handleUrlInput"
           @blur="handleUrlBlur"
+          @focus="handleUrlFocus"
+          autofocus
         />
         <button
           type="button"
           class="btn-fetch-metadata"
           @click="handleFetchMetadata"
-          :disabled="urlValidationState !== 'valid'"
+          :disabled="!isButtonEnabled.fetchMetadata"
           title="从网络获取网站标题、描述和图标"
         >
           🌐 获取信息
         </button>
         <!-- 提示信息：输入框下方紧贴 -->
-        <div v-if="urlValidationState === 'invalid'" class="error-message url-error-message">
+        <div
+          v-if="urlInputFocused && urlValidationState === 'invalid' && formData.url.trim()"
+          class="error-message url-error-message"
+        >
           ⚠️ URL 格式不正确，请输入有效的网址
         </div>
-        <div v-if="urlValidationState === 'exists'" class="warning-message url-exists-message">
+        <div
+          v-if="urlInputFocused && urlValidationState === 'exists' && formData.url.trim()"
+          class="warning-message url-exists-message"
+        >
           ⚠️ 该网站已存在，请勿重复添加
         </div>
       </div>
@@ -562,6 +692,7 @@ function handleCancel() {
         placeholder="输入网站名称（用于 Marked List 显示）"
         maxlength="100"
         @focus="handleNameFocus"
+        :disabled="!isEditable.name"
       />
     </div>
 
@@ -575,6 +706,7 @@ function handleCancel() {
         class="form-input"
         placeholder="输入网站标题（用于搜索结果）"
         maxlength="200"
+        :disabled="!isEditable.title"
       />
     </div>
 
@@ -588,6 +720,7 @@ function handleCancel() {
         class="form-input"
         placeholder="输入网站描述（可选）"
         maxlength="500"
+        :disabled="!isEditable.description"
       />
     </div>
 
@@ -608,6 +741,7 @@ function handleCancel() {
           class="form-textarea"
           placeholder="输入图标的 base64 编码"
           rows="2"
+          :disabled="!isEditable.iconData"
         ></textarea>
       </div>
     </div>
@@ -629,6 +763,7 @@ function handleCancel() {
           class="form-textarea"
           placeholder="输入 SVG 代码"
           rows="2"
+          :disabled="!isEditable.iconGenerateData"
         ></textarea>
       </div>
     </div>
@@ -643,10 +778,11 @@ function handleCancel() {
           type="text"
           class="form-input"
           placeholder="输入标签，用逗号分隔"
+          :disabled="!isEditable.tags"
         />
       </div>
     </div>
-    
+
     <!-- 标签列表行（与 input 左对齐） -->
     <div v-if="allTags.length > 0" class="form-row tags-list-row">
       <span class="form-label form-label-placeholder">标签</span>
@@ -656,8 +792,8 @@ function handleCancel() {
             v-for="tag in allTags"
             :key="tag"
             class="tag-item"
-            :class="{ 'tag-added': isTagAdded(tag) }"
-            @click="toggleTag(tag)"
+            :class="{ 'tag-added': isTagAdded(tag), 'tag-disabled': !isEditable.tags }"
+            @click="isEditable.tags && toggleTag(tag)"
           >
             {{ tag }}
           </div>
@@ -686,7 +822,13 @@ function handleCancel() {
 
     <div class="form-actions">
       <button class="button button-secondary" @click="handleCancel">取消</button>
-      <button class="button button-primary" @click="handleSubmit">添加网站</button>
+      <button
+        class="button button-primary"
+        @click="handleSubmit"
+        :disabled="!isButtonEnabled.submit"
+      >
+        添加网站
+      </button>
     </div>
   </div>
 </template>
@@ -721,7 +863,6 @@ function handleCancel() {
   flex: 1;
   height: 40px;
 }
-
 
 .form-label {
   flex: 0 0 auto;
@@ -1020,6 +1161,16 @@ function handleCancel() {
   background-color: var(--color-primary-hover);
 }
 
+.tag-item.tag-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tag-item.tag-disabled:hover {
+  background-color: var(--color-bg-active);
+  transform: none;
+}
+
 .form-hint {
   margin-top: 4px;
   font-size: 12px;
@@ -1053,15 +1204,24 @@ function handleCancel() {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.button-primary:hover {
+.button-primary:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.button-primary:active {
+.button-primary:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button-primary:disabled {
+  background-color: var(--color-bg-disabled);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
 }
 
 .button-secondary {

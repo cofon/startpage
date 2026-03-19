@@ -4,6 +4,19 @@
  */
 
 /**
+ * 导入 valid-url 库
+ * 用于验证 URL 是否有效
+ * 该库支持 http、https、file 协议，以及 localhost 和内网 IP 地址
+ * 该库还支持自定义验证规则，如域名长度、协议支持等
+ * 该库的验证结果是布尔值，true 表示 URL 有效，false 表示无效
+ * 在函数 isValidUrl 中使用该库
+ * 已测试，此库无效
+ * npm install whatwg-url
+ * npm install valid-url
+ * 要记得把这两个安装删掉
+ */
+
+/**
  * 验证 URL 是否有效（增强版）
  * 支持 http、https、file 协议，支持 localhost 和内网 IP
  * @param {string} urlString - 待验证的 URL 字符串
@@ -34,7 +47,7 @@ export function isValidUrl(urlString) {
     if (!['http:', 'https:', 'file:'].includes(urlObj.protocol)) {
       return {
         valid: false,
-        error: 'URL 必须使用 HTTP、HTTPS 或 FILE 协议'
+        error: 'URL 必须使用 HTTP、HTTPS 或 FILE 协议',
       }
     }
 
@@ -65,7 +78,8 @@ export function isValidUrl(urlString) {
     }
 
     // 如果是内网 IP 地址（如 192.168.x.x, 10.x.x.x, 172.16-31.x.x）
-    const ipPattern = /^(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/
+    const ipPattern =
+      /^(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/
     if (ipPattern.test(hostname)) {
       return { valid: true }
     }
@@ -76,11 +90,28 @@ export function isValidUrl(urlString) {
     // 2. 必须包含至少一个点（有 TLD）
     // 3. 每个标签（label）由字母、数字、连字符组成
     // 4. 每个标签不能以连字符开头或结尾
-    // 5. TLD 必须是 2-63 个字母（符合 DNS 规范）
-    const domainPattern = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,63}$/
+    // 5. 每个标签长度在 1-63 个字符之间
+    // 6. TLD 必须是 2-63 个字母（符合 DNS 规范）
+
+    // 特殊处理：www.xxx 格式（如 www.ba、www.bai）应该被判定为无效
+    const parts = hostname.split('.')
+    if (parts.length === 2 && parts[0] === 'www' ) {
+      return { valid: false, error: '域名格式不正确，顶级域名长度不足' }
+    }
+
+    const domainPattern =
+      /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,63}$/
 
     if (domainPattern.test(hostname)) {
       return { valid: true }
+    }
+
+    // 额外检查：确保TLD部分只包含字母且长度至少为2
+    if (parts.length >= 2) {
+      const tld = parts[parts.length - 1]
+      if (!/^[a-zA-Z]{2,}$/.test(tld)) {
+        return { valid: false, error: '域名的顶级域名（TLD）必须至少包含2个字母' }
+      }
     }
 
     // 如果以上都不匹配，说明域名格式有问题
@@ -168,13 +199,19 @@ export function generateDefaultIcon(name) {
 
   // 根据域名哈希选择背景色（避免相同首字母无法区分）
   const colorPalette = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-    '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEAA7',
+    '#DDA0DD',
+    '#98D8C8',
+    '#F7DC6F',
   ]
 
   let hash = 0
   for (let i = 0; i < displayName.length; i++) {
-    hash = ((hash << 5) - hash) + displayName.charCodeAt(i)
+    hash = (hash << 5) - hash + displayName.charCodeAt(i)
     hash |= 0
   }
   const backgroundColor = colorPalette[Math.abs(hash) % colorPalette.length]
@@ -203,7 +240,7 @@ export async function fetchWebsiteInfo(url) {
     const corsProxies = [
       'https://api.allorigins.win/raw?url=',
       'https://corsproxy.io/?',
-      'https://api.codetabs.com/v1/proxy?quest='
+      'https://api.codetabs.com/v1/proxy?quest=',
     ]
 
     let html = ''
@@ -216,8 +253,8 @@ export async function fetchWebsiteInfo(url) {
         const response = await fetch(proxyUrl, {
           method: 'GET',
           headers: {
-            'Accept': 'text/html,application/xhtml+xml'
-          }
+            Accept: 'text/html,application/xhtml+xml',
+          },
         })
 
         if (!response.ok) {
@@ -297,7 +334,7 @@ export async function fetchWebsiteIcon(url) {
       `https://faviconsnap.com/api/favicon?url=${domain}`,
       `https://icon.horse/icon/${domain}`,
       `https://favicon.pub/api/${domain}`,
-      `https://api.afmax.cn/so/ico/index.php?r=${domain}`
+      `https://api.afmax.cn/so/ico/index.php?r=${domain}`,
     ]
 
     // 尝试从各个 API 获取
@@ -308,7 +345,7 @@ export async function fetchWebsiteIcon(url) {
 
         const response = await fetch(apiUrl, {
           signal: controller.signal,
-          mode: 'cors'
+          mode: 'cors',
         })
 
         clearTimeout(timeoutId)
@@ -386,13 +423,13 @@ function validateIcon(iconData) {
     const img = new Image()
     const timeout = setTimeout(() => resolve(false), 5000)
 
-    img.onload = function() {
+    img.onload = function () {
       clearTimeout(timeout)
       // 检查图片尺寸是否合理（至少 16x16）
       resolve(img.width >= 16 && img.height >= 16)
     }
 
-    img.onerror = function() {
+    img.onerror = function () {
       clearTimeout(timeout)
       resolve(false)
     }
@@ -424,15 +461,15 @@ export function createDefaultWebsiteData(url) {
     iconData: iconSvg,
     iconGenerateData: {
       type: 'default',
-      siteName: siteName
-    }
+      siteName: siteName,
+    },
   }
 }
 
 /**
  * 从主机名中提取根域名
- * 例如：www.baidu.com -> baidu.com, mail.google.com -> google.com
- * 注意：对于 .co.uk 等复合后缀，简化处理为最后两部分
+ * 例如：www.baidu.com -> baidu.com, mail.google.com -> google.com, subdomain.co.uk -> co.uk
+ * 支持常见的复合后缀如 .co.uk, .com.cn 等
  * @param {string} hostname - 主机名（如：www.baidu.com）
  * @returns {string|null} 根域名，如果无法提取则返回 null
  */
@@ -442,7 +479,49 @@ export function extractRootDomain(hostname) {
   const parts = hostname.split('.')
   if (parts.length < 2) return null
 
-  // 取最后两部分作为根域名
+  // 常见的复合后缀列表
+  const complexSuffixes = [
+    'co.uk',
+    'com.au',
+    'com.cn',
+    'org.uk',
+    'net.uk',
+    'ac.uk',
+    'gov.uk',
+    'nhs.uk',
+    'sch.uk',
+    'co.jp',
+    'com.tw',
+    'org.tw',
+    'edu.tw',
+    'gov.tw',
+    'co.in',
+    'com.in',
+    'org.in',
+    'edu.in',
+    'gov.in',
+    'co.ca',
+    'com.ca',
+    'org.ca',
+    'edu.ca',
+    'gov.ca',
+    'eu.org',
+  ]
+
+  // 检查是否是复合后缀
+  if (parts.length >= 3) {
+    const lastThreeParts = parts.slice(-3).join('.')
+    const lastTwoParts = parts.slice(-2).join('.')
+
+    // 检查是否匹配已知的复合后缀
+    for (const suffix of complexSuffixes) {
+      if (lastTwoParts === suffix) {
+        return suffix
+      }
+    }
+  }
+
+  // 对于普通域名，取最后两部分
   const rootParts = parts.slice(-2)
   return rootParts.join('.')
 }
@@ -466,7 +545,7 @@ export function createWebsiteObject(data = {}) {
     tags: Array.isArray(data.tags) ? [...data.tags] : [],
     visitCount: data.visitCount || 0,
     isMarked: data.isMarked || false,
-    markOrder: data.isMarked ? (data.markOrder || 0) : 0,
+    markOrder: data.isMarked ? data.markOrder || 0 : 0,
     isActive: data.isActive !== undefined ? data.isActive : true,
     isHidden: data.isHidden !== undefined ? data.isHidden : false,
     // 图标相关字段
@@ -480,7 +559,7 @@ export function createWebsiteObject(data = {}) {
     // 时间戳
     createdAt: data.createdAt || new Date(),
     updatedAt: data.updatedAt || new Date(),
-    lastVisited: data.lastVisited || null
+    lastVisited: data.lastVisited || null,
   }
 }
 
@@ -501,7 +580,7 @@ export function normalizeWebsiteForDB(website) {
     tags: Array.isArray(website.tags) ? [...website.tags] : [],
     visitCount: website.visitCount || 0,
     isMarked: website.isMarked,
-    markOrder: website.isMarked ? (website.markOrder || 0) : 0,
+    markOrder: website.isMarked ? website.markOrder || 0 : 0,
     isActive: website.isActive !== undefined ? website.isActive : true,
     isHidden: website.isHidden !== undefined ? website.isHidden : false,
     iconUrl: website.iconUrl || '',
@@ -513,7 +592,7 @@ export function normalizeWebsiteForDB(website) {
     iconError: website.iconError || null,
     createdAt: website.createdAt,
     updatedAt: website.updatedAt,
-    lastVisited: website.lastVisited
+    lastVisited: website.lastVisited,
   }
 }
 
@@ -524,7 +603,7 @@ export function normalizeWebsiteForDB(website) {
  */
 export function normalizeWebsitesForDB(websites) {
   if (!Array.isArray(websites)) return []
-  return websites.map(website => normalizeWebsiteForDB(website))
+  return websites.map((website) => normalizeWebsiteForDB(website))
 }
 
 /**
@@ -538,7 +617,7 @@ export function createUpdateObject(website, updates = {}) {
   return {
     ...normalized,
     ...updates,
-    updatedAt: new Date()
+    updatedAt: new Date(),
   }
 }
 
@@ -585,7 +664,7 @@ export function fillDefaultFields(website) {
     isMarked: website.isMarked !== undefined ? website.isMarked : false,
     markOrder: website.markOrder !== undefined ? website.markOrder : 0,
     isActive: website.isActive !== undefined ? website.isActive : true,
-    isHidden: website.isHidden !== undefined ? website.isHidden : false
+    isHidden: website.isHidden !== undefined ? website.isHidden : false,
   }
 }
 
@@ -692,8 +771,9 @@ export function encodeSvg(svg) {
   if (svg.startsWith('data:image/svg+xml;base64,') || svg.startsWith('data:image/svg+xml;utf8,')) {
     return svg
   }
-  const encodedSvg = encodeURIComponent(svg)
-    .replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))
+  const encodedSvg = encodeURIComponent(svg).replace(/%([0-9A-F]{2})/g, (match, p1) =>
+    String.fromCharCode('0x' + p1),
+  )
   return `data:image/svg+xml;base64,${btoa(encodedSvg)}`
 }
 
@@ -758,7 +838,7 @@ export function normalizeWebsiteData(data) {
     ...data,
     visitCount: 0,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   })
 
   return result
@@ -777,7 +857,7 @@ export function checkUrlExists(url, allWebsites) {
 
   const normalizedUrl = normalizeUrl(url)
 
-  const existingWebsite = allWebsites.find(w => {
+  const existingWebsite = allWebsites.find((w) => {
     if (!w.isActive) return false
 
     const normalizedExistingUrl = normalizeUrl(w.url)
@@ -789,11 +869,11 @@ export function checkUrlExists(url, allWebsites) {
       exists: true,
       websiteId: existingWebsite.id,
       websiteName: existingWebsite.name,
-      website: existingWebsite
+      website: existingWebsite,
     }
   } else {
     return {
-      exists: false
+      exists: false,
     }
   }
 }
@@ -827,10 +907,11 @@ export function validateWebsite_1(data) {
   }
 
   // 3. iconData/iconGenerateData至少有一个不为空
-  const hasValidIconData = data.iconData &&
-    (data.iconData.startsWith('data:image/') || data.iconData.length > 0)
+  const hasValidIconData =
+    data.iconData && (data.iconData.startsWith('data:image/') || data.iconData.length > 0)
 
-  const hasValidIconGenerateData = data.iconGenerateData &&
+  const hasValidIconGenerateData =
+    data.iconGenerateData &&
     (data.iconGenerateData.startsWith('data:image/svg') || data.iconGenerateData.length > 0)
 
   // 批量导入时放宽要求，允许后续自动生成
@@ -840,6 +921,6 @@ export function validateWebsite_1(data) {
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   }
 }
