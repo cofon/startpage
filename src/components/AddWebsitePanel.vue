@@ -596,14 +596,6 @@ async function handleSubmit() {
       console.log('[handleSubmit] ✓ tags 为空，已自动添加 "new"')
     }
 
-    // 上边已经验证了，不需要再调用验证函数
-    // 验证数据
-    // const validation = validateWebsite(websiteData)
-    // if (!validation.valid) {
-    //   notificationStore.warning(validation.errors.join(', '))
-    //   return
-    // }
-
     // 标准化数据
     const normalizedData = normalizeWebsiteData(websiteData)
 

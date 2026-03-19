@@ -14,9 +14,9 @@
 
 // 导入依赖（按需引入）
 import {
-  normalizeImportUrl,
+  normalizeUrl,
   isWebsiteComplete,
-  getMissingFields,
+  getMissingMeatFields,
   normalizeWebsiteData,
 } from '../utils/website/websiteUtils'
 import { fetchMetadata } from '../services/websiteMetadataService'
@@ -408,12 +408,12 @@ async function importWebsites(websites, config, monitor) {
     // ========== 新增：URL 规范化处理 ==========
     // 对导入的 URL 进行规范化
     // https://www.bilibili.com/ --> https://www.bilibili.com
-    const normalizedImportUrl = normalizeImportUrl(website.url)
+    const normalizedImportUrl = normalizeUrl(website.url)
 
     // 在 existingUrlsMap 中查找时，需要遍历所有键并进行规范化比较
     let existingWebsite = null
     for (const [dbUrl, dbWebsite] of existingUrlsMap.entries()) {
-      const normalizedDbUrl = normalizeImportUrl(dbUrl)
+      const normalizedDbUrl = normalizeUrl(dbUrl)
       if (normalizedDbUrl === normalizedImportUrl) {
         existingWebsite = dbWebsite
         break
@@ -443,7 +443,7 @@ async function importWebsites(websites, config, monitor) {
         logDetails.existedIncomplete++
         logDetails.urls.update.push({
           url: website.url,
-          missingFields: getMissingFields(existingWebsite),
+          missingFields: getMissingMeatFields(existingWebsite),
         })
       }
     } else {
