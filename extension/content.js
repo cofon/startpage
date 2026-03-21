@@ -1,0 +1,116 @@
+// 扩展内容脚本
+
+console.log('[Content Script] StartPage Content Script 已加载');
+console.log('[Content Script] 当前页面 URL:', window.location.href);
+console.log('[Content Script] document.readyState:', document.readyState);
+
+// 标记扩展已安装
+window.StartPageExtension = true;
+
+// 消息去重，避免无限循环
+const processedMessages = new Set();
+
+// 生成消息唯一标识
+function generateMessageId(message) {
+  if (message.type === 'EXTENSION_SUBMIT_WEBSITE_META' && message.payload && message.payload.url) {
+    return `${message.type}_${message.payload.url}_${Date.now()}`;
+  }
+  return `${message.type}_${JSON.stringify(message.payload || {})}_${Date.now()}`;
+}
+
+// 监听来自起始页的消息
+window.addEventListener('StartPageAPI-Call', (event) => {
+  const { type, payload, requestId } = event.detail;
+  
+  // 生成消息ID
+  const messageId = generateMessageId({ type, payload });
+  
+  // 检查是否已经处理过
+  if (processedMessages.has(messageId)) {
+    console.log('[Content Script] 忽略重复消息:', type);
+    return;
+  }
+  
+  // 标记为已处理
+  processedMessages.add(messageId);
+  
+  console.log('[Content Script] 收到起始页消息:', type, event.detail);
+  
+  // 发送消息到后台脚本
+  chrome.runtime.sendMessage(
+    { type, payload },
+    (response) => {
+      console.log('[Content Script] 扩展响应:', response);
+      
+      // 发送响应回起始页
+      const responseEvent = new CustomEvent('StartPageAPI-Response', {
+        detail: {
+          ...response,
+          requestId
+        }
+      });
+      window.dispatchEvent(responseEvent);
+    }
+  );
+});
+
+// 监听来自扩展后台的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Content Script] 收到扩展后台消息:', message.type, message);
+  
+  // 生成消息ID
+  const messageId = generateMessageId(message);
+  
+  // 检查是否已经处理过
+  if (processedMessages.has(messageId)) {
+    console.log('[Content Script] 忽略重复消息:', message.type);
+    sendResponse({
+      success: false,
+      error: '消息已处理'
+    });
+    return;
+  }
+  
+  // 标记为已处理
+  processedMessages.add(messageId);
+  
+  // 处理扩展提交网站元数据
+  if (message.type === 'EXTENSION_SUBMIT_WEBSITE_META') {
+    // 发送消息给起始页
+    const requestId = Date.now() + '-' + Math.random();
+    const event = new CustomEvent('StartPageAPI-Call', {
+      detail: {
+        type: 'EXTENSION_SUBMIT_WEBSITE_META',
+        payload: message.payload,
+        requestId: requestId
+      }
+    });
+    
+    console.log('[Content Script] 发送消息给起始页:', event.detail);
+    
+    // 监听响应
+    const handleResponse = (responseEvent) => {
+      if (responseEvent.detail && responseEvent.detail.requestId === requestId) {
+        console.log('[Content Script] 收到起始页响应:', responseEvent.detail);
+        window.removeEventListener('StartPageAPI-Response', handleResponse);
+        sendResponse(responseEvent.detail);
+      }
+    };
+    
+    window.addEventListener('StartPageAPI-Response', handleResponse);
+    window.dispatchEvent(event);
+    
+    // 表示异步响应
+    return true;
+  }
+  
+  // 处理其他消息类型
+  sendResponse({
+    success: false,
+    error: '未知消息类型'
+  });
+});
+
+console.log('[Content Script] 注册消息监听器');
+
+

@@ -13,3 +13,7 @@ dist
 dist-ssr
 coverage
 *.local
+
+# custom
+docs/
+temp/

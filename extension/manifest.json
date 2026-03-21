@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "起始页网站管理",
+  "version": "1.0.0",
+  "description": "在任意标签页快速添加网站到起始页",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:5173/",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "commands": {
+    "open-panel": {
+      "suggested_key": {
+        "default": "Alt+Shift+D"
+      },
+      "description": "打开添加网站面板"
+    }
+  }
+}

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>添加网站</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      font-size: 18px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #555;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .icon-preview {
+      width: 64px;
+      height: 64px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: white;
+    }
+    .icon-preview img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #45a049;
+    }
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background-color: #e0e0e0;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    .error {
+      color: red;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>添加网站到起始页</h1>
+  
+  <div class="loading" id="loading">
+    正在获取当前页面信息...
+  </div>
+  
+  <div id="form" style="display: none;">
+    <div class="form-group">
+      <label for="title">标题</label>
+      <input type="text" id="title" placeholder="网站标题">
+    </div>
+    
+    <div class="form-group">
+      <label for="description">描述</label>
+      <textarea id="description" placeholder="网站描述"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>图标预览</label>
+      <div class="icon-preview" id="iconPreview">
+        <img id="iconImage" src="" alt="网站图标">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="iconData">图标数据 (base64)</label>
+      <textarea id="iconData" placeholder="图标 base64 数据"></textarea>
+    </div>
+    
+    <div class="button-group">
+      <button class="btn-secondary" id="cancelBtn">取消</button>
+      <button class="btn-primary" id="addBtn">添加</button>
+    </div>
+  </div>
+  
+  <div class="error" id="error" style="display: none;"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -12,6 +12,8 @@ import {
   handleWebsiteRestored,
   handleWebsiteMarkToggled,
 } from './utils/ui/displayModeManager'
+import { isExtensionInstalled, sendMessageToExtension } from './services/websiteMetadataService'
+import { extractSiteNameFromUrl } from './utils/website/websiteUtils'
 import SearchModule from './components/SearchModule.vue'
 import DisplayModule from './components/DisplayModule.vue'
 import WebsiteDialog from './components/WebsiteDialog.vue'
@@ -207,9 +209,95 @@ async function toggleWebsiteMark(website) {
   handleWebsiteMarkToggled(searchStore, websiteStore, newIsMarked)
 }
 
+// 处理来自扩展的消息
+function handleExtensionMessage(event) {
+  const { type, payload, requestId } = event.detail;
+  console.log('[App] 收到扩展消息:', type, payload);
+  
+  // 只处理来自扩展的消息，忽略来自起始页内部的消息
+  if (type === 'EXTENSION_SUBMIT_WEBSITE_META') {
+    // 处理扩展提交的网站元数据
+    handleExtensionSubmitWebsiteMeta(payload, requestId);
+  }
+}
+
+// 处理扩展提交网站元数据
+async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
+  try {
+    // 检查 URL 是否已存在
+    const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
+    if (!existingWebsite) {
+      // 创建新网站
+      const siteName = extractSiteNameFromUrl(meta.url);
+      const newWebsite = {
+        name: siteName,
+        title: meta.title || siteName,
+        url: meta.url,
+        description: meta.description || '',
+        tags: ['new'],
+        isMarked: false,
+        isActive: true,
+        isHidden: false,
+        iconData: meta.iconData || '',
+        iconGenerateData: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        visitCount: 0,
+        lastVisited: null
+      };
+      
+      // 添加到 store
+      websiteStore.addWebsite(newWebsite);
+      // 保存到数据库
+      const websiteToAdd = normalizeWebsiteForDB(newWebsite);
+      await db.addWebsite(websiteToAdd);
+      
+      console.log('[App] 已添加从扩展提交的网站:', siteName);
+      notificationStore.success(`已从扩展添加网站：${siteName}`);
+      
+      // 发送响应
+      const responseEvent = new CustomEvent('StartPageAPI-Response', {
+        detail: {
+          success: true,
+          message: '网站添加成功',
+          requestId
+        }
+      });
+      window.dispatchEvent(responseEvent);
+    } else {
+      console.log('[App] 网站已存在:', meta.url);
+      
+      // 发送响应
+      const responseEvent = new CustomEvent('StartPageAPI-Response', {
+        detail: {
+          success: false,
+          error: '网站已存在',
+          requestId
+        }
+      });
+      window.dispatchEvent(responseEvent);
+    }
+  } catch (error) {
+    console.error('[App] 处理扩展提交网站元数据失败:', error);
+    
+    // 发送响应
+    const responseEvent = new CustomEvent('StartPageAPI-Response', {
+      detail: {
+        success: false,
+        error: error.message,
+        requestId
+      }
+    });
+    window.dispatchEvent(responseEvent);
+  }
+}
+
 // 初始化应用
 onMounted(async () => {
   try {
+    // 注册扩展消息监听器
+    window.addEventListener('StartPageAPI-Call', handleExtensionMessage);
+
     // ========== 1. 初始化 IndexedDB（基础依赖） ==========
     await db.init()
 
@@ -230,7 +318,54 @@ onMounted(async () => {
       websiteStore.setWebsites(websitesWithIds)
     }
 
-    // ========== 4. 加载搜索引擎图标 ==========
+    // ========== 4. 从扩展获取未同步的元数据 ==========
+    try {
+      const installed = await isExtensionInstalled();
+      if (installed) {
+        console.log('[App] 扩展已安装，尝试获取未同步的元数据');
+        const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS');
+        if (response.success && response.data && response.data.length > 0) {
+          console.log('[App] 从扩展获取到未同步的元数据:', response.data.length, '条');
+          for (const meta of response.data) {
+            // 检查 URL 是否已存在
+            const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
+            if (!existingWebsite) {
+              // 创建新网站
+              const siteName = extractSiteNameFromUrl(meta.url);
+              const newWebsite = {
+                name: siteName,
+                title: meta.title || siteName,
+                url: meta.url,
+                description: meta.description || '',
+                tags: ['new'],
+                isMarked: false,
+                isActive: true,
+                isHidden: false,
+                iconData: meta.iconData || '',
+                iconGenerateData: '',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                visitCount: 0,
+                lastVisited: null
+              };
+              
+              // 添加到 store
+              websiteStore.addWebsite(newWebsite);
+              // 保存到数据库
+              const websiteToAdd = normalizeWebsiteForDB(newWebsite);
+              await db.addWebsite(websiteToAdd);
+              
+              console.log('[App] 已添加从扩展同步的网站:', siteName);
+              notificationStore.success(`已从扩展同步网站：${siteName}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[App] 从扩展获取未同步元数据失败:', error);
+    }
+
+    // ========== 5. 加载搜索引擎图标 ==========
     await searchStore.loadEngineIcons()
     searchStore.init()
   } catch (error) {
