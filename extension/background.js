@@ -130,95 +130,66 @@ async function getMetadataFromUrl(url) {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Accept': 'text/html'
-      }
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'User-Agent': navigator.userAgent,
+      },
     });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    // 获取响应的字符编码
-    let encoding = 'utf-8';
-    const contentType = response.headers.get('content-type');
-    if (contentType) {
-      const charsetMatch = contentType.match(/charset=([^;]*)/i);
-      if (charsetMatch && charsetMatch[1]) {
-        encoding = charsetMatch[1].toLowerCase();
-      }
-    }
+    // 修复编码问题：统一使用 arrayBuffer + TextDecoder
+    // 1. 首先尝试从 Content-Type 头获取字符集
+    const contentType = response.headers.get('content-type') || '';
+    const charsetMatch = contentType.match(/charset=(['"]?)([^'"\s]*)\1/i);
+    let charset = charsetMatch ? charsetMatch[2] : null;
 
-    // 处理不同的字符编码
-    let html;
-    if (encoding === 'utf-8') {
-      html = await response.text();
-    } else {
-      // 对于非UTF-8编码，使用arrayBuffer并尝试解码
-      console.warn(`检测到非UTF-8编码 (${encoding})，尝试使用TextDecoder解码`);
+    // 2. 如果没有指定字符集，尝试检测 HTML 中的 meta charset
+    if (!charset) {
       const buffer = await response.arrayBuffer();
-      
-      try {
-        // 尝试使用TextDecoder解码
-        // 注意：TextDecoder可能不支持所有编码
-        // 对于常见的编码如gb2312，我们可以使用utf-8解码后再处理
-        const decoder = new TextDecoder('utf-8');
-        html = decoder.decode(buffer);
-        
-        // 尝试修复乱码
-        // 对于gb2312编码，有时可以通过替换某些字符来改善
-        html = fixEncoding(html);
-      } catch (decodeError) {
-        console.error('解码失败:', decodeError);
-        // 如果解码失败，使用简化的方式处理
-        html = '';
+      const decoder = new TextDecoder('utf-8');
+      const textChunk = decoder.decode(buffer.slice(0, 1024)); // 只读取前 1KB 用于检测
+
+      const metaCharsetMatch = textChunk.match(/<meta\s+charset=["']?([^"'\s>]+)/i);
+      if (metaCharsetMatch) {
+        charset = metaCharsetMatch[1];
+        console.log('[Background] 从 meta charset 检测到编码:', charset);
       }
-    }
 
-    // 使用正则表达式解析HTML，因为service worker中没有DOMParser
-    // 获取标题
-    let title = '';
-    const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/i);
-    if (titleMatch && titleMatch[1]) {
-      title = titleMatch[1].trim();
-      // 尝试修复标题中的乱码
-      title = fixEncoding(title);
-    }
+      // 3. 如果还是没有，尝试从 http-equiv 获取
+      if (!charset) {
+        const httpEquivMatch = textChunk.match(/<meta\s+http-equiv=["']?content-type["']?\s+content=["']?text\/html;\s*charset=([^"'\s>]+)/i);
+        if (httpEquivMatch) {
+          charset = httpEquivMatch[1];
+          console.log('[Background] 从 http-equiv 检测到编码:', charset);
+        }
+      }
 
-    // 获取描述
-    let description = '';
-    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*?)"/i);
-    if (descMatch && descMatch[1]) {
-      description = descMatch[1].trim();
-      // 尝试修复描述中的乱码
-      description = fixEncoding(description);
-    }
+      // 4. 使用检测到的编码或默认 UTF-8 解码
+      const finalCharset = charset || 'utf-8';
+      console.log('[Background] 使用编码解码:', finalCharset);
 
-    // 获取图标
-    let iconUrl = '';
-    const iconMatch = html.match(/<link\s+rel="[^"]*icon[^"]*"\s+href="([^"]*?)"/i);
-    if (iconMatch && iconMatch[1]) {
-      iconUrl = iconMatch[1];
+      try {
+        const html = new TextDecoder(finalCharset).decode(buffer);
+        return parseHtmlMetadata(html, url);
+      } catch (e) {
+        console.warn('[Background] 使用检测的编码解码失败，回退到 UTF-8:', e);
+        const html = new TextDecoder('utf-8').decode(buffer);
+        return parseHtmlMetadata(html, url);
+      }
     } else {
-      // 尝试使用默认图标
-      const domain = new URL(url).origin;
-      iconUrl = `${domain}/favicon.ico`;
+      // 5. 如果从响应头获取到了 charset，也使用 arrayBuffer + TextDecoder 方式
+      console.log('[Background] 从 Content-Type 获取编码:', charset);
+      const buffer = await response.arrayBuffer();
+      const html = new TextDecoder(charset).decode(buffer);
+      console.log('[Background] 使用 Content-Type 编码解码:', charset);
+      return parseHtmlMetadata(html, url);
     }
-
-    // 确保图标URL是完整的
-    if (iconUrl && !iconUrl.startsWith('http')) {
-      const baseUrl = new URL(url).origin;
-      iconUrl = new URL(iconUrl, baseUrl).href;
-    }
-
-    // 转换图标为base64
-    const iconData = await fetchIconAsBase64(iconUrl);
-
-    return {
-      url,
-      title,
-      description,
-      iconData
-    };
   } catch (error) {
     console.error('使用fetch获取元数据失败:', error);
     // 尝试使用打开标签页的方式
@@ -226,84 +197,223 @@ async function getMetadataFromUrl(url) {
   }
 }
 
-// 修复编码问题
-function fixEncoding(str) {
-  if (!str) return '';
-  
-  // 尝试修复常见的编码问题
-  try {
-    // 对于可能的gb2312编码，尝试转换
-    // 这里使用简单的替换方法，处理常见的乱码情况
-    return str
-      .replace(/â€™/g, "'")
-      .replace(/â€œ/g, '"')
-      .replace(/â€"/g, '"')
-      .replace(/â€¦/g, '…')
-      .replace(/â€“/g, '-')
-      .replace(/â€”/g, '—')
-      .replace(/â€˜/g, "'")
-      .replace(/â€¢/g, '•')
-      .replace(/â€³/g, '"')
-      .replace(/â€²/g, "'")
-      .replace(/ãƒ‡/g, 'デ')
-      .replace(/ãƒ¼/g, 'ー')
-      .replace(/ã‚«/g, 'カ')
-      .replace(/ã‚¹/g, 'ス')
-      .replace(/ã‚¯/g, 'ク')
-      .replace(/ã‚·/g, 'シ')
-      .replace(/ãƒ­/g, 'ロ')
-      .replace(/ãƒ³/g, 'ン')
-      .replace(/ã®/g, 'の')
-      .replace(/ã¯/g, 'は')
-      .replace(/ã„/g, 'い')
-      .replace(/ã‹/g, 'か')
-      .replace(/ã™/g, 'す')
-      .replace(/ã¦/g, 'て')
-      .replace(/ã„ãŒ/g, 'いが')
-      .replace(/ã™ã‚‹/g, 'する')
-      .replace(/ã£ã¦/g, 'って')
-      .replace(/ã®/g, 'の')
-      .replace(/ã«/g, 'に')
-      .replace(/ãŠ/g, 'お')
-      .replace(/ã‹/g, 'か')
-      .replace(/ã™/g, 'す')
-      .replace(/ã¦/g, 'て')
-      .replace(/ã„ãŒ/g, 'いが')
-      .replace(/ã™ã‚‹/g, 'する')
-      .replace(/ã£ã¦/g, 'って')
-      .replace(/Ã©/g, 'é')
-      .replace(/Ã¨/g, 'è')
-      .replace(/Ã /g, 'à')
-      .replace(/Ã¹/g, 'ù')
-      .replace(/Ã´/g, 'ô')
-      .replace(/Ãª/g, 'ê')
-      .replace(/Ã§/g, 'ç')
-      .replace(/Ã«/g, 'ë')
-      .replace(/Ã¼/g, 'ü')
-      .replace(/Ã¶/g, 'ö')
-      .replace(/Ã¤/g, 'ä')
-      .replace(/Ã¥/g, 'å')
-      .replace(/Ã¦/g, 'æ')
-      .replace(/Ã¸/g, 'ø')
-      .replace(/Ã°/g, 'ð')
-      .replace(/Ã¾/g, 'þ')
-      .replace(/Ã¥/g, 'å')
-      .replace(/Ã¤/g, 'ä')
-      .replace(/Ã¶/g, 'ö')
-      .replace(/Ã¼/g, 'ü')
-      .replace(/ÃŸ/g, 'ß')
-      .replace(/Ã©/g, 'é')
-      .replace(/Ã¨/g, 'è')
-      .replace(/Ã /g, 'à')
-      .replace(/Ã¹/g, 'ù')
-      .replace(/Ã´/g, 'ô')
-      .replace(/Ãª/g, 'ê')
-      .replace(/Ã§/g, 'ç');
-  } catch (e) {
-    console.error('修复编码失败:', e);
-    return str;
+/**
+ * 解析 HTML 元数据
+ * @param {string} html - HTML 内容
+ * @param {string} url - 网页 URL
+ * @returns {Promise<Object>} 元数据对象
+ */
+async function parseHtmlMetadata(html, url) {
+  console.log('[Background] HTML 长度:', html.length);
+
+  // 改进的 title 提取逻辑（优先级从高到低）
+  let title = '';
+
+  // 方法 1: 从 <title> 标签获取（支持属性和换行）
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch) {
+    title = titleMatch[1].trim();
+    console.log('[Background] ✅ 从 <title> 标签获取 title:', title);
   }
+
+  // 方法 2: 从 og:title meta 标签获取（属性顺序兼容）
+  if (!title) {
+    const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                         html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:title["'][^>]*>/i);
+    if (ogTitleMatch) {
+      title = ogTitleMatch[1].trim();
+      console.log('[Background] ✅ 从 og:title 获取 title:', title);
+    }
+  }
+
+  // 方法 3: 从 twitter:title meta 标签获取（属性顺序兼容）
+  if (!title) {
+    const twitterTitleMatch = html.match(/<meta[^>]*name=["']twitter:title["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                              html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']twitter:title["'][^>]*>/i);
+    if (twitterTitleMatch) {
+      title = twitterTitleMatch[1].trim();
+      console.log('[Background] ✅ 从 twitter:title 获取 title:', title);
+    }
+  }
+
+  // 方法 4: 从 JSON-LD structured data 获取
+  if (!title) {
+    const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch) {
+      try {
+        const jsonData = JSON.parse(jsonLdMatch[1]);
+        if (jsonData.name || jsonData.headline) {
+          title = (jsonData.name || jsonData.headline).trim();
+          console.log('[Background] ✅ 从 JSON-LD 获取 title:', title);
+        }
+      } catch (e) {
+        console.warn('[Background] 解析 JSON-LD 失败:', e);
+      }
+    }
+  }
+
+  // 方法 5: 从 h1 标签提取（作为最后手段）
+  if (!title) {
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1Match) {
+      title = h1Match[1].replace(/<[^>]+>/g, '').trim();
+      console.log('[Background] ✅ 从 <h1> 标签获取 title:', title);
+    }
+  }
+
+  // 方法 6: 从 URL 提取（兜底方案）
+  if (!title) {
+    try {
+      const urlObj = new URL(url);
+      title = urlObj.hostname.replace('www.', '');
+      console.log('[Background] ✅ 从 URL 提取 title:', title);
+    } catch (e) {
+      console.warn('[Background] 从 URL 提取 title 失败:', e);
+    }
+  }
+
+  // 改进的 description 提取逻辑（优先级从高到低）
+  let description = '';
+
+  // 方法 1: 从 name="description" meta 标签获取（属性顺序兼容）
+  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                    html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i);
+  if (descMatch) {
+    description = descMatch[1].trim();
+    console.log('[Background] ✅ 从 description meta 标签获取 description');
+  }
+
+  // 方法 2: 从 og:description meta 标签获取（属性顺序兼容）
+  if (!description) {
+    const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                        html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:description["'][^>]*>/i);
+    if (ogDescMatch) {
+      description = ogDescMatch[1].trim();
+      console.log('[Background] ✅ 从 og:description 获取 description');
+    }
+  }
+
+  // 方法 3: 从 twitter:description meta 标签获取（属性顺序兼容）
+  if (!description) {
+    const twitterDescMatch = html.match(/<meta[^>]*name=["']twitter:description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                             html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']twitter:description["'][^>]*>/i);
+    if (twitterDescMatch) {
+      description = twitterDescMatch[1].trim();
+      console.log('[Background] ✅ 从 twitter:description 获取 description');
+    }
+  }
+
+  // 方法 4: 从 JSON-LD structured data 获取 description
+  if (!description) {
+    const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (jsonLdMatch) {
+      try {
+        const jsonData = JSON.parse(jsonLdMatch[1]);
+        if (jsonData.description) {
+          description = jsonData.description.trim();
+          console.log('[Background] ✅ 从 JSON-LD 获取 description');
+        }
+      } catch (e) {
+        console.warn('[Background] 解析 JSON-LD 失败:', e);
+      }
+    }
+  }
+
+  // 方法 5: 从 meta keywords 提取（作为备用方案）
+  if (!description) {
+    const keywordsMatch = html.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+                          html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']keywords["'][^>]*>/i);
+    if (keywordsMatch) {
+      description = keywordsMatch[1].trim();
+      console.log('[Background] ✅ 从 keywords meta 标签获取 description');
+    }
+  }
+
+  // 方法 6: 从第一个段落提取（限制长度，作为最后手段）
+  if (!description) {
+    const pMatch = html.match(/<p[^>]*>([\s\S]{50,300}?)<\/p>/i);
+    if (pMatch) {
+      description = pMatch[1].replace(/<[^>]+>/g, '').trim();
+      console.log('[Background] ✅ 从 <p> 标签获取 description');
+    }
+  }
+
+  // 改进的 icon 提取逻辑（优先级从高到低）
+  let iconUrl = '';
+
+  // 方法 1: 从 rel="icon" link 标签获取（属性顺序兼容）
+  const iconMatch = html.match(/<link[^>]*rel=["']icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                    html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']icon["'][^>]*>/i);
+  if (iconMatch) {
+    iconUrl = new URL(iconMatch[1], url).href;
+    console.log('[Background] ✅ 从 rel="icon" 获取 icon:', iconUrl);
+  }
+
+  // 方法 2: 从 rel="shortcut icon" link 标签获取（属性顺序兼容）
+  if (!iconUrl) {
+    const shortcutIconMatch = html.match(/<link[^>]*rel=["']shortcut icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                              html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']shortcut icon["'][^>]*>/i);
+    if (shortcutIconMatch) {
+      iconUrl = new URL(shortcutIconMatch[1], url).href;
+      console.log('[Background] ✅ 从 rel="shortcut icon" 获取 icon:', iconUrl);
+    }
+  }
+
+  // 方法 3: 从 rel="apple-touch-icon" link 标签获取（属性顺序兼容）
+  if (!iconUrl) {
+    const appleIconMatch = html.match(/<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                           html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']apple-touch-icon["'][^>]*>/i);
+    if (appleIconMatch) {
+      iconUrl = new URL(appleIconMatch[1], url).href;
+      console.log('[Background] ✅ 从 rel="apple-touch-icon" 获取 icon:', iconUrl);
+    }
+  }
+
+  // 方法 4: 从 rel="mask-icon" link 标签获取（Safari）
+  if (!iconUrl) {
+    const maskIconMatch = html.match(/<link[^>]*rel=["']mask-icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+                          html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']mask-icon["'][^>]*>/i);
+    if (maskIconMatch) {
+      iconUrl = new URL(maskIconMatch[1], url).href;
+      console.log('[Background] ✅ 从 rel="mask-icon" 获取 icon:', iconUrl);
+    }
+  }
+
+  // 方法 5: 从 SVG 图标文件获取
+  if (!iconUrl) {
+    const svgIconMatch = html.match(/<link[^>]*rel=["']icon["'][^>]*href=["']([^"']*\.svg)["'][^>]*>/i) ||
+                         html.match(/<link[^>]*href=["']([^"']*\.svg)["'][^>]*rel=["']icon["'][^>]*>/i);
+    if (svgIconMatch) {
+      iconUrl = new URL(svgIconMatch[1], url).href;
+      console.log('[Background] ✅ 从 SVG 文件获取 icon:', iconUrl);
+    }
+  }
+
+  // 方法 6: 回退到 /favicon.ico
+  if (!iconUrl) {
+    iconUrl = new URL('/favicon.ico', url).href;
+    console.log('[Background] ✅ 使用默认 /favicon.ico:', iconUrl);
+  }
+
+  // 获取图标数据
+  const iconData = await fetchIconAsBase64(iconUrl);
+
+  console.log('[Background] 📊 最终结果:', { 
+    title: title ? `${title.substring(0, 50)}...` : '(空)', 
+    description: description ? `${description.substring(0, 50)}...` : '(空)', 
+    iconUrl, 
+    hasIconData: !!iconData 
+  });
+
+  return {
+    url,
+    title,
+    description,
+    iconData,
+  };
 }
+
+
 
 // 从新标签页获取元数据
 async function getMetadataFromNewTab(url) {
