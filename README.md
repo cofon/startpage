@@ -20,6 +20,7 @@
 - 🖼️ **智能图标** - 自动获取网站 favicon，支持多级降级
 - ⌨️ **命令模式** - 通过 `--keyword` 命令访问高级功能
 - 🚀 **EdgeOne 部署** - 支持自动构建和边缘函数
+- 🧩 **浏览器扩展** - 支持从任意标签页快速添加网站到起始页
 
 ## 🚀 快速开始
 
@@ -119,6 +120,27 @@ npm run format
 - **导出**：`--export` 下载 JSON 备份文件
 - **导入**：`--import` 上传 JSON 文件恢复数据
 
+### 浏览器扩展
+
+#### 安装扩展
+1. 打开 Chrome 浏览器
+2. 进入 `chrome://extensions/`
+3. 开启"开发者模式"
+4. 点击"加载已解压的扩展程序"
+5. 选择 `extension` 目录
+
+#### 使用扩展
+1. 访问任意网站
+2. 点击浏览器工具栏中的扩展图标
+3. 在弹出的面板中点击"添加到起始页"
+4. 扩展会自动获取网站元数据并添加到起始页
+
+#### 扩展功能
+- 自动获取当前页面的标题、描述和图标
+- 支持离线添加（当起始页未打开时，数据会保存在扩展存储中）
+- 当起始页打开时，会自动同步扩展中保存的网站数据
+- 支持从扩展面板直接添加网站到起始页
+
 ## 🏗️ 技术架构
 
 ### 前端技术栈
@@ -130,6 +152,7 @@ npm run format
 | Vue Router | 5.0.1 | Hash 模式路由 |
 | Vite | 7.3.1 | 构建工具 |
 | IndexedDB | - | 本地数据存储 |
+| Cheerio | 1.2.0 | HTML 解析（用于元数据获取） |
 
 ### 项目结构
 
@@ -143,6 +166,7 @@ startpage/
 │   │   ├── SearchResultsList.vue     # 搜索结果列表
 │   │   ├── CommandSettings.vue       # 命令设置面板
 │   │   ├── AddWebsitePanel.vue       # 添加网站面板
+│   │   ├── WebsiteDialog.vue         # 网站管理对话框
 │   │   └── ...
 │   ├── stores/               # Pinia 状态管理
 │   │   ├── website.js        # 网站数据
@@ -150,24 +174,34 @@ startpage/
 │   │   ├── setting.js        # 全局设置
 │   │   └── notification.js   # 通知状态
 │   ├── utils/                # 工具函数
-│   │   ├── indexedDB.js      # IndexedDB 操作
-│   │   ├── searchParser.js   # 命令解析
-│   │   ├── websiteUtils.js   # 网站工具
+│   │   ├── database/         # 数据库操作
+│   │   ├── search/           # 搜索相关
+│   │   ├── ui/               # UI 相关
+│   │   ├── website/          # 网站相关
 │   │   └── ...
 │   ├── services/             # 业务服务
-│   │   ├── websiteService.js         # 网站服务
-│   │   └── importService.js          # 导入服务
+│   │   ├── importService.js          # 导入服务
+│   │   └── websiteMetadataService.js # 网站元数据服务
 │   ├── data/                 # 静态数据
 │   ├── router/               # 路由配置
 │   ├── App.vue               # 根组件
 │   └── main.js               # 入口文件
+├── extension/                # 浏览器扩展
+│   ├── background.js         # 扩展后台脚本
+│   ├── content.js            # 扩展内容脚本
+│   ├── manifest.json         # 扩展配置
+│   ├── popup.html            # 扩展弹出面板
+│   └── popup.js              # 扩展弹出面板脚本
 ├── edge-functions/           # EdgeOne 边缘函数
 │   ├── api/
 │   │   ├── get-metadata.js   # 元数据获取函数
 │   │   └── hello.js          # Hello World 示例
 │   ├── .env                  # 环境变量配置
 │   └── edgeone-pages.json    # EdgeOne 配置
-├── docs/                     # 文档目录
+├── node-functions/           # Node.js 函数（备用）
+│   ├── api/
+│   │   └── get-metadata.js   # 元数据获取函数
+├── public/                   # 静态资源
 ├── dist/                     # 构建输出
 ├── index.html                # HTML 模板
 ├── package.json              # 项目配置
@@ -205,6 +239,23 @@ startpage/
   selectedThemeId: string,       // 当前主题
   selectedSearchEngineId: string,// 当前搜索引擎
   lastBackupTime: Date           // 最后备份时间
+}
+```
+
+### 扩展存储结构
+
+扩展使用 `chrome.storage.local` 存储以下数据：
+
+```javascript
+{
+  "metas": [ // 未同步的网站元数据
+    {
+      "url": "https://www.example.com",
+      "title": "示例网站",
+      "description": "这是一个示例网站",
+      "iconData": "data:image/png;base64,..."
+    }
+  ]
 }
 ```
 
@@ -247,20 +298,26 @@ VITE_EDGEONE_API_URL=https://your-domain.edgeone.cool
 
 连接 GitHub 仓库，自动构建和部署
 
-## 🔧 EdgeOne 边缘函数
+## 🔧 元数据获取
 
-### 功能说明
+### 扩展获取（推荐）
+
+使用浏览器扩展获取网站元数据，支持：
+- 自动获取当前页面的标题、描述和图标
+- 支持多种编码格式（UTF-8、GB2312 等）
+- 支持多种图标格式（ICO、PNG、SVG 等）
+- 离线存储功能
+
+### EdgeOne 边缘函数
 
 边缘函数用于获取网站元数据（标题、描述、图标），解决跨域问题。
 
-### API 端点
-
+**API 端点**：
 ```
 GET /api/get-metadata?url=<website_url>
 ```
 
-### 示例
-
+**示例**：
 ```bash
 # 请求
 curl "https://your-domain.edgeone.cool/api/get-metadata?url=https://www.baidu.com"
@@ -272,7 +329,6 @@ curl "https://your-domain.edgeone.cool/api/get-metadata?url=https://www.baidu.co
     "url": "https://www.baidu.com",
     "title": "百度一下，你就知道",
     "description": "全球领先的中文搜索引擎...",
-    "iconUrl": "https://www.baidu.com/favicon.ico",
     "iconData": "data:image/x-icon;base64,xxx..."
   }
 }
@@ -287,10 +343,6 @@ npm run serve:local
 # 访问 http://localhost:3000/api/get-metadata?url=https://www.baidu.com
 ```
 
-### 部署
-
-边缘函数随前端代码一起自动部署到 EdgeOne，无需手动操作。
-
 ## 📊 性能优化
 
 - ✅ Vite 快速构建和热更新
@@ -299,6 +351,7 @@ npm run serve:local
 - ✅ 图标懒加载和缓存
 - ✅ 批量数据处理优化
 - ✅ 边缘函数减少网络延迟
+- ✅ 扩展本地处理，提高响应速度
 
 ## 🤝 贡献指南
 
@@ -339,7 +392,27 @@ MIT License
 
 ## 🔄 更新日志
 
-### v2.0.0 (当前版本)
+### v2.1.0 (当前版本)
+
+**新功能**：
+- ✅ 浏览器扩展集成，支持从任意标签页快速添加网站
+- ✅ 扩展离线存储功能，当起始页未打开时保存数据
+- ✅ 扩展与起始页自动同步机制
+- ✅ 多编码支持，解决中文网站乱码问题
+- ✅ 多级图标获取策略，提高图标获取成功率
+
+**功能优化**：
+- ✅ 元数据获取逻辑改进，支持多种编码格式
+- ✅ 消息传递机制重构，统一管理所有消息
+- ✅ 错误处理增强，提供更友好的错误提示
+- ✅ 扩展存储管理优化，自动清理已同步数据
+
+**性能提升**：
+- ✅ 扩展本地处理元数据，减少网络请求
+- ✅ 批量数据处理优化
+- ✅ 图标缓存机制改进
+
+### v2.0.0
 
 **架构重构**：
 - ✅ 删除传统设置面板 UI，改用命令模式
@@ -384,6 +457,9 @@ MIT License
 ### 边缘计算
 利用 EdgeOne 边缘函数处理跨域请求，提升性能和可靠性。
 
+### 扩展集成
+通过浏览器扩展，提供更便捷的网站添加方式，实现无缝体验。
+
 ---
 
 **注意**：因使用 IndexedDB，数据仅保存在当前浏览器中，跨设备不同步。请定期使用 `--export` 命令导出数据备份。
@@ -394,19 +470,4 @@ MIT License
 - [Vue 3 文档](https://vuejs.org/)
 - [Pinia 文档](https://pinia.vuejs.org/)
 - [Vite 文档](https://vitejs.dev/)
-
-
-
-## 未完成工作
-
-#### 插件
-- 插件的功能
-    - 定义一个快捷键打开插件面板
-    - 插件面板有添加网站表单
-    - 自动获取当前打开的页面的网站数据 title desc iconData
-    - 提交表单添加到数据库
-- 插件和起始页的消息传递
-    - 插件没有自己数据库
-    - 插件获取到数据后，发送给起始页，起始页保存到数据库
-    - 插件需要数据时可以发消息给起始页，起始页返回数据
-    - 
+- [Chrome 扩展开发文档](https://developer.chrome.com/docs/extensions/mv3/)
