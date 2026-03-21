@@ -321,6 +321,7 @@ onMounted(async () => {
       const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS');
       if (response.success && response.data && response.data.length > 0) {
         console.log('[App] 从扩展获取到未同步的元数据:', response.data.length, '条');
+        const syncedWebsiteIds = [];
         for (const meta of response.data) {
           // 检查 URL 是否已存在
           const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
@@ -344,15 +345,23 @@ onMounted(async () => {
               lastVisited: null
             };
             
-            // 添加到 store
-            websiteStore.addWebsite(newWebsite);
-            // 保存到数据库
-            const websiteToAdd = normalizeWebsiteForDB(newWebsite);
-            await db.addWebsite(websiteToAdd);
+            // 添加到 store（已包含数据库保存逻辑）
+            await websiteStore.addWebsite(newWebsite);
             
             console.log('[App] 已添加从扩展同步的网站:', siteName);
             notificationStore.success(`已从扩展同步网站：${siteName}`);
+            
+            // 记录已同步的网站 URL
+            syncedWebsiteIds.push(meta.url);
           }
+        }
+        
+        // 通知扩展数据已同步
+        if (syncedWebsiteIds.length > 0) {
+          console.log('[App] 通知扩展数据已同步:', syncedWebsiteIds.length, '条');
+          await sendMessageToExtension('START_PAGE_SYNC_COMPLETE', {
+            syncedWebsiteIds: syncedWebsiteIds
+          });
         }
       }
     } catch (error) {

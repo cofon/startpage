@@ -700,12 +700,10 @@ async function handleStartPageBatchRequestMetas(message, sendResponse) {
 async function handleStartPageRequestUnsyncedMetas(sendResponse) {
   try {
     const metas = await getMetas();
-    // 过滤出未同步的元数据
-    const unsyncedMetas = metas.filter(meta => !meta.synced);
-
+    // 现在仓库中只保存未同步的元数据，直接返回所有
     sendResponse({
       success: true,
-      data: unsyncedMetas
+      data: metas
     });
   } catch (error) {
     console.error('处理起始页请求未同步的元数据失败:', error);
@@ -725,22 +723,17 @@ async function handleStartPageSyncComplete(message, sendResponse) {
     }
 
     const metas = await getMetas();
-    // 更新已同步的元数据状态
-    const updatedMetas = metas.map(meta => {
-      if (syncedWebsiteIds.includes(meta.url)) {
-        return { ...meta, synced: true };
-      }
-      return meta;
-    });
+    // 删除已同步的元数据
+    const updatedMetas = metas.filter(meta => !syncedWebsiteIds.includes(meta.url));
 
     // 保存更新后的元数据
     await saveMetas(updatedMetas);
 
-    console.log('[Background] 起始页同步完成，已更新', syncedWebsiteIds.length, '条元数据的状态');
+    console.log('[Background] 起始页同步完成，已删除', syncedWebsiteIds.length, '条元数据');
 
     sendResponse({
       success: true,
-      data: { synced: syncedWebsiteIds.length }
+      data: { deleted: syncedWebsiteIds.length }
     });
   } catch (error) {
     console.error('处理起始页同步完成失败:', error);
@@ -839,10 +832,10 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
         const existingIndex = metas.findIndex(m => m.url === meta.url);
         if (existingIndex !== -1) {
           // 更新现有数据
-          metas[existingIndex] = { ...meta, synced: false };
+          metas[existingIndex] = { ...meta };
         } else {
           // 添加新数据
-          metas.push({ ...meta, synced: false });
+          metas.push({ ...meta });
         }
 
         const saved = await saveMetas(metas);
@@ -866,10 +859,10 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
       const existingIndex = metas.findIndex(m => m.url === meta.url);
       if (existingIndex !== -1) {
         // 更新现有数据
-        metas[existingIndex] = { ...meta, synced: false };
+        metas[existingIndex] = { ...meta };
       } else {
         // 添加新数据
-        metas.push({ ...meta, synced: false });
+        metas.push({ ...meta });
       }
 
       const saved = await saveMetas(metas);

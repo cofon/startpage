@@ -44,6 +44,13 @@ export const useWebsiteStore = defineStore('website', () => {
   console.log('[websiteStore.addWebsite] 准备添加网站:', website)
   console.log('[websiteStore.addWebsite] 当前 websites 数量:', websites.value.length)
     
+    // 检查 URL 是否已存在
+    const existingWebsite = websites.value.find(w => w.url === website.url)
+    if (existingWebsite) {
+      console.log('[websiteStore.addWebsite] 网站已存在，返回现有网站:', existingWebsite)
+      return existingWebsite
+    }
+    
    const websiteWithDefaults = createWebsiteObject({
       ...website,
       visitCount: 0,
