@@ -131,6 +131,25 @@ export const useSearchStore = defineStore('search', () => {
   function handleCommand(command) {
     const cmd = command.toLowerCase().substring(2).trim()
 
+    // 如果只有 -- 没有后续内容，当作普通搜索处理
+    if (!cmd) {
+      results.value = websiteStore.searchWebsites(query.value)
+      setDisplayMode('search')
+      commandMode.value = null
+      return
+    }
+
+    // 检查是否是已知的命令
+    const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'layout', 'all', 'active']
+    
+    // 如果不是已知命令，当作普通搜索处理（使用完整的输入内容）
+    if (!knownCommands.includes(cmd)) {
+      results.value = websiteStore.searchWebsites(query.value)
+      setDisplayMode('search')
+      commandMode.value = null
+      return
+    }
+
     switch (cmd) {
       case 'theme':
         commandMode.value = 'theme'
@@ -159,6 +178,18 @@ export const useSearchStore = defineStore('search', () => {
       case 'layout':
         commandMode.value = 'layout'
         setDisplayMode('settings')
+        break
+      case 'all':
+        // 显示所有网站（包括已删除和隐藏的）
+        results.value = websiteStore.websites
+        setDisplayMode('search')
+        commandMode.value = null
+        break
+      case 'active':
+        // 显示所有活跃网站
+        results.value = websiteStore.activeWebsites
+        setDisplayMode('search')
+        commandMode.value = null
         break
       default:
         // 其他命令（如 --inactive, --active false）传递给现有的搜索逻辑

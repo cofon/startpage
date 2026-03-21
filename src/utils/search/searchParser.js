@@ -26,13 +26,13 @@ export function parseSearchQuery(query) {
     }
   }
 
-  // 检查是否是特殊命令（以 -- 开头）
-  if (keyword.startsWith('--')) {
+  // 检查是否是特殊命令（以 -- 开头且后面有内容）
+  if (keyword.startsWith('--') && keyword.length > 2) {
     return parseAdvancedSearch(keyword)
   }
 
   // 普通搜索：支持多个关键词（空格分隔，AND关系）
-  const keywords = keyword.split(/\s+/).filter(k => k.length > 0)
+  const keywords = keyword.split(/\s+/).filter(k => k.length > 0 && k !== '--')
 
   return {
     isAdvanced: false,
@@ -72,13 +72,9 @@ function parseAdvancedSearch(command) {
         break
 
       case 'active':
-        // 检查下一个参数是否是 true/false
-        if (i + 1 < parts.length && (parts[i + 1] === 'true' || parts[i + 1] === 'false')) {
-          filters.isActive = parts[i + 1] === 'true'
-          i++
-        } else {
-          filters.isActive = true
-        }
+        // 显示所有活跃网站（不包括已删除和隐藏的）
+        filters.isActive = true
+        filters.isHidden = false
         break
 
       case 'inactive':
