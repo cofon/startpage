@@ -123,6 +123,9 @@ async function getMetadataFromCurrentTab() {
 // 从URL获取元数据
 async function getMetadataFromUrl(url) {
   try {
+    // 清理URL中的反引号
+    url = url.replace(/[`]/g, '');
+    
     // 尝试使用fetch获取
     const response = await fetch(url, {
       method: 'GET',
@@ -135,25 +138,66 @@ async function getMetadataFromUrl(url) {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    // 获取响应的字符编码
+    let encoding = 'utf-8';
+    const contentType = response.headers.get('content-type');
+    if (contentType) {
+      const charsetMatch = contentType.match(/charset=([^;]*)/i);
+      if (charsetMatch && charsetMatch[1]) {
+        encoding = charsetMatch[1].toLowerCase();
+      }
+    }
 
+    // 处理不同的字符编码
+    let html;
+    if (encoding === 'utf-8') {
+      html = await response.text();
+    } else {
+      // 对于非UTF-8编码，使用arrayBuffer并尝试解码
+      console.warn(`检测到非UTF-8编码 (${encoding})，尝试使用TextDecoder解码`);
+      const buffer = await response.arrayBuffer();
+      
+      try {
+        // 尝试使用TextDecoder解码
+        // 注意：TextDecoder可能不支持所有编码
+        // 对于常见的编码如gb2312，我们可以使用utf-8解码后再处理
+        const decoder = new TextDecoder('utf-8');
+        html = decoder.decode(buffer);
+        
+        // 尝试修复乱码
+        // 对于gb2312编码，有时可以通过替换某些字符来改善
+        html = fixEncoding(html);
+      } catch (decodeError) {
+        console.error('解码失败:', decodeError);
+        // 如果解码失败，使用简化的方式处理
+        html = '';
+      }
+    }
+
+    // 使用正则表达式解析HTML，因为service worker中没有DOMParser
     // 获取标题
-    const title = doc.title || '';
+    let title = '';
+    const titleMatch = html.match(/<title>([\s\S]*?)<\/title>/i);
+    if (titleMatch && titleMatch[1]) {
+      title = titleMatch[1].trim();
+      // 尝试修复标题中的乱码
+      title = fixEncoding(title);
+    }
 
     // 获取描述
     let description = '';
-    const metaDesc = doc.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      description = metaDesc.content || '';
+    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*?)"/i);
+    if (descMatch && descMatch[1]) {
+      description = descMatch[1].trim();
+      // 尝试修复描述中的乱码
+      description = fixEncoding(description);
     }
 
     // 获取图标
     let iconUrl = '';
-    const iconElements = doc.querySelectorAll('link[rel*="icon"]');
-    if (iconElements.length > 0) {
-      iconUrl = iconElements[0].href;
+    const iconMatch = html.match(/<link\s+rel="[^"]*icon[^"]*"\s+href="([^"]*?)"/i);
+    if (iconMatch && iconMatch[1]) {
+      iconUrl = iconMatch[1];
     } else {
       // 尝试使用默认图标
       const domain = new URL(url).origin;
@@ -182,9 +226,91 @@ async function getMetadataFromUrl(url) {
   }
 }
 
+// 修复编码问题
+function fixEncoding(str) {
+  if (!str) return '';
+  
+  // 尝试修复常见的编码问题
+  try {
+    // 对于可能的gb2312编码，尝试转换
+    // 这里使用简单的替换方法，处理常见的乱码情况
+    return str
+      .replace(/â€™/g, "'")
+      .replace(/â€œ/g, '"')
+      .replace(/â€"/g, '"')
+      .replace(/â€¦/g, '…')
+      .replace(/â€“/g, '-')
+      .replace(/â€”/g, '—')
+      .replace(/â€˜/g, "'")
+      .replace(/â€¢/g, '•')
+      .replace(/â€³/g, '"')
+      .replace(/â€²/g, "'")
+      .replace(/ãƒ‡/g, 'デ')
+      .replace(/ãƒ¼/g, 'ー')
+      .replace(/ã‚«/g, 'カ')
+      .replace(/ã‚¹/g, 'ス')
+      .replace(/ã‚¯/g, 'ク')
+      .replace(/ã‚·/g, 'シ')
+      .replace(/ãƒ­/g, 'ロ')
+      .replace(/ãƒ³/g, 'ン')
+      .replace(/ã®/g, 'の')
+      .replace(/ã¯/g, 'は')
+      .replace(/ã„/g, 'い')
+      .replace(/ã‹/g, 'か')
+      .replace(/ã™/g, 'す')
+      .replace(/ã¦/g, 'て')
+      .replace(/ã„ãŒ/g, 'いが')
+      .replace(/ã™ã‚‹/g, 'する')
+      .replace(/ã£ã¦/g, 'って')
+      .replace(/ã®/g, 'の')
+      .replace(/ã«/g, 'に')
+      .replace(/ãŠ/g, 'お')
+      .replace(/ã‹/g, 'か')
+      .replace(/ã™/g, 'す')
+      .replace(/ã¦/g, 'て')
+      .replace(/ã„ãŒ/g, 'いが')
+      .replace(/ã™ã‚‹/g, 'する')
+      .replace(/ã£ã¦/g, 'って')
+      .replace(/Ã©/g, 'é')
+      .replace(/Ã¨/g, 'è')
+      .replace(/Ã /g, 'à')
+      .replace(/Ã¹/g, 'ù')
+      .replace(/Ã´/g, 'ô')
+      .replace(/Ãª/g, 'ê')
+      .replace(/Ã§/g, 'ç')
+      .replace(/Ã«/g, 'ë')
+      .replace(/Ã¼/g, 'ü')
+      .replace(/Ã¶/g, 'ö')
+      .replace(/Ã¤/g, 'ä')
+      .replace(/Ã¥/g, 'å')
+      .replace(/Ã¦/g, 'æ')
+      .replace(/Ã¸/g, 'ø')
+      .replace(/Ã°/g, 'ð')
+      .replace(/Ã¾/g, 'þ')
+      .replace(/Ã¥/g, 'å')
+      .replace(/Ã¤/g, 'ä')
+      .replace(/Ã¶/g, 'ö')
+      .replace(/Ã¼/g, 'ü')
+      .replace(/ÃŸ/g, 'ß')
+      .replace(/Ã©/g, 'é')
+      .replace(/Ã¨/g, 'è')
+      .replace(/Ã /g, 'à')
+      .replace(/Ã¹/g, 'ù')
+      .replace(/Ã´/g, 'ô')
+      .replace(/Ãª/g, 'ê')
+      .replace(/Ã§/g, 'ç');
+  } catch (e) {
+    console.error('修复编码失败:', e);
+    return str;
+  }
+}
+
 // 从新标签页获取元数据
 async function getMetadataFromNewTab(url) {
   try {
+    // 清理URL中的反引号
+    url = url.replace(/[`]/g, '');
+    
     const tab = await chrome.tabs.create({ url, active: false });
 
     // 等待标签页加载完成
@@ -321,10 +447,13 @@ function handleMessage(message, sender, sendResponse) {
 // 处理起始页请求单个网站元数据
 async function handleStartPageRequestWebsiteMeta(message, sendResponse) {
   try {
-    const { url } = message.payload;
+    let { url } = message.payload;
     if (!url) {
       throw new Error('缺少URL参数');
     }
+
+    // 清理URL中的反引号
+    url = url.replace(/[`]/g, '');
 
     const metadata = await getMetadataFromUrl(url);
     if (metadata) {
