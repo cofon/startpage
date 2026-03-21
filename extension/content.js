@@ -13,9 +13,10 @@ const processedMessages = new Set();
 // 生成消息唯一标识
 function generateMessageId(message) {
   if (message.type === 'EXTENSION_SUBMIT_WEBSITE_META' && message.payload && message.payload.url) {
-    return `${message.type}_${message.payload.url}_${Date.now()}`;
+    // 使用 URL 作为唯一标识，不包含时间戳，确保相同的消息只处理一次
+    return `${message.type}_${message.payload.url}`;
   }
-  return `${message.type}_${JSON.stringify(message.payload || {})}_${Date.now()}`;
+  return `${message.type}_${JSON.stringify(message.payload || {})}`;
 }
 
 // 监听来自起始页的消息

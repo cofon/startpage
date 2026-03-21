@@ -246,11 +246,8 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
         lastVisited: null
       };
       
-      // 添加到 store
+      // 添加到 store（已包含数据库保存逻辑）
       websiteStore.addWebsite(newWebsite);
-      // 保存到数据库
-      const websiteToAdd = normalizeWebsiteForDB(newWebsite);
-      await db.addWebsite(websiteToAdd);
       
       console.log('[App] 已添加从扩展提交的网站:', siteName);
       notificationStore.success(`已从扩展添加网站：${siteName}`);

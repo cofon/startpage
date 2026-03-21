@@ -162,4 +162,6 @@ function bindEvents() {
 
 // 启动初始化
 init();
+
+// 绑定事件（只绑定一次）
 bindEvents();

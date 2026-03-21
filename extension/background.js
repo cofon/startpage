@@ -286,7 +286,7 @@ async function fetchIconAsBase64(iconUrl) {
 
 // 处理消息
 function handleMessage(message, sender, sendResponse) {
-  console.log('收到消息:', message.type, message);
+  console.log('收到消息:', message.type, message, '来自:', sender.tab?.url || sender.url || 'background');
 
   switch (message.type) {
     case MESSAGE_TYPES.GET_CURRENT_PAGE_METADATA:

@@ -20,22 +20,14 @@ const MESSAGE_TYPES = {
  */
 export async function isExtensionInstalled() {
   return new Promise((resolve) => {
+    // 检查 window.StartPageExtension，这个变量由 content.js 设置
     if (typeof window.StartPageExtension !== 'undefined') {
       resolve(true);
       return;
     }
 
-    // 尝试发送检测事件
-    const checkExtension = () => {
-      if (window.StartPageExtension) {
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    };
-
     // 立即检查
-    checkExtension();
+    resolve(false);
   });
 }
 
@@ -94,14 +86,7 @@ export async function fetchMetadata(url) {
   console.log('[fetchMetadata] URL:', url)
 
   try {
-    // 检查扩展是否安装
-    const installed = await isExtensionInstalled();
-    if (!installed) {
-      console.warn('[fetchMetadata] ⚠️ 扩展未安装，无法获取元数据')
-      return null;
-    }
-
-    // 发送消息到扩展
+    // 直接发送消息到扩展，不检查扩展是否安装
     const response = await sendMessageToExtension(MESSAGE_TYPES.START_PAGE_REQUEST_WEBSITE_META, { url });
     
     if (response.success && response.data) {
