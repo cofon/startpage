@@ -11,7 +11,8 @@
   ],
   "host_permissions": [
     "http://localhost:5173/",
-    "https://*/*"
+    "https://*/*",
+    "http://*/*"
   ],
   "action": {
     "default_popup": "popup.html"

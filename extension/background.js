@@ -126,7 +126,8 @@ async function getMetadataFromUrl(url) {
     // 清理URL中的反引号
     url = url.replace(/[`]/g, '');
     
-    // 尝试使用fetch获取
+    // 优先使用fetch获取
+    console.log('[Background] 优先使用fetch获取元数据');
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -193,6 +194,7 @@ async function getMetadataFromUrl(url) {
   } catch (error) {
     console.error('使用fetch获取元数据失败:', error);
     // 尝试使用打开标签页的方式
+    console.log('[Background] fetch失败，尝试使用标签页方式获取元数据');
     return await getMetadataFromNewTab(url);
   }
 }
@@ -275,18 +277,37 @@ async function parseHtmlMetadata(html, url) {
   // 改进的 description 提取逻辑（优先级从高到低）
   let description = '';
 
-  // 方法 1: 从 name="description" meta 标签获取（属性顺序兼容）
-  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
-                    html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i);
+  // 方法 1: 从 name="description" meta 标签获取（支持各种属性顺序和中文内容）
+  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
+                    html.match(/<meta[^>]*content=["']([\s\S]*?)["'][^>]*name=["']description["'][^>]*>/i);
   if (descMatch) {
     description = descMatch[1].trim();
     console.log('[Background] ✅ 从 description meta 标签获取 description');
   }
+  
+  // 方法 1.1: 从 name="Description" meta 标签获取（大小写不敏感）
+  if (!description) {
+    const descMatchCase = html.match(/<meta[^>]*name=["']Description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
+                          html.match(/<meta[^>]*content=["']([\s\S]*?)["'][^>]*name=["']Description["'][^>]*>/i);
+    if (descMatchCase) {
+      description = descMatchCase[1].trim();
+      console.log('[Background] ✅ 从 Description meta 标签获取 description');
+    }
+  }
+  
+  // 方法 1.2: 从 name="description" meta 标签获取（无引号版本）
+  if (!description) {
+    const descMatchNoQuote = html.match(/<meta[^>]*name=description[^>]*content=([^>\s]*)/i);
+    if (descMatchNoQuote) {
+      description = descMatchNoQuote[1].trim();
+      console.log('[Background] ✅ 从 description meta 标签（无引号）获取 description');
+    }
+  }
 
   // 方法 2: 从 og:description meta 标签获取（属性顺序兼容）
   if (!description) {
-    const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
-                        html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*property=["']og:description["'][^>]*>/i);
+    const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
+                        html.match(/<meta[^>]*content=["']([\s\S]*?)["'][^>]*property=["']og:description["'][^>]*>/i);
     if (ogDescMatch) {
       description = ogDescMatch[1].trim();
       console.log('[Background] ✅ 从 og:description 获取 description');
@@ -295,8 +316,8 @@ async function parseHtmlMetadata(html, url) {
 
   // 方法 3: 从 twitter:description meta 标签获取（属性顺序兼容）
   if (!description) {
-    const twitterDescMatch = html.match(/<meta[^>]*name=["']twitter:description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
-                             html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']twitter:description["'][^>]*>/i);
+    const twitterDescMatch = html.match(/<meta[^>]*name=["']twitter:description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
+                             html.match(/<meta[^>]*content=["']([\s\S]*?)["'][^>]*name=["']twitter:description["'][^>]*>/i);
     if (twitterDescMatch) {
       description = twitterDescMatch[1].trim();
       console.log('[Background] ✅ 从 twitter:description 获取 description');
@@ -441,11 +462,66 @@ async function getMetadataFromNewTab(url) {
         // 获取标题
         const title = document.title || '';
         
-        // 获取描述
+        // 获取描述（支持多种格式）
         let description = '';
-        const metaDesc = document.querySelector('meta[name="description"]');
+        
+        // 方法 1: 从 name="description" meta 标签获取
+        const metaDesc = document.querySelector('meta[name="description"]') || 
+                        document.querySelector('meta[name="Description"]');
         if (metaDesc) {
           description = metaDesc.content || '';
+        }
+        
+        // 方法 2: 从 og:description meta 标签获取
+        if (!description) {
+          const ogDesc = document.querySelector('meta[property="og:description"]');
+          if (ogDesc) {
+            description = ogDesc.content || '';
+          }
+        }
+        
+        // 方法 3: 从 twitter:description meta 标签获取
+        if (!description) {
+          const twitterDesc = document.querySelector('meta[name="twitter:description"]');
+          if (twitterDesc) {
+            description = twitterDesc.content || '';
+          }
+        }
+        
+        // 方法 4: 从 JSON-LD structured data 获取
+        if (!description) {
+          const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+          for (const script of jsonLdScripts) {
+            try {
+              const jsonData = JSON.parse(script.textContent);
+              if (jsonData.description) {
+                description = jsonData.description || '';
+                break;
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
+        
+        // 方法 5: 从 meta keywords 提取
+        if (!description) {
+          const metaKeywords = document.querySelector('meta[name="keywords"]');
+          if (metaKeywords) {
+            description = metaKeywords.content || '';
+          }
+        }
+        
+        // 方法 6: 从第一个段落提取
+        if (!description) {
+          const firstP = document.querySelector('p');
+          if (firstP) {
+            description = firstP.textContent || '';
+            // 限制长度
+            if (description.length > 300) {
+              description = description.substring(0, 300) + '...';
+            }
+          }
         }
         
         // 获取图标
