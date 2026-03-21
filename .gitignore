@@ -17,3 +17,6 @@ coverage
 # custom
 docs/
 temp/
+node_functions/
+edge-functions/
+.edgeone/
