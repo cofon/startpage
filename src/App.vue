@@ -317,44 +317,41 @@ onMounted(async () => {
 
     // ========== 4. 从扩展获取未同步的元数据 ==========
     try {
-      const installed = await isExtensionInstalled();
-      if (installed) {
-        console.log('[App] 扩展已安装，尝试获取未同步的元数据');
-        const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS');
-        if (response.success && response.data && response.data.length > 0) {
-          console.log('[App] 从扩展获取到未同步的元数据:', response.data.length, '条');
-          for (const meta of response.data) {
-            // 检查 URL 是否已存在
-            const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
-            if (!existingWebsite) {
-              // 创建新网站
-              const siteName = extractSiteNameFromUrl(meta.url);
-              const newWebsite = {
-                name: siteName,
-                title: meta.title || siteName,
-                url: meta.url,
-                description: meta.description || '',
-                tags: ['new'],
-                isMarked: false,
-                isActive: true,
-                isHidden: false,
-                iconData: meta.iconData || '',
-                iconGenerateData: '',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                visitCount: 0,
-                lastVisited: null
-              };
-              
-              // 添加到 store
-              websiteStore.addWebsite(newWebsite);
-              // 保存到数据库
-              const websiteToAdd = normalizeWebsiteForDB(newWebsite);
-              await db.addWebsite(websiteToAdd);
-              
-              console.log('[App] 已添加从扩展同步的网站:', siteName);
-              notificationStore.success(`已从扩展同步网站：${siteName}`);
-            }
+      console.log('[App] 尝试从扩展获取未同步的元数据');
+      const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS');
+      if (response.success && response.data && response.data.length > 0) {
+        console.log('[App] 从扩展获取到未同步的元数据:', response.data.length, '条');
+        for (const meta of response.data) {
+          // 检查 URL 是否已存在
+          const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
+          if (!existingWebsite) {
+            // 创建新网站
+            const siteName = extractSiteNameFromUrl(meta.url);
+            const newWebsite = {
+              name: siteName,
+              title: meta.title || siteName,
+              url: meta.url,
+              description: meta.description || '',
+              tags: ['new'],
+              isMarked: false,
+              isActive: true,
+              isHidden: false,
+              iconData: meta.iconData || '',
+              iconGenerateData: '',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              visitCount: 0,
+              lastVisited: null
+            };
+            
+            // 添加到 store
+            websiteStore.addWebsite(newWebsite);
+            // 保存到数据库
+            const websiteToAdd = normalizeWebsiteForDB(newWebsite);
+            await db.addWebsite(websiteToAdd);
+            
+            console.log('[App] 已添加从扩展同步的网站:', siteName);
+            notificationStore.success(`已从扩展同步网站：${siteName}`);
           }
         }
       }

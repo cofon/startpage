@@ -13,6 +13,7 @@ const MESSAGE_TYPES = {
   START_PAGE_REQUEST_WEBSITE_META: 'START_PAGE_REQUEST_WEBSITE_META',
   START_PAGE_BATCH_REQUEST_METAS: 'START_PAGE_BATCH_REQUEST_METAS',
   START_PAGE_REQUEST_UNSYNCED_METAS: 'START_PAGE_REQUEST_UNSYNCED_METAS',
+  START_PAGE_SYNC_COMPLETE: 'START_PAGE_SYNC_COMPLETE',
   // 扩展内部消息
   GET_CURRENT_PAGE_METADATA: 'GET_CURRENT_PAGE_METADATA',
   // 扩展响应的消息
@@ -617,6 +618,10 @@ function handleMessage(message, sender, sendResponse) {
       handleStartPageRequestUnsyncedMetas(sendResponse);
       return true;
 
+    case MESSAGE_TYPES.START_PAGE_SYNC_COMPLETE:
+      handleStartPageSyncComplete(message, sendResponse);
+      return true;
+
     case MESSAGE_TYPES.EXTENSION_SUBMIT_WEBSITE_META:
       handleExtensionSubmitWebsiteMeta(message, sendResponse);
       return true;
@@ -704,6 +709,41 @@ async function handleStartPageRequestUnsyncedMetas(sendResponse) {
     });
   } catch (error) {
     console.error('处理起始页请求未同步的元数据失败:', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+// 处理起始页同步完成
+async function handleStartPageSyncComplete(message, sendResponse) {
+  try {
+    const { syncedWebsiteIds } = message.payload;
+    if (!Array.isArray(syncedWebsiteIds)) {
+      throw new Error('缺少同步网站ID数组参数');
+    }
+
+    const metas = await getMetas();
+    // 更新已同步的元数据状态
+    const updatedMetas = metas.map(meta => {
+      if (syncedWebsiteIds.includes(meta.url)) {
+        return { ...meta, synced: true };
+      }
+      return meta;
+    });
+
+    // 保存更新后的元数据
+    await saveMetas(updatedMetas);
+
+    console.log('[Background] 起始页同步完成，已更新', syncedWebsiteIds.length, '条元数据的状态');
+
+    sendResponse({
+      success: true,
+      data: { synced: syncedWebsiteIds.length }
+    });
+  } catch (error) {
+    console.error('处理起始页同步完成失败:', error);
     sendResponse({
       success: false,
       error: error.message

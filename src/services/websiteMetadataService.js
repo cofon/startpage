@@ -17,17 +17,12 @@ const MESSAGE_TYPES = {
 /**
  * 检查扩展是否安装
  * @returns {Promise<boolean>} 扩展是否安装
+ * @deprecated 不再使用，直接发送消息到扩展
  */
 export async function isExtensionInstalled() {
   return new Promise((resolve) => {
-    // 检查 window.StartPageExtension，这个变量由 content.js 设置
-    if (typeof window.StartPageExtension !== 'undefined') {
-      resolve(true);
-      return;
-    }
-
-    // 立即检查
-    resolve(false);
+    // 总是返回 true，因为即使 window.StartPageExtension 不存在，直接发送消息也可能成功
+    resolve(true);
   });
 }
 
