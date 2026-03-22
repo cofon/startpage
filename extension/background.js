@@ -1,3 +1,5 @@
+/* global chrome */
+
 // 扩展后台脚本
 
 // 存储键名
@@ -70,14 +72,14 @@ async function getMetadataFromCurrentTab() {
       func: () => {
         // 获取标题
         const title = document.title || '';
-        
+
         // 获取描述
         let description = '';
         const metaDesc = document.querySelector('meta[name="description"]');
         if (metaDesc) {
           description = metaDesc.content || '';
         }
-        
+
         // 获取图标
         let iconUrl = '';
         const iconElements = document.querySelectorAll('link[rel*="icon"]');
@@ -88,13 +90,13 @@ async function getMetadataFromCurrentTab() {
           const domain = window.location.origin;
           iconUrl = `${domain}/favicon.ico`;
         }
-        
+
         // 确保图标URL是完整的
         if (iconUrl && !iconUrl.startsWith('http')) {
           const baseUrl = window.location.origin;
           iconUrl = new URL(iconUrl, baseUrl).href;
         }
-        
+
         return {
           url: window.location.href,
           title,
@@ -126,7 +128,7 @@ async function getMetadataFromUrl(url) {
   try {
     // 清理URL中的反引号
     url = url.replace(/[`]/g, '');
-    
+
     // 优先使用fetch获取
     console.log('[Background] 优先使用fetch获取元数据');
     const response = await fetch(url, {
@@ -285,7 +287,7 @@ async function parseHtmlMetadata(html, url) {
     description = descMatch[1].trim();
     console.log('[Background] ✅ 从 description meta 标签获取 description');
   }
-  
+
   // 方法 1.1: 从 name="Description" meta 标签获取（大小写不敏感）
   if (!description) {
     const descMatchCase = html.match(/<meta[^>]*name=["']Description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i) ||
@@ -295,7 +297,7 @@ async function parseHtmlMetadata(html, url) {
       console.log('[Background] ✅ 从 Description meta 标签获取 description');
     }
   }
-  
+
   // 方法 1.2: 从 name="description" meta 标签获取（无引号版本）
   if (!description) {
     const descMatchNoQuote = html.match(/<meta[^>]*name=description[^>]*content=([^>\s]*)/i);
@@ -420,11 +422,11 @@ async function parseHtmlMetadata(html, url) {
   // 获取图标数据
   const iconData = await fetchIconAsBase64(iconUrl);
 
-  console.log('[Background] 📊 最终结果:', { 
-    title: title ? `${title.substring(0, 50)}...` : '(空)', 
-    description: description ? `${description.substring(0, 50)}...` : '(空)', 
-    iconUrl, 
-    hasIconData: !!iconData 
+  console.log('[Background] 📊 最终结果:', {
+    title: title ? `${title.substring(0, 50)}...` : '(空)',
+    description: description ? `${description.substring(0, 50)}...` : '(空)',
+    iconUrl,
+    hasIconData: !!iconData
   });
 
   return {
@@ -439,11 +441,19 @@ async function parseHtmlMetadata(html, url) {
 
 // 从新标签页获取元数据
 async function getMetadataFromNewTab(url) {
+  let tab = null;
   try {
     // 清理URL中的反引号
     url = url.replace(/[`]/g, '');
     
-    const tab = await chrome.tabs.create({ url, active: false });
+    // 在后台打开标签页，不激活，确保在后台运行
+    tab = await chrome.tabs.create({ 
+      url, 
+      active: false,
+      pinned: false,
+      // 确保在当前窗口的最后一个位置打开，避免干扰用户
+      index: 9999
+    });
 
     // 等待标签页加载完成
     await new Promise((resolve) => {
@@ -499,7 +509,7 @@ async function getMetadataFromNewTab(url) {
                 description = jsonData.description || '';
                 break;
               }
-            } catch (e) {
+            } catch  {
               // 忽略解析错误
             }
           }
@@ -551,9 +561,6 @@ async function getMetadataFromNewTab(url) {
       }
     });
 
-    // 关闭标签页
-    await chrome.tabs.remove(tab.id);
-
     if (result && result[0] && result[0].result) {
       const data = result[0].result;
       // 转换图标为base64
@@ -567,6 +574,15 @@ async function getMetadataFromNewTab(url) {
     }
   } catch (error) {
     console.error('从新标签页获取元数据失败:', error);
+  } finally {
+    // 不管是否成功，都关闭标签页
+    if (tab) {
+      try {
+        await chrome.tabs.remove(tab.id);
+      } catch (e) {
+        console.error('关闭标签页失败:', e);
+      }
+    }
   }
   return null;
 }
@@ -773,7 +789,7 @@ async function checkStartPageInstance() {
   try {
     // 查询所有标签页
     const tabs = await chrome.tabs.query({});
-    
+
     // 查找起始页标签页（这里假设起始页的URL包含 localhost:5173 或其他特定标识）
     for (const tab of tabs) {
       if (tab.url && (tab.url.includes('localhost:5173') || tab.url.includes('startpage'))) {
@@ -809,7 +825,7 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
 
     // 检测是否有起始页实例
     const startPageTab = await checkStartPageInstance();
-    
+
     if (startPageTab) {
       console.log('找到起始页实例，尝试发送数据');
       // 发送消息给起始页
@@ -817,7 +833,7 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
         type: 'EXTENSION_SUBMIT_WEBSITE_META',
         payload: meta
       });
-      
+
       if (response && response.success) {
         console.log('起始页添加网站成功');
         sendResponse({
@@ -890,7 +906,7 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
 // 处理命令
 function handleCommand(command) {
   console.log('收到命令:', command);
-  
+
   if (command === 'open-panel') {
     // 打开弹出面板
     chrome.action.openPopup();

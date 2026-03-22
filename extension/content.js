@@ -1,3 +1,5 @@
+/* global chrome */
+
 // 扩展内容脚本
 
 console.log('[Content Script] StartPage Content Script 已加载');
@@ -22,21 +24,21 @@ function generateMessageId(message) {
 // 监听来自起始页的消息
 window.addEventListener('StartPageAPI-Call', (event) => {
   const { type, payload, requestId } = event.detail;
-  
+
   // 生成消息ID
   const messageId = generateMessageId({ type, payload });
-  
+
   // 检查是否已经处理过
   if (processedMessages.has(messageId)) {
     console.log('[Content Script] 忽略重复消息:', type);
     return;
   }
-  
+
   // 标记为已处理
   processedMessages.add(messageId);
-  
+
   console.log('[Content Script] 收到起始页消息:', type, event.detail);
-  
+
   // 发送消息到后台脚本
   try {
     chrome.runtime.sendMessage(
@@ -45,7 +47,7 @@ window.addEventListener('StartPageAPI-Call', (event) => {
         // 检查是否有错误
         if (chrome.runtime.lastError) {
           console.error('[Content Script] 发送消息到扩展失败:', chrome.runtime.lastError.message);
-          
+
           // 发送错误响应回起始页
           const responseEvent = new CustomEvent('StartPageAPI-Response', {
             detail: {
@@ -57,9 +59,9 @@ window.addEventListener('StartPageAPI-Call', (event) => {
           window.dispatchEvent(responseEvent);
           return;
         }
-        
+
         console.log('[Content Script] 扩展响应:', response);
-        
+
         // 发送响应回起始页
         const responseEvent = new CustomEvent('StartPageAPI-Response', {
           detail: {
@@ -72,7 +74,7 @@ window.addEventListener('StartPageAPI-Call', (event) => {
     );
   } catch (error) {
     console.error('[Content Script] 发送消息到扩展异常:', error.message);
-    
+
     // 发送错误响应回起始页
     const responseEvent = new CustomEvent('StartPageAPI-Response', {
       detail: {
@@ -89,10 +91,10 @@ window.addEventListener('StartPageAPI-Call', (event) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   try {
     console.log('[Content Script] 收到扩展后台消息:', message.type, message);
-    
+
     // 生成消息ID
     const messageId = generateMessageId(message);
-    
+
     // 检查是否已经处理过
     if (processedMessages.has(messageId)) {
       console.log('[Content Script] 忽略重复消息:', message.type);
@@ -102,10 +104,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return;
     }
-    
+
     // 标记为已处理
     processedMessages.add(messageId);
-    
+
     // 处理扩展提交网站元数据
     if (message.type === 'EXTENSION_SUBMIT_WEBSITE_META') {
       // 发送消息给起始页
@@ -117,9 +119,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           requestId: requestId
         }
       });
-      
+
       console.log('[Content Script] 发送消息给起始页:', event.detail);
-      
+
       // 监听响应
       const handleResponse = (responseEvent) => {
         if (responseEvent.detail && responseEvent.detail.requestId === requestId) {
@@ -128,14 +130,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse(responseEvent.detail);
         }
       };
-      
+
       window.addEventListener('StartPageAPI-Response', handleResponse);
       window.dispatchEvent(event);
-      
+
       // 表示异步响应
       return true;
     }
-    
+
     // 处理其他消息类型
     sendResponse({
       success: false,

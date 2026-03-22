@@ -198,13 +198,13 @@ export function separateWebsites(websites) {
  */
 export async function enrichWebsites(websites, config, progressCallback) {
   const total = websites.length
-  const batchSize = config.batchSize
-
-  // 分批处理
+  // 并行处理，提高导入速度
+  const batchSize = Math.min(config.batchSize || 10, 20); // 限制并发数量
+  
   for (let i = 0; i < websites.length; i += batchSize) {
-    const batch = websites.slice(i, i + batchSize)
-
-    // 批量获取元数据
+    const batch = websites.slice(i, i + batchSize);
+    
+    // 并行处理当前批次
     await Promise.all(
       batch.map(async (website) => {
         try {
@@ -245,18 +245,15 @@ export async function enrichWebsites(websites, config, progressCallback) {
               console.log(`[ImportService] ✗ 已添加 "meta_failed" 标签到：${website.url}`)
             }
           }
-
-          return website
         } catch (error) {
           console.error(`[ImportService] ❌ 补全失败：${website.url}`, error)
-          // 返回原始数据，后续会使用默认值
-          return website
+          // 继续处理下一个网站
         }
-      }),
-    )
+      })
+    );
 
     // 更新进度
-    const processed = Math.min(i + batchSize, total)
+    const processed = Math.min(i + batchSize, total);
     if (progressCallback) {
       progressCallback({
         phase: 'enriching',

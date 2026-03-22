@@ -1,3 +1,5 @@
+/* global chrome */
+
 // 扩展弹出面板脚本
 
 // 消息类型
@@ -46,8 +48,8 @@ function showForm() {
 // 获取当前页面的元数据
 async function getCurrentPageMetadata() {
   try {
-    const response = await chrome.runtime.sendMessage({ 
-      type: 'GET_CURRENT_PAGE_METADATA' 
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_CURRENT_PAGE_METADATA'
     });
     return response;
   } catch (error) {
@@ -73,20 +75,20 @@ async function submitWebsiteMeta(meta) {
 // 初始化
 async function init() {
   showLoading();
-  
+
   try {
     // 向后台脚本请求获取当前页面的元数据
-    const response = await chrome.runtime.sendMessage({ 
-      type: 'GET_CURRENT_PAGE_METADATA' 
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_CURRENT_PAGE_METADATA'
     });
-    
+
     if (response && response.success && response.data) {
       const metadata = response.data;
       // 填充表单
       elements.title.value = metadata.title || '';
       elements.description.value = metadata.description || '';
       elements.iconData.value = metadata.iconData || '';
-      
+
       // 显示图标预览
       if (metadata.iconData) {
         elements.iconImage.src = metadata.iconData;
@@ -94,7 +96,7 @@ async function init() {
       } else {
         elements.iconImage.style.display = 'none';
       }
-      
+
       showForm();
     } else {
       throw new Error(response?.error || '获取页面信息失败');
@@ -111,30 +113,30 @@ function bindEvents() {
   elements.cancelBtn.addEventListener('click', () => {
     window.close();
   });
-  
+
   // 添加按钮
   elements.addBtn.addEventListener('click', async () => {
     const title = elements.title.value.trim();
     const description = elements.description.value.trim();
     const iconData = elements.iconData.value.trim();
-    
+
     // 简单验证
     if (!title) {
       showError('请输入标题');
       return;
     }
-    
+
     showLoading();
-    
+
     try {
       // 获取当前标签页的URL
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs.length === 0) {
         throw new Error('未找到当前标签页');
       }
-      
+
       const url = tabs[0].url;
-      
+
       // 提交元数据
       const response = await submitWebsiteMeta({
         url,
@@ -142,7 +144,7 @@ function bindEvents() {
         description,
         iconData
       });
-      
+
       if (response && response.success) {
         // 显示成功信息
         elements.loading.textContent = '添加成功！';
