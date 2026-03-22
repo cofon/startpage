@@ -2,25 +2,6 @@
 
 一个轻量级、可自定义的浏览器起始页 Web 应用，用于替代浏览器默认收藏夹，提供便捷的网址收藏、展示和检索功能。
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Vue](https://img.shields.io/badge/vue-3.5.27-green.svg)
-![Vite](https://img.shields.io/badge/vite-7.3.1-purple.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D20.19.0-brightgreen.svg)
-
-## ✨ 特性
-
-- 🎯 **快速搜索** - 支持本地搜索和网络搜索，可自定义搜索引擎
-- 📌 **网站标记** - 标记常用网站，快速访问
-- 🏷️ **标签管理** - 通过标签分类管理网站
-- 🎨 **主题切换** - 支持浅色、深色和跟随系统主题
-- 💾 **数据持久化** - 使用 IndexedDB 本地存储，隐私安全
-- 📤 **导入导出** - 支持 JSON 格式数据备份
-- 📱 **响应式设计** - 适配不同屏幕尺寸
-- 🔔 **通知系统** - 实时反馈操作结果
-- 🖼️ **智能图标** - 自动获取网站 favicon，支持多级降级
-- ⌨️ **命令模式** - 通过 `--keyword` 命令访问高级功能
-- 🚀 **EdgeOne 部署** - 支持自动构建和边缘函数
-- 🧩 **浏览器扩展** - 支持从任意标签页快速添加网站到起始页
 
 ## 🚀 快速开始
 
@@ -49,7 +30,7 @@ npm run dev
 npm run build
 ```
 
-输出到 `dist/index.html`
+输出到 `dist`
 
 ### 代码质量
 
@@ -216,19 +197,21 @@ startpage/
 ```javascript
 {
   id: number,              // 自增 ID（主键）
+  url: string,             // 网站链接
   name: string,            // 网站名称
   title: string,           // 网站标题
-  url: string,             // 网站链接
   description: string,     // 网站描述
   iconData: string,        // 图标 base64
   iconGenerateData: string,// SVG 图标
   tags: Array,             // 标签数组
   isMarked: boolean,       // 已标记
+  isActive: boolean,       // 激活状态
+  isHidden: boolean        // 隐藏状态
   markOrder: number,       // 标记排序
   visitCount: number,      // 访问次数
   lastVisited: Date,       // 最后访问时间
-  isActive: boolean,       // 激活状态
-  isHidden: boolean        // 隐藏状态
+  createdAt: Date,         // 创建时间
+  updatedAt: Date          // 更新时间
 }
 ```
 
@@ -264,8 +247,9 @@ startpage/
 ### 本地使用
 
 ```bash
+# 这个版本的vite配置无法index.html直接打开，需要使用http服务器
+# 可以修改配置后再编译
 npm run build
-# 双击打开 dist/index.html（需要 HTTP 环境）
 ```
 
 ### 静态服务器
@@ -290,6 +274,7 @@ npm run build
 
 **环境变量配置**：
 ```bash
+# 当前版本只有扩展，没有edgeone支持
 VITE_API_MODE=edgeone
 VITE_EDGEONE_API_URL=https://your-domain.edgeone.cool
 ```
@@ -310,6 +295,7 @@ VITE_EDGEONE_API_URL=https://your-domain.edgeone.cool
 
 ### EdgeOne 边缘函数
 
+已经移除边缘还属的调用，但是函数还在
 边缘函数用于获取网站元数据（标题、描述、图标），解决跨域问题。
 
 **API 端点**：

@@ -27,12 +27,19 @@ export function parseSearchQuery(query) {
   }
 
   // 检查是否是特殊命令（以 -- 开头且后面有内容）
+  // 如果只有 "--" 两个字符，则执行普通搜索，搜索关键字就是 "--"
   if (keyword.startsWith('--') && keyword.length > 2) {
     return parseAdvancedSearch(keyword)
   }
 
   // 普通搜索：支持多个关键词（空格分隔，AND关系）
-  const keywords = keyword.split(/\s+/).filter(k => k.length > 0 && k !== '--')
+  // 如果输入是 "--"，则保留为搜索关键字
+  let keywords
+  if (keyword === '--') {
+    keywords = ['--']
+  } else {
+    keywords = keyword.split(/\s+/).filter(k => k.length > 0)
+  }
 
   return {
     isAdvanced: false,
@@ -49,6 +56,17 @@ function parseAdvancedSearch(command) {
   // 移除开头的 --
   const cmd = command.substring(2).trim()
   const parts = cmd.split(/\s+/)
+
+  // 检查是否是已知的命令
+  const knownCommands = ['all', 'active', 'inactive', 'marked', 'unmarked', 'hidden', 'visible', 'tag', 'visit', 'recent']
+  
+  // 如果第一个部分不是已知命令，则将完整的输入内容作为普通搜索的关键字
+  if (parts.length > 0 && !knownCommands.includes(parts[0])) {
+    return {
+      isAdvanced: false,
+      keywords: [command]
+    }
+  }
 
   // 解析命令
   const filters = {

@@ -22,7 +22,7 @@ export const useSearchStore = defineStore('search', () => {
   const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty' | 'settings' | 'help'
 
   // 命令模式
-  const commandMode = ref(null) // 'theme' | 'search' | 'add' | 'import' | 'export' | 'layout' | 'help' | null
+  const commandMode = ref(null) // 'theme' | 'search' | 'add' | 'import' | 'export' | 'layout' | 'help' | ...
 
   // 计算属性
   const isLocalSearch = computed(() => {
@@ -141,7 +141,7 @@ export const useSearchStore = defineStore('search', () => {
 
     // 检查是否是已知的命令
     const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'layout', 'all', 'active']
-    
+
     // 如果不是已知命令，当作普通搜索处理（使用完整的输入内容）
     if (!knownCommands.includes(cmd)) {
       results.value = websiteStore.searchWebsites(query.value)
