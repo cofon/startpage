@@ -479,4 +479,11 @@ onMounted(async () => {
 }
 </style>
 
+<style>
+/* 隐藏 EdgeOne 插入的沉浸式翻译插件 */
+#immersive-translate-browser-popup {
+  display: none !important;
+}
+</style>
+
 
