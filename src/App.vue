@@ -342,10 +342,13 @@ onMounted(async () => {
 
             console.log('[App] 已添加从扩展同步的网站:', siteName);
             notificationStore.success(`已从扩展同步网站：${siteName}`);
-
-            // 记录已同步的网站 URL
-            syncedWebsiteIds.push(meta.url);
+          } else {
+            console.log('[App] 网站已存在，跳过添加:', meta.url);
           }
+          
+          // 无论网站是否已存在，都记录为已同步
+          // 这样扩展会删除本地存储中的对应数据
+          syncedWebsiteIds.push(meta.url);
         }
 
         // 通知扩展数据已同步

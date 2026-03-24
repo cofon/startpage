@@ -745,13 +745,21 @@ async function checkStartPageInstance() {
   try {
     // 查询所有标签页
     const tabs = await chrome.tabs.query({})
+    console.log('[checkStartPageInstance] 找到标签页数量:', tabs.length)
+    
+    // 打印所有标签页的URL
+    for (const tab of tabs) {
+      console.log('[checkStartPageInstance] 标签页 URL:', tab.url)
+    }
 
     // 查找起始页标签页（这里假设起始页的URL包含 localhost:5173 或其他特定标识）
     for (const tab of tabs) {
       if (tab.url && (tab.url.includes('localhost:5173') || tab.url.includes('startpage'))) {
+        console.log('[checkStartPageInstance] 找到起始页标签页:', tab.url)
         return tab
       }
     }
+    console.log('[checkStartPageInstance] 未找到起始页标签页')
     return null
   } catch (error) {
     console.error('检测起始页实例失败:', error)
@@ -797,30 +805,39 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
           message: '网站已添加到起始页',
         })
       } else {
-        console.log('起始页添加网站失败，保存到扩展仓库')
-        // 保存到存储
-        const metas = await getMetas()
-        // 检查是否已存在
-        const existingIndex = metas.findIndex((m) => m.url === meta.url)
-        if (existingIndex !== -1) {
-          // 更新现有数据
-          metas[existingIndex] = { ...meta }
-        } else {
-          // 添加新数据
-          metas.push({ ...meta })
-        }
-
-        const saved = await saveMetas(metas)
-        if (saved) {
-          sendResponse({
-            success: true,
-            message: '元数据保存到扩展仓库',
-          })
-        } else {
+        // 检查错误信息，如果是"网站已存在"，则不保存到本地存储
+        if (response && response.error === '网站已存在') {
+          console.log('起始页添加网站失败：网站已存在，不保存到扩展仓库')
           sendResponse({
             success: false,
-            error: '元数据保存失败',
+            error: '网站已存在',
           })
+        } else {
+          console.log('起始页添加网站失败，保存到扩展仓库')
+          // 保存到存储
+          const metas = await getMetas()
+          // 检查是否已存在
+          const existingIndex = metas.findIndex((m) => m.url === meta.url)
+          if (existingIndex !== -1) {
+            // 更新现有数据
+            metas[existingIndex] = { ...meta }
+          } else {
+            // 添加新数据
+            metas.push({ ...meta })
+          }
+
+          const saved = await saveMetas(metas)
+          if (saved) {
+            sendResponse({
+              success: true,
+              message: '元数据保存到扩展仓库',
+            })
+          } else {
+            sendResponse({
+              success: false,
+              error: '元数据保存失败',
+            })
+          }
         }
       }
     } else {

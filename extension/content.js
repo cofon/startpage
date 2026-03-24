@@ -110,6 +110,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // 处理扩展提交网站元数据
     if (message.type === 'EXTENSION_SUBMIT_WEBSITE_META') {
+      console.log('[Content Script] 处理 EXTENSION_SUBMIT_WEBSITE_META 消息');
+      
+      // 检查起始页是否存在
+      if (window.StartPageExtension) {
+        console.log('[Content Script] 起始页扩展标记存在');
+      } else {
+        console.log('[Content Script] 起始页扩展标记不存在');
+      }
+      
       // 发送消息给起始页
       const requestId = Date.now() + '-' + Math.random();
       const event = new CustomEvent('StartPageAPI-Call', {
