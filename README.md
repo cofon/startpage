@@ -173,15 +173,7 @@ startpage/
 │   ├── manifest.json         # 扩展配置
 │   ├── popup.html            # 扩展弹出面板
 │   └── popup.js              # 扩展弹出面板脚本
-├── edge-functions/           # EdgeOne 边缘函数
-│   ├── api/
-│   │   ├── get-metadata.js   # 元数据获取函数
-│   │   └── hello.js          # Hello World 示例
-│   ├── .env                  # 环境变量配置
-│   └── edgeone-pages.json    # EdgeOne 配置
-├── node-functions/           # Node.js 函数（备用）
-│   ├── api/
-│   │   └── get-metadata.js   # 元数据获取函数
+
 ├── public/                   # 静态资源
 ├── dist/                     # 构建输出
 ├── index.html                # HTML 模板
@@ -265,19 +257,7 @@ npm run build
 2. 推送 `dist` 到 GitHub
 3. 启用 GitHub Pages
 
-### EdgeOne Pages（推荐）
 
-1. 推送代码到 GitHub
-2. EdgeOne 自动检测并构建
-3. 配置环境变量（EdgeOne 控制台）
-4. 自动部署到边缘节点
-
-**环境变量配置**：
-```bash
-# 当前版本只有扩展，没有edgeone支持
-VITE_API_MODE=edgeone
-VITE_EDGEONE_API_URL=https://your-domain.edgeone.cool
-```
 
 ### Vercel / Netlify
 
@@ -293,41 +273,13 @@ VITE_EDGEONE_API_URL=https://your-domain.edgeone.cool
 - 支持多种图标格式（ICO、PNG、SVG 等）
 - 离线存储功能
 
-### EdgeOne 边缘函数
 
-已经移除边缘还属的调用，但是函数还在
-边缘函数用于获取网站元数据（标题、描述、图标），解决跨域问题。
 
-**API 端点**：
-```
-GET /api/get-metadata?url=<website_url>
-```
 
-**示例**：
-```bash
-# 请求
-curl "https://your-domain.edgeone.cool/api/get-metadata?url=https://www.baidu.com"
 
-# 响应
-{
-  "success": true,
-  "data": {
-    "url": "https://www.baidu.com",
-    "title": "百度一下，你就知道",
-    "description": "全球领先的中文搜索引擎...",
-    "iconData": "data:image/x-icon;base64,xxx..."
-  }
-}
-```
 
-### 本地测试
 
-```bash
-cd edge-functions
-npm install
-npm run serve:local
-# 访问 http://localhost:3000/api/get-metadata?url=https://www.baidu.com
-```
+
 
 ## 📊 性能优化
 
@@ -336,7 +288,7 @@ npm run serve:local
 - ✅ IndexedDB 本地存储，读写高效
 - ✅ 图标懒加载和缓存
 - ✅ 批量数据处理优化
-- ✅ 边缘函数减少网络延迟
+
 - ✅ 扩展本地处理，提高响应速度
 
 ## 🤝 贡献指南
@@ -404,12 +356,12 @@ MIT License
 - ✅ 删除传统设置面板 UI，改用命令模式
 - ✅ 显示模式简化：已标记列表仅网格模式，搜索结果仅列表模式
 - ✅ 移除布局切换按钮
-- ✅ EdgeOne 边缘函数集成
+
 
 **功能优化**：
 - ✅ 命令模式增强，支持更多快捷命令
 - ✅ 搜索命令解析器改进
-- ✅ 图标获取逻辑优化（EdgeOne API）
+
 - ✅ 通知系统完善
 - ✅ 数据库结构优化
 
@@ -441,7 +393,7 @@ MIT License
 所有数据存储在本地 IndexedDB，支持导出备份，用户完全掌控自己的数据。
 
 ### 边缘计算
-利用 EdgeOne 边缘函数处理跨域请求，提升性能和可靠性。
+
 
 ### 扩展集成
 通过浏览器扩展，提供更便捷的网站添加方式，实现无缝体验。
@@ -452,7 +404,7 @@ MIT License
 
 ## 🔗 相关链接
 
-- [EdgeOne 文档](https://edgeone.ai/docs)
+
 - [Vue 3 文档](https://vuejs.org/)
 - [Pinia 文档](https://pinia.vuejs.org/)
 - [Vite 文档](https://vitejs.dev/)

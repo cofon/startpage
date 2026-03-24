@@ -1,9 +1,0 @@
-{
-  "name": "startpage-node-functions",
-  "version": "1.0.0",
-  "description": "Node Functions - 网站元数据获取服务",
-  "type": "module",
-  "dependencies": {
-    "cheerio": "^1.0.0"
-  }
-}

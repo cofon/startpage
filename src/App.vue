@@ -484,22 +484,4 @@ onMounted(async () => {
 }
 </style>
 
-<style>
-/* 隐藏 EdgeOne 水印 */
-#edgeone-watermark {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  position: absolute !important;
-  top: -9999px !important;
-  left: -9999px !important;
-  width: 0 !important;
-  height: 0 !important;
-  z-index: -1 !important;
-}
 
-/* 确保水印的关闭按钮也被隐藏 */
-#edgeone-watermark-close {
-  display: none !important;
-}
-</style>
