@@ -18,6 +18,9 @@ const elements = {
   iconData: document.getElementById('iconData'),
   addBtn: document.getElementById('addBtn'),
   cancelBtn: document.getElementById('cancelBtn'),
+  // 通知元素
+  toast: document.getElementById('toast'),
+  toastMessage: document.getElementById('toastMessage'),
 }
 
 // 显示错误信息
@@ -43,6 +46,34 @@ function showForm() {
   elements.loading.style.display = 'none'
   elements.form.style.display = 'block'
   hideError()
+}
+
+// 显示通知条幅
+function showToast(message, type = 'success') {
+  const { toast, toastMessage } = elements;
+  
+  // 隐藏主内容区域
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    mainContent.style.display = 'none';
+  }
+  
+  // 设置文字内容
+  toastMessage.textContent = message;
+  
+  // 移除旧类名，添加新类名
+  toast.className = `toast ${type}`;
+  
+  // 显示通知条幅
+  toast.style.display = 'flex';
+  
+  // 2 秒后淡出并关闭
+  setTimeout(() => {
+    toast.style.animation = 'toastFadeOut 0.3s ease-out forwards';
+    setTimeout(() => {
+      window.close();
+    }, 300);
+  }, 2000);
 }
 
 // 提交网站元数据
@@ -89,7 +120,7 @@ async function init() {
       throw new Error(response?.error || '获取页面信息失败')
     }
   } catch (error) {
-    showError('获取页面信息失败: ' + error.message)
+    showError('获取页面信息失败：' + error.message)
     showForm()
   }
 }
@@ -116,7 +147,7 @@ function bindEvents() {
     showLoading()
 
     try {
-      // 获取当前标签页的URL
+      // 获取当前标签页的 URL
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
       if (tabs.length === 0) {
         throw new Error('未找到当前标签页')
@@ -133,23 +164,19 @@ function bindEvents() {
       })
 
       if (response && response.success) {
-        // 显示成功信息
-        elements.loading.textContent = '添加成功！'
-        // 2秒后关闭
-        setTimeout(() => {
-          window.close()
-        }, 2000)
+        // 显示成功 Toast
+        showToast('添加成功！', 'success');
       } else {
-        // 显示错误信息
-        const errorMessage = response?.error || '添加失败'
-        elements.loading.textContent = errorMessage
-        // 2秒后关闭
-        setTimeout(() => {
-          window.close()
-        }, 2000)
+        // 显示错误 Toast
+        const errorMessage = response?.error || '添加失败';
+        if (errorMessage === '网站已存在') {
+          showToast('网站已存在', 'error');
+        } else {
+          showToast(errorMessage, 'error');
+        }
       }
     } catch (error) {
-      showError('添加失败: ' + error.message)
+      showError('添加失败：' + error.message)
       showForm()
     }
   })
