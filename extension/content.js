@@ -15,8 +15,9 @@ const processedMessages = new Set();
 // 生成消息唯一标识
 function generateMessageId(message) {
   if (message.type === 'EXTENSION_SUBMIT_WEBSITE_META' && message.payload && message.payload.url) {
-    // 使用 URL 作为唯一标识，不包含时间戳，确保相同的消息只处理一次
-    return `${message.type}_${message.payload.url}`;
+    // 为每个 EXTENSION_SUBMIT_WEBSITE_META 消息生成唯一的 ID，包含时间戳
+    // 这样即使是同一个网站，每个消息都会被正确处理
+    return `${message.type}_${message.payload.url}_${Date.now()}_${Math.random()}`;
   }
   return `${message.type}_${JSON.stringify(message.payload || {})}`;
 }
@@ -24,6 +25,13 @@ function generateMessageId(message) {
 // 监听来自起始页的消息
 window.addEventListener('StartPageAPI-Call', (event) => {
   const { type, payload, requestId } = event.detail;
+
+  // 忽略来自扩展后台的消息，只处理来自起始页的消息
+  // 这样可以避免无限循环
+  if (type === 'EXTENSION_SUBMIT_WEBSITE_META') {
+    console.log('[Content Script] 忽略来自扩展后台的 EXTENSION_SUBMIT_WEBSITE_META 消息');
+    return;
+  }
 
   // 生成消息ID
   const messageId = generateMessageId({ type, payload });
