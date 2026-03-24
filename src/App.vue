@@ -480,9 +480,15 @@ onMounted(async () => {
 </style>
 
 <style>
-/* 隐藏 EdgeOne 插入的沉浸式翻译插件 */
-#immersive-translate-browser-popup {
+/* 隐藏 EdgeOne 插入的元素 */
+#immersive-translate-browser-popup,
+#edgeone-watermark {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
 }
 </style>
 
