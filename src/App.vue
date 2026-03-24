@@ -92,14 +92,6 @@ function checkTextSelection(event) {
   return !hadSelectionOnMouseDown && (distanceDiff > 5 || timeDiff > 200)
 }
 
-// 记录鼠标按下事件
-// function handleMouseDown(event) {
-//   mouseDownTime = Date.now()
-//   mouseDownPosition = { x: event.clientX, y: event.clientY }
-//   const selection = window.getSelection()
-//   hadSelectionOnMouseDown = selection.toString().trim().length > 0
-// }
-
 // 处理网站点击
 function handleWebsiteClick(website, event) {
   if (checkTextSelection(event)) {
@@ -213,7 +205,7 @@ async function toggleWebsiteMark(website) {
 function handleExtensionMessage(event) {
   const { type, payload, requestId } = event.detail;
   console.log('[App] 收到扩展消息:', type, payload);
-  
+
   // 只处理来自扩展的消息，忽略来自起始页内部的消息
   if (type === 'EXTENSION_SUBMIT_WEBSITE_META') {
     // 处理扩展提交的网站元数据
@@ -245,13 +237,13 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
         visitCount: 0,
         lastVisited: null
       };
-      
+
       // 添加到 store（已包含数据库保存逻辑）
       websiteStore.addWebsite(newWebsite);
-      
+
       console.log('[App] 已添加从扩展提交的网站:', siteName);
       notificationStore.success(`已从扩展添加网站：${siteName}`);
-      
+
       // 发送响应
       const responseEvent = new CustomEvent('StartPageAPI-Response', {
         detail: {
@@ -263,7 +255,7 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
       window.dispatchEvent(responseEvent);
     } else {
       console.log('[App] 网站已存在:', meta.url);
-      
+
       // 发送响应
       const responseEvent = new CustomEvent('StartPageAPI-Response', {
         detail: {
@@ -276,7 +268,7 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
     }
   } catch (error) {
     console.error('[App] 处理扩展提交网站元数据失败:', error);
-    
+
     // 发送响应
     const responseEvent = new CustomEvent('StartPageAPI-Response', {
       detail: {
@@ -344,18 +336,18 @@ onMounted(async () => {
               visitCount: 0,
               lastVisited: null
             };
-            
+
             // 添加到 store（已包含数据库保存逻辑）
             await websiteStore.addWebsite(newWebsite);
-            
+
             console.log('[App] 已添加从扩展同步的网站:', siteName);
             notificationStore.success(`已从扩展同步网站：${siteName}`);
-            
+
             // 记录已同步的网站 URL
             syncedWebsiteIds.push(meta.url);
           }
         }
-        
+
         // 通知扩展数据已同步
         if (syncedWebsiteIds.length > 0) {
           console.log('[App] 通知扩展数据已同步:', syncedWebsiteIds.length, '条');
