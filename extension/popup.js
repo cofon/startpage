@@ -140,7 +140,13 @@ function bindEvents() {
           window.close()
         }, 2000)
       } else {
-        throw new Error(response?.error || '添加失败')
+        // 显示错误信息
+        const errorMessage = response?.error || '添加失败'
+        elements.loading.textContent = errorMessage
+        // 2秒后关闭
+        setTimeout(() => {
+          window.close()
+        }, 2000)
       }
     } catch (error) {
       showError('添加失败: ' + error.message)
