@@ -219,27 +219,26 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
     // 检查 URL 是否已存在
     const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
     if (!existingWebsite) {
-      // 创建新网站
-      const siteName = extractSiteNameFromUrl(meta.url);
+      // 创建新网站，使用从扩展传递过来的字段
+      const siteName = meta.name || extractSiteNameFromUrl(meta.url);
       const newWebsite = {
         name: siteName,
         title: meta.title || siteName,
         url: meta.url,
         description: meta.description || '',
-        tags: ['new'],
-        isMarked: false,
-        isActive: true,
-        isHidden: false,
+        tags: meta.tags && Array.isArray(meta.tags) && meta.tags.length > 0 ? meta.tags : ['new'],
+        isMarked: meta.isMarked || false,
+        isActive: meta.isActive !== undefined ? meta.isActive : true,
+        isHidden: meta.isHidden || false,
         iconData: meta.iconData || '',
-        iconGenerateData: '',
         createdAt: new Date(),
         updatedAt: new Date(),
         visitCount: 0,
         lastVisited: null
       };
 
-      // 添加到 store（已包含数据库保存逻辑）
-      websiteStore.addWebsite(newWebsite);
+      // 添加到 store（已包含数据库保存逻辑和 SVG 生成）
+      await websiteStore.addWebsite(newWebsite);
 
       console.log('[App] 已添加从扩展提交的网站:', siteName);
       notificationStore.success(`已从扩展添加网站：${siteName}`);

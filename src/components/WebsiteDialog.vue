@@ -2,6 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '../stores/website'
 import { useNotificationStore } from '../stores/notification'
+import { generateSVG, encodeSVG } from '../utils/website/websiteUtils'
+import { fetchMetadata } from '../services/websiteMetadataService'
 
 const props = defineProps({
   modelValue: {
@@ -37,6 +39,33 @@ function encodeSvg(svg) {
   return `data:image/svg+xml;base64,${btoa(encodedSvg)}`
 }
 
+// 获取URL的meta数据
+async function fetchWebsiteMeta() {
+  if (!form.value.url) {
+    notificationStore.warning('请输入URL')
+    return
+  }
+  
+  try {
+    notificationStore.info('正在获取网站信息...')
+    
+    // 使用 websiteMetadataService.fetchMetadata 获取网站元数据
+    const metadata = await fetchMetadata(form.value.url)
+    
+    if (metadata) {
+      if (metadata.title) form.value.title = metadata.title
+      if (metadata.description) form.value.description = metadata.description
+      if (metadata.iconData) form.value.iconData = metadata.iconData
+      notificationStore.success('获取网站信息成功！')
+    } else {
+      notificationStore.error('获取网站信息失败')
+    }
+  } catch (error) {
+    console.error('获取网站信息失败:', error)
+    notificationStore.error('获取网站信息失败：' + (error.message || '未知错误'))
+  }
+}
+
 // 表单数据
 const form = ref({
   name: '',
@@ -51,6 +80,20 @@ const form = ref({
   iconData: '',
   iconGenerateData: ''
 })
+
+// 监视name输入框的变化，当第一个字符变了时重新生成SVG
+let previousNameFirstChar = ''
+watch(() => form.value.name, (newName) => {
+  const newFirstChar = newName ? newName.charAt(0) : ''
+  if (newFirstChar !== previousNameFirstChar) {
+    // 生成新的SVG图标
+    if (newName) {
+      const svgIcon = generateSVG(newName)
+      form.value.iconGenerateData = encodeSVG(svgIcon)
+    }
+    previousNameFirstChar = newFirstChar
+  }
+}, { immediate: true })
 
 // 标签输入
 const tagInput = ref('')
@@ -266,13 +309,24 @@ watch(() => props.modelValue, (newVal) => {
 
         <div class="form-group">
           <label for="website-url">网站URL *</label>
-          <input
-            id="website-url"
-            v-model="form.url"
-            type="text"
-            placeholder="例如：github.com"
-            class="form-input"
-          >
+          <div style="display: flex; gap: 8px;">
+            <input
+              id="website-url"
+              v-model="form.url"
+              type="text"
+              placeholder="例如：github.com"
+              class="form-input"
+              style="flex: 1;"
+            >
+            <button
+              type="button"
+              class="button button-secondary"
+              style="flex-shrink: 0; white-space: nowrap;"
+              @click="fetchWebsiteMeta"
+            >
+              获取信息
+            </button>
+          </div>
         </div>
 
         <div class="form-group">

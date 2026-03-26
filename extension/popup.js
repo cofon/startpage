@@ -12,8 +12,13 @@ const elements = {
   loading: document.getElementById('loading'),
   form: document.getElementById('form'),
   error: document.getElementById('error'),
+  name: document.getElementById('name'),
   title: document.getElementById('title'),
   description: document.getElementById('description'),
+  tags: document.getElementById('tags'),
+  isMarked: document.getElementById('isMarked'),
+  isActive: document.getElementById('isActive'),
+  isHidden: document.getElementById('isHidden'),
   iconImage: document.getElementById('iconImage'),
   iconData: document.getElementById('iconData'),
   addBtn: document.getElementById('addBtn'),
@@ -134,14 +139,25 @@ function bindEvents() {
 
   // 添加按钮
   elements.addBtn.addEventListener('click', async () => {
+    const name = elements.name.value.trim()
     const title = elements.title.value.trim()
     const description = elements.description.value.trim()
+    const tagsInput = elements.tags.value.trim()
+    const isMarked = elements.isMarked.checked
+    const isActive = elements.isActive.checked
+    const isHidden = elements.isHidden.checked
     const iconData = elements.iconData.value.trim()
 
     // 简单验证
-    if (!title) {
-      showError('请输入标题')
+    if (!name) {
+      showError('请输入网站名称')
       return
+    }
+
+    // 处理标签，转换为数组
+    let tags = []
+    if (tagsInput) {
+      tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag)
     }
 
     showLoading()
@@ -158,8 +174,13 @@ function bindEvents() {
       // 提交元数据
       const response = await submitWebsiteMeta({
         url,
+        name,
         title,
         description,
+        tags,
+        isMarked,
+        isActive,
+        isHidden,
         iconData,
       })
 
