@@ -6,6 +6,7 @@
 import { ref, watch, onMounted } from 'vue'
 import WebsiteIcon from './WebsiteIcon.vue'
 import WebsiteActions from './WebsiteActions.vue'
+import { useSearchStore } from '../stores/search'
 
 const props = defineProps({
   websites: {
@@ -15,6 +16,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click', 'toggle-mark', 'edit', 'delete', 'restore'])
+const searchStore = useSearchStore()
+
+// 保存上一次的搜索词和结果长度
+const previousQuery = ref('')
+const previousResultsLength = ref(0)
 
 // 滚动到顶部
 function scrollToTop() {
@@ -28,12 +34,24 @@ function scrollToTop() {
 }
 
 // 监听 websites 变化，当搜索结果更新时滚动到顶部
-watch(() => props.websites, () => {
-  scrollToTop()
+watch(() => props.websites, (newWebsites) => {
+  const currentQuery = searchStore.query
+  const currentLength = newWebsites.length
+  
+  // 只有当搜索词发生变化且搜索结果长度也发生变化时才滚动到顶部
+  if (currentQuery !== previousQuery.value && currentLength !== previousResultsLength.value) {
+    scrollToTop()
+  }
+  
+  // 更新记录
+  previousQuery.value = currentQuery
+  previousResultsLength.value = currentLength
 }, { deep: true })
 
 // 组件挂载时滚动到顶部
 onMounted(() => {
+  previousQuery.value = searchStore.query
+  previousResultsLength.value = props.websites.length
   scrollToTop()
 })
 

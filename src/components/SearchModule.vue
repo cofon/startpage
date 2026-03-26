@@ -169,22 +169,23 @@ function handleEscKey() {
   flex-wrap: wrap;
   gap: 10px;
   padding: 15px;
-  background-color: var(--color-bg-card);
-  border-radius: 15px;
-  box-shadow: var(--shadow-medium);
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
   z-index: 100;
   margin-top: 10px;
 }
 
 .tag-item {
   padding: 8px 16px;
-  background-color: var(--color-bg-hover);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
   border-radius: 20px;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .tag-item:hover {
-  background-color: var(--color-bg-active);
+  background-color: var(--color-primary-hover);
 }
 </style>

@@ -43,22 +43,31 @@ const topPadding = computed(() => {
 
     // marked list 为空时，使用较大空白使搜索模块居中偏上
     if (markedCount === 0) {
+      return 320
+    }
+    if (markedCount <= 9) {
       return 300
     }
-    if (markedCount <= 7) {
-      return 270
+    if (markedCount <= 18) {
+      return 280
     }
-    if (markedCount <= 14) {
+    if (markedCount <= 27) {
       return 250
     }
-    if (markedCount <= 21) {
-      return 180
+    if (markedCount <= 36) {
+      return 210
     }
-    if (markedCount <= 28) {
-      return 134
+    if (markedCount <= 45) {
+      return 160
     }
-    if (markedCount <= 35) {
-      return 64
+    if (markedCount <= 54) {
+      return 100
+    }
+    if (markedCount <= 63) {
+      return 50
+    }
+    if (markedCount <= 72) {
+      return 0
     }
   }
 
@@ -344,7 +353,7 @@ onMounted(async () => {
           } else {
             console.log('[App] 网站已存在，跳过添加:', meta.url);
           }
-          
+
           // 无论网站是否已存在，都记录为已同步
           // 这样扩展会删除本地存储中的对应数据
           syncedWebsiteIds.push(meta.url);
