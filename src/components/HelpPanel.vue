@@ -62,6 +62,10 @@ function closePanel() {
             <span class="description">显示非活动网站（已删除）</span>
           </div>
           <div class="command-item">
+            <code class="command">--all</code>
+            <span class="description">显示所有活跃且非隐藏的网站</span>
+          </div>
+          <div class="command-item">
             <code class="command">--marked</code>
             <span class="description">显示已标记的网站</span>
           </div>
@@ -76,6 +80,29 @@ function closePanel() {
           <div class="command-item">
             <code class="command">--visible</code>
             <span class="description">显示可见的网站</span>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>字段搜索命令</h3>
+          <div class="command-item">
+            <code class="command">--title [关键词]</code>
+            <span class="description">只搜索网站标题</span>
+          </div>
+          <div class="command-item">
+            <code class="command">--desc [关键词]</code>
+            <span class="description">只搜索网站描述</span>
+          </div>
+          <div class="command-item">
+            <code class="command">--name [关键词]</code>
+            <span class="description">只搜索网站名称</span>
+          </div>
+          <div class="command-item">
+            <code class="command">--url [关键词]</code>
+            <span class="description">只搜索网站 URL</span>
+          </div>
+          <div class="example">
+            例如：<code>--title 谷歌</code> 只搜索标题中包含"谷歌"的网站
           </div>
         </div>
 

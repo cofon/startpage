@@ -131,8 +131,13 @@ export const useSearchStore = defineStore('search', () => {
   function handleCommand(command) {
     const cmd = command.toLowerCase().substring(2).trim()
 
+    // 检查是否是带参数的命令（如 --title abc）
+    const cmdParts = cmd.split(/\s+/)
+    const mainCmd = cmdParts[0]
+    const cmdArgs = cmdParts.slice(1).join(' ')
+
     // 如果只有 -- 没有后续内容，当作普通搜索处理
-    if (!cmd) {
+    if (!mainCmd) {
       results.value = websiteStore.searchWebsites(query.value)
       setDisplayMode('search')
       commandMode.value = null
@@ -140,17 +145,17 @@ export const useSearchStore = defineStore('search', () => {
     }
 
     // 检查是否是已知的命令
-    const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'layout', 'all', 'active']
+    const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'layout', 'all', 'active', 'title', 'desc', 'name', 'url']
 
     // 如果不是已知命令，当作普通搜索处理（使用完整的输入内容）
-    if (!knownCommands.includes(cmd)) {
+    if (!knownCommands.includes(mainCmd)) {
       results.value = websiteStore.searchWebsites(query.value)
       setDisplayMode('search')
       commandMode.value = null
       return
     }
 
-    switch (cmd) {
+    switch (mainCmd) {
       case 'theme':
         commandMode.value = 'theme'
         setDisplayMode('settings')
@@ -180,14 +185,66 @@ export const useSearchStore = defineStore('search', () => {
         setDisplayMode('settings')
         break
       case 'all':
-        // 显示所有网站（包括已删除和隐藏的）
-        results.value = websiteStore.websites
+        // 显示所有活跃且非隐藏的网站
+        results.value = websiteStore.websites.filter(w => w.isActive && !w.isHidden)
         setDisplayMode('search')
         commandMode.value = null
         break
       case 'active':
         // 显示所有活跃网站
         results.value = websiteStore.activeWebsites
+        setDisplayMode('search')
+        commandMode.value = null
+        break
+      case 'title':
+        // 只搜索 title 字段
+        if (cmdArgs) {
+          results.value = websiteStore.websites.filter(w => 
+            w.isActive && 
+            !w.isHidden && 
+            w.title && 
+            w.title.toLowerCase().includes(cmdArgs.toLowerCase())
+          )
+        }
+        setDisplayMode('search')
+        commandMode.value = null
+        break
+      case 'desc':
+        // 只搜索 description 字段
+        if (cmdArgs) {
+          results.value = websiteStore.websites.filter(w => 
+            w.isActive && 
+            !w.isHidden && 
+            w.description && 
+            w.description.toLowerCase().includes(cmdArgs.toLowerCase())
+          )
+        }
+        setDisplayMode('search')
+        commandMode.value = null
+        break
+      case 'name':
+        // 只搜索 name 字段
+        if (cmdArgs) {
+          results.value = websiteStore.websites.filter(w => 
+            w.isActive && 
+            !w.isHidden && 
+            w.name && 
+            w.name.toLowerCase().includes(cmdArgs.toLowerCase())
+          )
+        }
+        setDisplayMode('search')
+        commandMode.value = null
+        break
+      case 'url':
+        // 只搜索 url 字段
+        if (cmdArgs) {
+          results.value = websiteStore.websites.filter(w => 
+            w.isActive && 
+            !w.isHidden && 
+            w.url && 
+            w.url.toLowerCase().includes(cmdArgs.toLowerCase())
+          )
+        }
         setDisplayMode('search')
         commandMode.value = null
         break
