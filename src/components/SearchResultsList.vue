@@ -3,7 +3,7 @@
  * 搜索结果列表组件
  * 用于显示搜索结果，包含网站信息和操作按钮
  */
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import WebsiteIcon from './WebsiteIcon.vue'
 import WebsiteActions from './WebsiteActions.vue'
 
@@ -14,9 +14,28 @@ const props = defineProps({
   }
 })
 
-
-
 const emit = defineEmits(['click', 'toggle-mark', 'edit', 'delete', 'restore'])
+
+// 滚动到顶部
+function scrollToTop() {
+  // 找到最近的可滚动容器
+  let container = document.getElementById('app')
+  if (container) {
+    container.scrollTop = 0
+  }
+  // 同时也滚动整个页面
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// 监听 websites 变化，当搜索结果更新时滚动到顶部
+watch(() => props.websites, () => {
+  scrollToTop()
+}, { deep: true })
+
+// 组件挂载时滚动到顶部
+onMounted(() => {
+  scrollToTop()
+})
 
 // 文字选择相关状态
 let mouseDownTime = 0
