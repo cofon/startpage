@@ -48,7 +48,7 @@ export const useWebsiteStore = defineStore('website', () => {
     
     // 优先缓存标记的网站
     data.forEach(website => {
-      if (website.isMarked && (website.iconData || website.iconGenerateData)) {
+      if (website.isMarked && (website.iconData !== undefined || website.iconGenerateData !== undefined)) {
         updateIconCache(website.id, website.iconData, website.iconGenerateData)
       }
     })
@@ -106,7 +106,7 @@ export const useWebsiteStore = defineStore('website', () => {
     websites.value.push(createWebsiteObject(coreData))
 
     // 将图标数据添加到缓存
-    if (iconData || iconGenerateData) {
+    if (iconData !== undefined || iconGenerateData !== undefined) {
       updateIconCache(dbId, iconData, iconGenerateData)
     }
 
@@ -118,9 +118,12 @@ export const useWebsiteStore = defineStore('website', () => {
   async function updateWebsite(id, data) {
     const index = websites.value.findIndex(w => w.id === id)
     if (index !== -1) {
+      // 从数据库获取完整的网站数据，包括图标数据
+      const fullWebsiteData = await db.getWebsiteById(id)
+      
       // 创建一个新的网站对象，确保数组类型的字段也被正确更新
       const updatedWebsite = {
-        ...websites.value[index],
+        ...fullWebsiteData, // 使用完整的数据库数据作为基础
         ...data,
         updatedAt: new Date()
       }
@@ -137,7 +140,7 @@ export const useWebsiteStore = defineStore('website', () => {
       websites.value[index] = createWebsiteObject(coreData)
 
       // 更新图标缓存
-      if (iconData || iconGenerateData) {
+      if (iconData !== undefined || iconGenerateData !== undefined) {
         updateIconCache(id, iconData, iconGenerateData)
       }
 

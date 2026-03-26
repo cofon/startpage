@@ -303,8 +303,8 @@ export function createWebsiteObject(data = {}) {
     isHidden: data.isHidden !== undefined ? data.isHidden : false,
     // 图标相关字段
     iconUrl: data.url || '',
-    iconData: data.iconData || null,
-    iconGenerateData: data.iconGenerateData || null,
+    iconData: data.iconData !== undefined ? data.iconData : null,
+    iconGenerateData: data.iconGenerateData !== undefined ? data.iconGenerateData : null,
     iconCanFetch: data.iconCanFetch !== undefined ? data.iconCanFetch : true,
     iconFetchAttempts: data.iconFetchAttempts || 0,
     iconLastFetchTime: data.iconLastFetchTime || null,
