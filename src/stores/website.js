@@ -5,7 +5,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { parseSearchQuery, applyFilters } from '../utils/search/searchParser'
-import { createWebsiteObject } from '../utils/website/websiteUtils'
+import { createWebsiteObject, normalizeWebsiteData } from '../utils/website/websiteUtils'
 import db from '../utils/database'
 
 export const useWebsiteStore = defineStore('website', () => {
@@ -51,7 +51,8 @@ export const useWebsiteStore = defineStore('website', () => {
       return existingWebsite
     }
     
-   const websiteWithDefaults = createWebsiteObject({
+    // 先创建网站对象
+    let websiteWithDefaults = createWebsiteObject({
       ...website,
       visitCount: 0,
       createdAt: new Date(),
@@ -59,6 +60,14 @@ export const useWebsiteStore = defineStore('website', () => {
       isActive: true,
       isHidden: false
     })
+    
+    // 检查是否需要生成 SVG 图标
+    if (!websiteWithDefaults.iconGenerateData) {
+      console.log('[websiteStore.addWebsite] 生成 SVG 图标...')
+      // 使用 normalizeWebsiteData 函数生成 SVG 图标
+      websiteWithDefaults = normalizeWebsiteData(websiteWithDefaults)
+      console.log('[websiteStore.addWebsite] SVG 图标生成完成:', websiteWithDefaults.iconGenerateData ? '成功' : '失败')
+    }
 
     // 先保存到数据库，获取 ID
     let dbId
