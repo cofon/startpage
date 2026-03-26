@@ -446,7 +446,7 @@ async function parseHtmlMetadata(html, url) {
   }
 
   // 获取图标数据
-  const iconData = await fetchIconAsBase64(iconUrl)
+  const iconData = await fetchIconAsBase64(iconUrl, url)
 
   console.log('[Background] 📊 最终结果:', {
     title: title ? `${title.substring(0, 50)}...` : '(空)',
@@ -518,7 +518,7 @@ async function getMetadataFromNewTab(url) {
 
     // 转换图标为base64
     console.log('[getMetadataFromNewTab] 开始获取iconData...');
-    const iconData = await fetchIconAsBase64(response.iconUrl);
+    const iconData = await fetchIconAsBase64(response.iconUrl, url);
     console.log('[getMetadataFromNewTab] 拿到了iconData:', iconData ? 'base64 格式' : '无');
 
     // 准备返回数据
@@ -538,11 +538,39 @@ async function getMetadataFromNewTab(url) {
 }
 
 // 获取图标并转换为base64
-async function fetchIconAsBase64(iconUrl) {
+async function fetchIconAsBase64(iconUrl, originalUrl) {
   if (!iconUrl) {
     return ''
   }
 
+  // 尝试获取图标
+  const iconData = await tryFetchIcon(iconUrl)
+  if (iconData) {
+    return iconData
+  }
+
+  // 如果失败，尝试使用原始 URL 的域名 + /favicon.ico
+  try {
+    const originalUrlObj = new URL(originalUrl)
+    const domainFaviconUrl = new URL('/favicon.ico', originalUrlObj.origin).href
+    
+    // 避免重复尝试
+    if (domainFaviconUrl !== iconUrl) {
+      console.log('尝试使用原始 URL 域名 favicon.ico:', domainFaviconUrl)
+      const domainIconData = await tryFetchIcon(domainFaviconUrl)
+      if (domainIconData) {
+        return domainIconData
+      }
+    }
+  } catch (error) {
+    console.error('生成原始 URL 域名 favicon.ico URL 失败:', error)
+  }
+
+  return ''
+}
+
+// 尝试获取图标并验证有效性
+async function tryFetchIcon(iconUrl) {
   try {
     const response = await fetch(iconUrl)
     if (!response.ok) {
@@ -550,6 +578,19 @@ async function fetchIconAsBase64(iconUrl) {
     }
 
     const blob = await response.blob()
+    
+    // 验证 blob 是否是有效的图片
+    if (!blob.type.startsWith('image/')) {
+      console.error('获取的图标不是有效的图片:', blob.type)
+      return ''
+    }
+
+    // 验证 blob 大小是否合理（至少10字节）
+    if (blob.size < 10) {
+      console.error('获取的图标大小不合理:', blob.size)
+      return ''
+    }
+
     return new Promise((resolve) => {
       const reader = new FileReader()
       reader.onloadend = () => {
