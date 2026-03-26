@@ -386,53 +386,53 @@ async function parseHtmlMetadata(html, url) {
   // 改进的 icon 提取逻辑（优先级从高到低）
   let iconUrl = ''
 
-  // 方法 1: 从 rel="icon" link 标签获取（属性顺序兼容）
-  const iconMatch =
-    html.match(/<link[^>]*rel=["']icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
-    html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']icon["'][^>]*>/i)
+  // 方法 1: 从 rel="icon" link 标签获取（支持多行和各种属性顺序）
+  const iconMatch = 
+    html.match(/<link[^>]*rel=["']icon["'].*?href=["']([^"']*)["'].*?>/is) ||
+    html.match(/<link[^>]*href=["']([^"']*)["'].*?rel=["']icon["'].*?>/is)
   if (iconMatch) {
     iconUrl = new URL(iconMatch[1], url).href
     console.log('[Background] ✅ 从 rel="icon" 获取 icon:', iconUrl)
   }
 
-  // 方法 2: 从 rel="shortcut icon" link 标签获取（属性顺序兼容）
+  // 方法 2: 从 rel="shortcut icon" link 标签获取（支持多行和各种属性顺序）
   if (!iconUrl) {
-    const shortcutIconMatch =
-      html.match(/<link[^>]*rel=["']shortcut icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
-      html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']shortcut icon["'][^>]*>/i)
+    const shortcutIconMatch = 
+      html.match(/<link[^>]*rel=["']shortcut icon["'].*?href=["']([^"']*)["'].*?>/is) ||
+      html.match(/<link[^>]*href=["']([^"']*)["'].*?rel=["']shortcut icon["'].*?>/is)
     if (shortcutIconMatch) {
       iconUrl = new URL(shortcutIconMatch[1], url).href
       console.log('[Background] ✅ 从 rel="shortcut icon" 获取 icon:', iconUrl)
     }
   }
 
-  // 方法 3: 从 rel="apple-touch-icon" link 标签获取（属性顺序兼容）
+  // 方法 3: 从 rel="apple-touch-icon" link 标签获取（支持多行和各种属性顺序）
   if (!iconUrl) {
-    const appleIconMatch =
-      html.match(/<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
-      html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']apple-touch-icon["'][^>]*>/i)
+    const appleIconMatch = 
+      html.match(/<link[^>]*rel=["']apple-touch-icon["'].*?href=["']([^"']*)["'].*?>/is) ||
+      html.match(/<link[^>]*href=["']([^"']*)["'].*?rel=["']apple-touch-icon["'].*?>/is)
     if (appleIconMatch) {
       iconUrl = new URL(appleIconMatch[1], url).href
       console.log('[Background] ✅ 从 rel="apple-touch-icon" 获取 icon:', iconUrl)
     }
   }
 
-  // 方法 4: 从 rel="mask-icon" link 标签获取（Safari）
+  // 方法 4: 从 rel="mask-icon" link 标签获取（Safari，支持多行和各种属性顺序）
   if (!iconUrl) {
-    const maskIconMatch =
-      html.match(/<link[^>]*rel=["']mask-icon["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
-      html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']mask-icon["'][^>]*>/i)
+    const maskIconMatch = 
+      html.match(/<link[^>]*rel=["']mask-icon["'].*?href=["']([^"']*)["'].*?>/is) ||
+      html.match(/<link[^>]*href=["']([^"']*)["'].*?rel=["']mask-icon["'].*?>/is)
     if (maskIconMatch) {
       iconUrl = new URL(maskIconMatch[1], url).href
       console.log('[Background] ✅ 从 rel="mask-icon" 获取 icon:', iconUrl)
     }
   }
 
-  // 方法 5: 从 SVG 图标文件获取
+  // 方法 5: 从 SVG 图标文件获取（支持多行和各种属性顺序）
   if (!iconUrl) {
-    const svgIconMatch =
-      html.match(/<link[^>]*rel=["']icon["'][^>]*href=["']([^"']*\.svg)["'][^>]*>/i) ||
-      html.match(/<link[^>]*href=["']([^"']*\.svg)["'][^>]*rel=["']icon["'][^>]*>/i)
+    const svgIconMatch = 
+      html.match(/<link[^>]*rel=["']icon["'].*?href=["']([^"']*\.svg)["'].*?>/is) ||
+      html.match(/<link[^>]*href=["']([^"']*\.svg)["'].*?rel=["']icon["'].*?>/is)
     if (svgIconMatch) {
       iconUrl = new URL(svgIconMatch[1], url).href
       console.log('[Background] ✅ 从 SVG 文件获取 icon:', iconUrl)
