@@ -102,8 +102,8 @@ function handleWebsiteClick(website, event) {
 <style scoped>
 .marked-website-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
   width: 100%;
 }
 
@@ -111,10 +111,10 @@ function handleWebsiteClick(website, event) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px;
   background-color: var(--color-bg-card);
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   user-select: none;
@@ -134,11 +134,18 @@ function handleWebsiteClick(website, event) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   height: 100%;
   text-decoration: none;
   color: inherit;
+}
+
+/* 调整标记网站列表中的图标大小为 36*36 */
+.website-link-wrapper :deep(.website-icon) {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
 }
 
 .website-info {
@@ -148,7 +155,7 @@ function handleWebsiteClick(website, event) {
 
 .website-name {
   display: block;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-text-main);
   overflow: hidden;
   text-overflow: ellipsis;
