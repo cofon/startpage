@@ -598,6 +598,10 @@ function handleMessage(message, sender, sendResponse) {
       handleExtensionSubmitWebsiteMeta(message, sendResponse)
       return true
 
+    case 'GET_WEBSITE_META':
+      handleStartPageRequestWebsiteMeta(message, sendResponse)
+      return true
+
     default:
       console.warn('未知消息类型:', message.type)
       sendResponse({
