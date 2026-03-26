@@ -198,8 +198,8 @@ export function separateWebsites(websites) {
  */
 export async function enrichWebsites(websites, config, progressCallback) {
   const total = websites.length
-  // 并行处理，提高导入速度
-  const batchSize = Math.min(config.batchSize || 10, 20); // 限制并发数量
+  // 并行处理，提高导入速度，固定批量大小为 8，避免浏览器卡顿
+  const batchSize = 8;
   
   for (let i = 0; i < websites.length; i += batchSize) {
     const batch = websites.slice(i, i + batchSize);
@@ -301,59 +301,115 @@ export async function importWebsitesToDB(websites, config, monitor, existingUrls
 
   if (!existingUrlsMap) {
     const existingWebsites = await db.getAllWebsites()
-    existingUrls.add(...existingWebsites.map((w) => w.url))
+    existingWebsites.forEach((w) => existingUrls.add(w.url))
   }
 
   // 检查内存使用
   MemoryOptimizer.checkMemoryUsage(500)
 
-  // 使用批量处理器
-  const batchProcessor = new BatchProcessor({
-    batchSize: config.batchSize,
-    delay: 100,
-    onProgress: (progress) => {
-      if (config.onProgress) {
-        config.onProgress({
-          phase: 'importing',
-          processed: progress.processed,
-          total: progress.total,
-          message: `正在导入网站到数据库... (${progress.processed}/${progress.total})`,
-        })
-      }
-    },
-  })
-
-  // 处理导入
-  await batchProcessor.process(websites, async (website) => {
-    try {
-      // 检查 URL 是否已存在
-      if (existingUrls.has(website.url)) {
-        if (config.onDuplicate === 'skip') {
-          result.skipped++
-          monitor.recordSuccess()
-        } else if (config.onDuplicate === 'update') {
-          await db.updateWebsite(website)
-          result.updated++
-          monitor.recordSuccess()
+  // 确保数据库已初始化
+  if (!db.db) {
+    await db.init()
+  }
+  
+  // 分块处理，每块使用单独的事务
+  const chunkSize = 100; // 每块处理 100 个网站
+  for (let i = 0; i < websites.length; i += chunkSize) {
+    const chunk = websites.slice(i, i + chunkSize);
+    
+    // 使用事务批量处理当前块
+    await new Promise((resolve, reject) => {
+      const transaction = db.db.transaction(['websites'], 'readwrite');
+      const store = transaction.objectStore('websites');
+      
+      let completed = 0;
+      const total = chunk.length;
+      
+      chunk.forEach(website => {
+        try {
+          // 检查 URL 是否已存在
+          if (existingUrls.has(website.url)) {
+            if (config.onDuplicate === 'skip') {
+              result.skipped++
+              monitor.recordSuccess()
+              completed++
+              if (completed === total) resolve();
+            } else if (config.onDuplicate === 'update') {
+              const request = store.put(website);
+              request.onsuccess = () => {
+                result.updated++
+                monitor.recordSuccess()
+                completed++
+                if (completed === total) resolve();
+              };
+              request.onerror = (event) => {
+                console.error('[ImportService] ❌ 更新失败:', website.url, event.target.error)
+                result.failed++
+                result.errors.push({
+                  url: website.url,
+                  error: event.target.error.message || '未知错误',
+                })
+                monitor.recordFailure()
+                completed++
+                if (completed === total) resolve();
+              };
+            }
+          } else {
+            // 导入网站，确保删除 id 字段，让 IndexedDB 自动生成
+            const plainWebsite = JSON.parse(JSON.stringify(website));
+            delete plainWebsite.id;
+            const request = store.add(plainWebsite);
+            request.onsuccess = () => {
+              result.success++
+              monitor.recordSuccess()
+              completed++
+              if (completed === total) resolve();
+            };
+            request.onerror = (event) => {
+              console.error('[ImportService] ❌ 导入失败:', website.url, event.target.error)
+              result.failed++
+              result.errors.push({
+                url: website.url,
+                error: event.target.error.message || '未知错误',
+              })
+              monitor.recordFailure()
+              completed++
+              if (completed === total) resolve();
+            };
+          }
+        } catch (error) {
+          console.error('[ImportService] ❌ 处理失败:', website.url, error)
+          result.failed++
+          result.errors.push({
+            url: website.url,
+            error: error.message || '未知错误',
+          })
+          monitor.recordFailure()
+          completed++
+          if (completed === total) resolve();
         }
-        return
-      }
-
-      // 导入网站
-      await db.addWebsite(website)
-      result.success++
-      monitor.recordSuccess()
-    } catch (error) {
-      console.error('[ImportService] ❌ 导入失败:', website.url, error)
-      console.error('[ImportService] 错误堆栈:', error.stack)
-      result.failed++
-      result.errors.push({
-        url: website.url,
-        error: error.message || '未知错误',
+      });
+      
+      transaction.oncomplete = () => {
+        resolve();
+      };
+      
+      transaction.onerror = (event) => {
+        reject(event.target.error);
+      };
+    });
+    
+    // 更新进度
+    const processed = Math.min(i + chunkSize, websites.length);
+    if (config.onProgress) {
+      config.onProgress({
+        phase: 'importing',
+        processed,
+        total: websites.length,
+        message: `正在导入网站到数据库... (${processed}/${websites.length})`,
       })
-      monitor.recordFailure()
     }
-  })
+  }
 
   // 结束数据库导入阶段
   monitor.endPhase()

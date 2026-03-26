@@ -50,9 +50,22 @@ async function handleImport(event) {
           notificationStore.success('导入成功！页面即将刷新...')
         }
 
-        setTimeout(() => {
-          window.location.reload()
-        }, 15000000000)
+        setTimeout(async () => {
+          // 避免使用 window.location.reload()
+          // 从数据库重新加载网站数据并更新 store
+          const { useWebsiteStore } = await import('../stores/website')
+          const websiteStore = useWebsiteStore()
+          const { default: db } = await import('../utils/database')
+          
+          try {
+            const websites = await db.getAllWebsites()
+            websiteStore.setWebsites(websites)
+          } catch (error) {
+            console.error('重新加载网站数据失败:', error)
+            // 如果重新加载失败，回退到页面刷新
+            window.location.reload()
+          }
+        }, 1000)
       } catch (error) {
         console.error('解析导入文件失败:', error)
         notificationStore.error('导入文件格式错误: ' + error.message)
