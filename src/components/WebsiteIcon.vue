@@ -67,22 +67,6 @@ onMounted(() => {
 
 // 图片加载失败时的处理
 async function onImageError() {
-  // 尝试从缓存或数据库获取完整的图标数据
-  if (props.website.id) {
-    try {
-      const iconData = await websiteStore.loadWebsiteIcon(props.website.id);
-      if (iconData) {
-        // 如果当前失败的是 iconData，尝试使用 iconGenerateData
-        if (iconData.iconGenerateData && currentIcon.value === iconData.iconData) {
-          currentIcon.value = iconData.iconGenerateData;
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('[WebsiteIcon] 获取图标数据失败:', error);
-    }
-  }
-
   // 生成一个基于网站名称的简单 SVG 图标作为后备
   function btoaUTF8(str) {
     return btoa(unescape(encodeURIComponent(str)));

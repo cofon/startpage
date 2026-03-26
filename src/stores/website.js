@@ -45,6 +45,13 @@ export const useWebsiteStore = defineStore('website', () => {
       const { iconData, iconGenerateData, ...coreData } = website
       return createWebsiteObject(coreData)
     })
+    
+    // 优先缓存标记的网站
+    data.forEach(website => {
+      if (website.isMarked && (website.iconData || website.iconGenerateData)) {
+        updateIconCache(website.id, website.iconData, website.iconGenerateData)
+      }
+    })
   }
 
   async function addWebsite(website) {
@@ -147,12 +154,22 @@ export const useWebsiteStore = defineStore('website', () => {
     }
   }
 
-  function markWebsite(id, order) {
+  async function markWebsite(id, order) {
     const website = websites.value.find(w => w.id === id)
     if (website) {
       website.isMarked = true
       website.markOrder = order
       website.updatedAt = new Date()
+      
+      // 当网站被标记时，优先缓存其图标数据
+      try {
+        const iconData = await loadWebsiteIcon(id)
+        if (iconData) {
+          updateIconCache(id, iconData.iconData, iconData.iconGenerateData)
+        }
+      } catch (error) {
+        console.error('[websiteStore] 缓存标记网站图标失败:', error)
+      }
     }
   }
 
