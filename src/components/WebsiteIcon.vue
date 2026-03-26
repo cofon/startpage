@@ -66,17 +66,31 @@ onMounted(() => {
 })
 
 // 图片加载失败时的处理
-function onImageError() {
-  // 如果当前正在尝试加载的是 iconData，并且存在 iconGenerateData，则使用 iconGenerateData
-  if (props.website.iconData && props.website.iconGenerateData && currentIcon.value === props.website.iconData) {
-    currentIcon.value = props.website.iconGenerateData
-    return
+async function onImageError() {
+  // 尝试从缓存或数据库获取完整的图标数据
+  if (props.website.id) {
+    try {
+      const iconData = await websiteStore.loadWebsiteIcon(props.website.id);
+      if (iconData) {
+        // 如果当前失败的是 iconData，尝试使用 iconGenerateData
+        if (iconData.iconGenerateData && currentIcon.value === iconData.iconData) {
+          currentIcon.value = iconData.iconGenerateData;
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('[WebsiteIcon] 获取图标数据失败:', error);
+    }
   }
 
   // 生成一个基于网站名称的简单 SVG 图标作为后备
+  function btoaUTF8(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  
   const fallbackIcon = props.website.name ?
-    `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="%2342b549"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial, sans-serif" font-size="24" fill="white">${props.website.name.charAt(0)}</text></svg>`)}`
-    : `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="%23999"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial, sans-serif" font-size="24" fill="white">?</text></svg>`)}`
+    `data:image/svg+xml;base64,${btoaUTF8(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="%2342b549"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial, sans-serif" font-size="24" fill="white">${props.website.name.charAt(0)}</text></svg>`)}`
+    : `data:image/svg+xml;base64,${btoaUTF8(`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="%23999"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial, sans-serif" font-size="24" fill="white">?</text></svg>`)}`
 
   currentIcon.value = fallbackIcon;
 }
