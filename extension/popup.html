@@ -237,6 +237,11 @@
       
       <div id="form" style="display: none;">
         <div class="form-group">
+          <label for="name">网站名称</label>
+          <input type="text" id="name" placeholder="输入网站名称">
+        </div>
+        
+        <div class="form-group">
           <label for="title">网站标题</label>
           <input type="text" id="title" placeholder="输入网站标题">
         </div>
@@ -244,6 +249,29 @@
         <div class="form-group">
           <label for="description">网站描述</label>
           <textarea id="description" placeholder="简短描述这个网站"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="tags">标签 (用逗号分隔)</label>
+          <input type="text" id="tags" placeholder="例如: 常用, 工作, 学习">
+        </div>
+        
+        <div class="form-group">
+          <label>状态</label>
+          <div style="display: flex; gap: 16px; margin-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal;">
+              <input type="checkbox" id="isMarked">
+              <span>标记</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal;">
+              <input type="checkbox" id="isActive" checked>
+              <span>激活</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal;">
+              <input type="checkbox" id="isHidden">
+              <span>隐藏</span>
+            </label>
+          </div>
         </div>
         
         <div class="form-group">
