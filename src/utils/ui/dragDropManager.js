@@ -83,23 +83,14 @@ export async function handleDrop(targetIndex, websiteStore, searchStore) {
   for (let i = 0; i < newOrder.length; i++) {
     const website = websiteStore.websites.find(w => w.id === newOrder[i])
     if (website) {
-      await db.updateWebsite({
-        id: website.id,
-        name: website.name,
-        url: website.url,
-        description: website.description || '',
-        tags: Array.isArray(website.tags) ? [...website.tags] : [],
-        visitCount: website.visitCount || 0,
-        isMarked: website.isMarked,
-        markOrder: i + 1,
-        isActive: website.isActive !== undefined ? website.isActive : true,
-        isHidden: website.isHidden !== undefined ? website.isHidden : false,
-        iconData: website.iconData,
-        iconGenerateData: website.iconGenerateData,
-        iconCanFetch: website.iconCanFetch,
-        iconFetchAttempts: website.iconFetchAttempts,
-        iconUrl: website.iconUrl
-      })
+      // 获取完整的网站数据（包含图标）
+      const fullWebsite = await db.getWebsiteById(website.id)
+      if (fullWebsite) {
+        await db.updateWebsite({
+          ...fullWebsite,
+          markOrder: i + 1
+        })
+      }
     }
   }
 

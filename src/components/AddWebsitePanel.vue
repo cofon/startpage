@@ -303,22 +303,38 @@ async function processUrlChange(url) {
     console.log('[processUrlChange] 提取的根域名:', rootDomain)
 
     if (rootDomain) {
+      // 先找到相同根域名的网站（不需要图标数据）
       const existingWebsiteWithSameRoot = websiteStore.websites.find((website) => {
         try {
           const websiteHostname = new URL(website.url).hostname
           const websiteRootDomain = extractRootDomain(websiteHostname)
-          return websiteRootDomain === rootDomain && website.iconGenerateData
+          return websiteRootDomain === rootDomain
         } catch {
           return false
         }
       })
 
-      if (existingWebsiteWithSameRoot && existingWebsiteWithSameRoot.iconGenerateData) {
-        formData.value.iconGenerateData = existingWebsiteWithSameRoot.iconGenerateData
-        console.log(
-          '[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:',
-          existingWebsiteWithSameRoot.name,
-        )
+      if (existingWebsiteWithSameRoot) {
+        // 异步获取完整数据（包含图标）
+        const websiteWithIcon = await websiteStore.getWebsiteWithIcon(existingWebsiteWithSameRoot.id)
+        if (websiteWithIcon?.iconGenerateData) {
+          formData.value.iconGenerateData = websiteWithIcon.iconGenerateData
+          console.log(
+            '[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:',
+            existingWebsiteWithSameRoot.name,
+          )
+        } else {
+          // 找到网站但没有图标数据，生成新的
+          const normalizedData = normalizeWebsiteData({
+            url: url,
+            name: formData.value.name || extractSiteNameFromUrl(url),
+          })
+          formData.value.iconGenerateData = normalizedData.iconGenerateData
+          formData.value.tags = Array.isArray(normalizedData.tags)
+            ? normalizedData.tags.join(', ')
+            : ''
+          console.log('[processUrlChange] - 找到相同根域名网站但无图标，已生成新 SVG')
+        }
       } else {
         const normalizedData = normalizeWebsiteData({
           url: url,

@@ -1,39 +1,67 @@
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { useWebsiteStore } from '../stores/website'
 
 const props = defineProps({
   website: {
     type: Object,
     required: true
+  },
+  lazy: {
+    type: Boolean,
+    default: true // 默认启用懒加载
   }
 })
 
+const websiteStore = useWebsiteStore()
 const currentIcon = ref('')
+const isLoading = ref(false)
 
-// 加载图标 - 直接使用已有的图标数据，不再获取或生成
-function loadIcon() {
+// 加载图标 - 支持懒加载
+async function loadIcon() {
   if (!props.website) {
     currentIcon.value = ''
     return
   }
 
-  // 直接使用已有的图标数据
-  const { iconData, iconGenerateData } = props.website
-  
-  if (iconData) {
-    // 优先使用网络获取的 icon
-    currentIcon.value = iconData
-  } else if (iconGenerateData) {
-    // 其次使用生成的 SVG
-    currentIcon.value = iconGenerateData
-  } else {
-    // 如果都没有，显示空图标
-    currentIcon.value = ''
+  // 如果 website 对象已经包含图标数据，直接使用
+  if (props.website.iconData || props.website.iconGenerateData) {
+    const { iconData, iconGenerateData } = props.website
+    if (iconData) {
+      currentIcon.value = iconData
+    } else if (iconGenerateData) {
+      currentIcon.value = iconGenerateData
+    }
+    return
+  }
+
+  // 需要从缓存或数据库加载图标
+  if (props.lazy && props.website.id) {
+    isLoading.value = true
+    try {
+      const iconData = await websiteStore.loadWebsiteIcon(props.website.id)
+      if (iconData) {
+        if (iconData.iconData) {
+          currentIcon.value = iconData.iconData
+        } else if (iconData.iconGenerateData) {
+          currentIcon.value = iconData.iconGenerateData
+        }
+      }
+    } catch (error) {
+      console.error('[WebsiteIcon] 加载图标失败:', error)
+    } finally {
+      isLoading.value = false
+    }
   }
 }
 
 // 监听 website 变化
-watchEffect(() => {
+watch(() => props.website, () => {
+  loadIcon()
+}, { immediate: true })
+
+// 组件挂载时加载图标
+onMounted(() => {
   loadIcon()
 })
 

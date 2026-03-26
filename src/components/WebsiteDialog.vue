@@ -136,23 +136,27 @@ const dialogTitle = computed(() => {
 })
 
 // 打开对话框时初始化表单
-function openDialog() {
+async function openDialog() {
   if (props.website) {
+    // 从 store 获取完整的网站数据（包含图标）
+    const websiteWithIcon = await websiteStore.getWebsiteWithIcon(props.website.id)
+    const websiteData = websiteWithIcon || props.website
+    
     form.value = {
-      name: props.website.name || '',
-      title: props.website.title || '',
-      url: props.website.url,
-      description: props.website.description || '',
-      tags: props.website.tags ? [...props.website.tags] : [],
-      isMarked: props.website.isMarked || false,
-      isActive: props.website.isActive !== undefined ? props.website.isActive : true,
-      isHidden: props.website.isHidden || false,
+      name: websiteData.name || '',
+      title: websiteData.title || '',
+      url: websiteData.url,
+      description: websiteData.description || '',
+      tags: websiteData.tags ? [...websiteData.tags] : [],
+      isMarked: websiteData.isMarked || false,
+      isActive: websiteData.isActive !== undefined ? websiteData.isActive : true,
+      isHidden: websiteData.isHidden || false,
       // 保留现有的图标相关字段
-      iconData: props.website.iconData || '',
-      iconGenerateData: props.website.iconGenerateData || ''
+      iconData: websiteData.iconData || '',
+      iconGenerateData: websiteData.iconGenerateData || ''
     }
     // 将标签数组转换为逗号分隔的字符串
-    tagInput.value = props.website.tags ? props.website.tags.join(', ') : ''
+    tagInput.value = websiteData.tags ? websiteData.tags.join(', ') : ''
   } else {
     // 新建网站时初始化所有字段
     form.value = {

@@ -243,6 +243,28 @@ class IndexedDB {
     })
   }
 
+  // 获取单个网站（包含完整数据，用于按需加载图标）
+  async getWebsiteById(id) {
+    if (!this.db) {
+      throw new Error('数据库未初始化')
+    }
+
+    const transaction = this.db.transaction([STORE_WEBSITES], 'readonly')
+    const store = transaction.objectStore(STORE_WEBSITES)
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(id)
+
+      request.onsuccess = () => {
+        resolve(request.result)
+      }
+
+      request.onerror = () => {
+        reject(request.error)
+      }
+    })
+  }
+
   // 获取设置
   async getSettings() {
     if (!this.db) {
