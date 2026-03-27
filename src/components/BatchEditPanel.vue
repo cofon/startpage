@@ -358,6 +358,39 @@ async function executeBatchEdit() {
   }
 }
 
+// 截断输入值
+function truncateValue() {
+  const MAX_LENGTH = 10000 // 最大字符数
+  if (operationConfig.newValue && operationConfig.newValue.length > MAX_LENGTH) {
+    operationConfig.newValue = operationConfig.newValue.substring(0, MAX_LENGTH)
+  }
+}
+
+// 截断文本
+function truncateText(text, maxLength = 50) {
+  if (!text || typeof text !== 'string') return text
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// 重置条件
+function resetConditions() {
+  conditionGroups.value = [
+    {
+      id: 'group1',
+      conditions: [
+        {
+          id: 'cond1',
+          field: 'url',
+          operator: 'contains',
+          value: ''
+        }
+      ]
+    }
+  ]
+  updateMatchedCount()
+}
+
 // 添加条件组
 function addGroup() {
   const newGroupId = `group${conditionGroups.value.length + 1}`
@@ -519,6 +552,12 @@ onMounted(() => {
       <div class="matched-info">
         <p v-if="isLoading">计算中...</p>
         <p v-else>符合条件的网站数量：<strong>{{ matchedCount }}</strong></p>
+        <button 
+          class="reset-conditions-button"
+          @click="resetConditions"
+        >
+          重置条件
+        </button>
       </div>
     </div>
     
@@ -526,6 +565,37 @@ onMounted(() => {
     <div v-if="currentStep === 2" class="step-content">
       <h4>选择操作类型</h4>
       
+      <!-- 显示筛选条件 -->
+      <div class="selected-conditions">
+        <h5>已选择的筛选条件：</h5>
+        <div v-if="conditionGroups.length === 0" class="condition-empty">
+          无筛选条件（将应用于所有网站）
+        </div>
+        <div v-else class="condition-list">
+          <div 
+            v-for="(group, groupIndex) in conditionGroups" 
+            :key="group.id"
+            class="condition-group-preview"
+          >
+            <div class="group-label">条件组 {{ groupIndex + 1 }}：</div>
+            <div class="group-conditions-preview">
+              <div 
+                v-for="(condition, condIndex) in group.conditions" 
+                :key="condition.id"
+                class="condition-item-preview"
+              >
+                {{ fieldOptions.find(f => f.value === condition.field)?.label }} 
+                {{ operatorOptions.find(o => o.value === condition.operator)?.label }}
+                <span v-if="!['isEmpty', 'notEmpty', 'valid', 'invalid'].includes(condition.operator)">
+                  "{{ condition.value }}"
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 操作类型选择 -->
       <div class="operation-type-selector">
         <label>操作类型：</label>
         <select v-model="operationConfig.type">
@@ -533,6 +603,60 @@ onMounted(() => {
             {{ type.label }}
           </option>
         </select>
+      </div>
+      
+      <!-- 操作描述 -->
+      <div class="operation-description">
+        <h5>操作描述：</h5>
+        <div class="description-content">
+          <div v-if="operationConfig.type === 'field'">
+            修改 <strong>{{ fieldOptions.find(f => f.value === operationConfig.field)?.label }}</strong> 字段：
+            <span v-if="operationConfig.action === 'replace'">
+              将 "{{ truncateText(operationConfig.find) }}" 替换为 "{{ truncateText(operationConfig.replace) }}"
+            </span>
+            <span v-else-if="operationConfig.action === 'prefix'">
+              在开头添加 "{{ truncateText(operationConfig.prefix) }}"
+            </span>
+            <span v-else-if="operationConfig.action === 'suffix'">
+              在末尾添加 "{{ truncateText(operationConfig.suffix) }}"
+            </span>
+            <span v-else-if="operationConfig.action === 'set'">
+              设置为 "{{ truncateText(operationConfig.newValue) }}"
+            </span>
+            <span v-else-if="operationConfig.action === 'clear'">
+              清空字段值
+            </span>
+          </div>
+          <div v-else-if="operationConfig.type === 'tag'">
+            <span v-if="operationConfig.action === 'add'">
+              为网站添加标签 "{{ operationConfig.newTag }}"
+            </span>
+            <span v-else-if="operationConfig.action === 'remove'">
+              从网站移除标签 "{{ operationConfig.oldTag }}"
+            </span>
+            <span v-else-if="operationConfig.action === 'replace'">
+              将标签 "{{ operationConfig.oldTag }}" 替换为 "{{ operationConfig.newTag }}"
+            </span>
+          </div>
+          <div v-else-if="operationConfig.type === 'icon'">
+            <span v-if="operationConfig.action === 'refetch'">
+              重新从网站获取图标数据（iconData）
+            </span>
+            <span v-else-if="operationConfig.action === 'default'">
+              将图标设置为默认的 SVG 图标（清空 iconData，保留或生成 iconGenerateData）
+            </span>
+            <span v-else-if="operationConfig.action === 'clear'">
+              清除所有图标数据（同时清空 iconData 和 iconGenerateData）
+            </span>
+          </div>
+          <div v-else-if="operationConfig.type === 'status'">
+            将 <strong>{{ statusFields.find(f => f.value === operationConfig.statusField)?.label }}</strong> 设置为
+            <strong>{{ operationConfig.statusValue ? '是' : '否' }}</strong>
+          </div>
+          <div v-else>
+            请选择操作类型
+          </div>
+        </div>
       </div>
       
       <!-- 字段修改配置 -->
@@ -571,7 +695,11 @@ onMounted(() => {
         </div>
         <div v-if="operationConfig.action === 'set'" class="config-row">
           <label>新值：</label>
-          <input v-model="operationConfig.newValue" type="text" placeholder="设置的新值" />
+          <input 
+            v-model="operationConfig.newValue" 
+            type="text" 
+            placeholder="设置的新值" 
+          />
         </div>
       </div>
       
@@ -909,6 +1037,90 @@ onMounted(() => {
   font-size: 18px;
 }
 
+.reset-conditions-button {
+  margin-top: 12px;
+  padding: 6px 12px;
+  background-color: var(--color-bg-hover);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.reset-conditions-button:hover {
+  background-color: var(--color-bg-active);
+}
+
+.input-hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  margin-left: 90px;
+}
+
+.value-input {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 选择的筛选条件 */
+.selected-conditions {
+  background-color: var(--color-bg-input);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.selected-conditions h5,
+.operation-description h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--color-text-main);
+}
+
+.condition-empty {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.condition-group-preview {
+  margin-bottom: 10px;
+}
+
+.condition-group-preview .group-label {
+  font-weight: 500;
+  color: var(--color-text-main);
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.condition-item-preview {
+  margin-left: 20px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* 操作描述 */
+.operation-description {
+  background-color: var(--color-bg-hover);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.description-content {
+  font-size: 14px;
+  color: var(--color-text-main);
+  line-height: 1.4;
+}
+
 /* 操作配置 */
 .operation-type-selector,
 .config-row {
@@ -1073,10 +1285,14 @@ onMounted(() => {
 }
 
 .execute-button {
-  background-color: var(--color-success);
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
 }
 
 .execute-button:hover:not(:disabled) {
-  background-color: var(--color-success-hover);
+  background-color: var(--color-bg-active);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
 }
 </style>
