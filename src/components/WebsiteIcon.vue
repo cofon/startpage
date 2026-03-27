@@ -28,28 +28,18 @@ async function loadIcon() {
   // 重置标记
   triedIconGenerateData.value = false
 
-  // 如果 website 对象已经包含图标数据，直接使用
-  if (props.website.iconData || props.website.iconGenerateData) {
-    const { iconData, iconGenerateData } = props.website
-    if (iconData) {
-      currentIcon.value = iconData
-    } else if (iconGenerateData) {
-      currentIcon.value = iconGenerateData
-      triedIconGenerateData.value = true
-    }
-    return
-  }
-
-  // 需要从缓存或数据库加载图标
-  if (props.lazy && props.website.id) {
+  // 无论 website 对象是否包含图标数据，都从缓存或数据库加载完整的图标数据
+  // 这样可以确保使用最新的图标数据，而不是依赖于传递的 website 对象
+  if (props.website.id) {
     isLoading.value = true
     try {
-      const iconData = await websiteStore.loadWebsiteIcon(props.website.id)
-      if (iconData) {
-        if (iconData.iconData) {
-          currentIcon.value = iconData.iconData
-        } else if (iconData.iconGenerateData) {
-          currentIcon.value = iconData.iconGenerateData
+      const iconDataResult = await websiteStore.loadWebsiteIcon(props.website.id)
+      if (iconDataResult) {
+        // 优先使用 iconData，只有当它不是空字符串时才使用
+        if (iconDataResult.iconData && iconDataResult.iconData.trim() !== '') {
+          currentIcon.value = iconDataResult.iconData
+        } else if (iconDataResult.iconGenerateData) {
+          currentIcon.value = iconDataResult.iconGenerateData
           triedIconGenerateData.value = true
         }
       }
@@ -80,9 +70,9 @@ async function onImageError() {
     // 尝试从缓存或数据库获取 iconGenerateData
     if (props.website.id) {
       try {
-        const iconData = await websiteStore.loadWebsiteIcon(props.website.id)
-        if (iconData && iconData.iconGenerateData) {
-          currentIcon.value = iconData.iconGenerateData
+        const iconDataResult = await websiteStore.loadWebsiteIcon(props.website.id)
+        if (iconDataResult && iconDataResult.iconGenerateData) {
+          currentIcon.value = iconDataResult.iconGenerateData
           return
         }
       } catch (error) {
