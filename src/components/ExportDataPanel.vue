@@ -95,13 +95,39 @@ const sortOrderOptions = [
   { value: 'desc', label: '降序' }
 ]
 
+// 存储从数据库获取的完整网站数据
+const allWebsites = ref([])
+
+// 从数据库加载完整网站数据
+async function loadAllWebsites() {
+  try {
+    const db = await import('../utils/database')
+    allWebsites.value = await db.default.getAllWebsites()
+  } catch (error) {
+    console.error('加载网站数据失败:', error)
+    allWebsites.value = []
+  }
+}
+
+// 组件挂载时加载数据
+import { onMounted } from 'vue'
+onMounted(() => {
+  loadAllWebsites()
+})
+
+// 监听条件变化时重新加载数据
+import { watch } from 'vue'
+watch(() => exportConfig.value.conditions, () => {
+  loadAllWebsites()
+}, { deep: true })
+
 // 计算符合条件的网站数量
 const filteredWebsitesCount = computed(() => {
   if (exportMode.value === 'basic') {
-    return websiteStore.websites.length
+    return allWebsites.value.length
   }
   
-  return websiteStore.websites.filter(website => {
+  return allWebsites.value.filter(website => {
     if (exportConfig.value.conditions.length === 0) {
       return true
     }
@@ -187,8 +213,11 @@ async function handleExport() {
       exportDate: new Date().toISOString()
     }
     
+    // 确保使用最新的网站数据
+    await loadAllWebsites()
+    
     // 导出网站数据
-    let websites = await db.default.getAllWebsites()
+    let websites = [...allWebsites.value]
     
     // 如果是高级模式，应用筛选条件
     if (exportMode.value === 'advanced') {
