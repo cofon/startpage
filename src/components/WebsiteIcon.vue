@@ -16,6 +16,7 @@ const props = defineProps({
 const websiteStore = useWebsiteStore()
 const currentIcon = ref('')
 const isLoading = ref(false)
+const triedIconGenerateData = ref(false) // 标记是否已经尝试过 iconGenerateData
 
 // 加载图标 - 支持懒加载
 async function loadIcon() {
@@ -24,6 +25,9 @@ async function loadIcon() {
     return
   }
 
+  // 重置标记
+  triedIconGenerateData.value = false
+
   // 如果 website 对象已经包含图标数据，直接使用
   if (props.website.iconData || props.website.iconGenerateData) {
     const { iconData, iconGenerateData } = props.website
@@ -31,6 +35,7 @@ async function loadIcon() {
       currentIcon.value = iconData
     } else if (iconGenerateData) {
       currentIcon.value = iconGenerateData
+      triedIconGenerateData.value = true
     }
     return
   }
@@ -45,6 +50,7 @@ async function loadIcon() {
           currentIcon.value = iconData.iconData
         } else if (iconData.iconGenerateData) {
           currentIcon.value = iconData.iconGenerateData
+          triedIconGenerateData.value = true
         }
       }
     } catch (error) {
@@ -67,7 +73,25 @@ onMounted(() => {
 
 // 图片加载失败时的处理
 async function onImageError() {
-  // 生成一个基于网站名称的简单 SVG 图标作为后备
+  // 如果还没有尝试过 iconGenerateData，先尝试使用它
+  if (!triedIconGenerateData.value) {
+    triedIconGenerateData.value = true
+    
+    // 尝试从缓存或数据库获取 iconGenerateData
+    if (props.website.id) {
+      try {
+        const iconData = await websiteStore.loadWebsiteIcon(props.website.id)
+        if (iconData && iconData.iconGenerateData) {
+          currentIcon.value = iconData.iconGenerateData
+          return
+        }
+      } catch (error) {
+        console.error('[WebsiteIcon] 获取 iconGenerateData 失败:', error)
+      }
+    }
+  }
+  
+  // 如果 iconGenerateData 也失败了，生成一个基于网站名称的简单 SVG 图标作为后备
   function btoaUTF8(str) {
     return btoa(unescape(encodeURIComponent(str)));
   }
