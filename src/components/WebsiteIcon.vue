@@ -27,18 +27,54 @@ async function loadIcon() {
 
   // 重置标记
   triedIconGenerateData.value = false
+  
+  // 在加载数据前，先设置为 loading 状态，避免 img 标签尝试加载空值或旧值
+  isLoading.value = true
+  currentIcon.value = '' // 清空当前图标，防止显示旧数据
 
   // 无论 website 对象是否包含图标数据，都从缓存或数据库加载完整的图标数据
   // 这样可以确保使用最新的图标数据，而不是依赖于传递的 website 对象
   if (props.website.id) {
-    isLoading.value = true
     try {
       const iconDataResult = await websiteStore.loadWebsiteIcon(props.website.id)
       if (iconDataResult) {
+        // 添加调试日志
+        console.log('[WebsiteIcon] 加载图标数据:', {
+          id: props.website.id,
+          name: props.website.name,
+          iconDataLength: iconDataResult.iconData ? iconDataResult.iconData.length : 0,
+          iconGenerateDataLength: iconDataResult.iconGenerateData ? iconDataResult.iconGenerateData.length : 0
+        })
+        
         // 优先使用 iconData，只有当它不是空字符串时才使用
         if (iconDataResult.iconData && iconDataResult.iconData.trim() !== '') {
+          console.log('[WebsiteIcon] ✓ 使用 iconData:', {
+            id: props.website.id,
+            name: props.website.name,
+            iconDataLength: iconDataResult.iconData.length,
+            iconDataPreview: iconDataResult.iconData.substring(0, 50),
+            triedIconGenerateData: triedIconGenerateData.value
+          })
           currentIcon.value = iconDataResult.iconData
+          console.log('[WebsiteIcon] currentIcon 已设置为 iconData:', {
+            length: currentIcon.value.length,
+            preview: currentIcon.value.substring(0, 50),
+            type: typeof currentIcon.value
+          })
+          
+          // 立即检查 img 元素的状态
+          setTimeout(() => {
+            console.log('[WebsiteIcon] 延迟检查 - currentIcon:', {
+              length: currentIcon.value.length,
+              preview: currentIcon.value.substring(0, 50)
+            })
+          }, 100)
         } else if (iconDataResult.iconGenerateData) {
+          console.log('[WebsiteIcon] 使用 iconGenerateData:', {
+            id: props.website.id,
+            name: props.website.name,
+            iconGenerateDataLength: iconDataResult.iconGenerateData.length
+          })
           currentIcon.value = iconDataResult.iconGenerateData
           triedIconGenerateData.value = true
         }
@@ -61,8 +97,29 @@ onMounted(() => {
   loadIcon()
 })
 
+// 图片加载成功时的处理
+function onImageLoad() {
+  console.log('[WebsiteIcon] ✓ 图片加载成功:', {
+    id: props.website.id,
+    name: props.website.name,
+    srcType: currentIcon.value.startsWith('data:image/svg') ? 'SVG' : (currentIcon.value.startsWith('data:image/x-icon') ? 'ICO' : '其他'),
+    srcPreview: currentIcon.value.substring(0, 50),
+    srcLength: currentIcon.value.length
+  })
+}
+
 // 图片加载失败时的处理
 async function onImageError() {
+  console.error('[WebsiteIcon] ✗ 图片加载失败，准备切换备用方案:', {
+    id: props.website.id,
+    name: props.website.name,
+    currentSrcValue: currentIcon.value, // 打印完整值用于调试
+    currentSrcType: currentIcon.value && currentIcon.value.startsWith ? (currentIcon.value.startsWith('data:image/svg') ? 'SVG' : (currentIcon.value.startsWith('data:image/x-icon') ? 'ICO' : '其他')) : '未知类型',
+    currentSrcPreview: currentIcon.value ? currentIcon.value.substring(0, 50) : '空字符串',
+    currentSrcLength: currentIcon.value ? currentIcon.value.length : 0,
+    triedIconGenerateData: triedIconGenerateData.value
+  })
+  
   // 如果还没有尝试过 iconGenerateData，先尝试使用它
   if (!triedIconGenerateData.value) {
     triedIconGenerateData.value = true
@@ -72,6 +129,11 @@ async function onImageError() {
       try {
         const iconDataResult = await websiteStore.loadWebsiteIcon(props.website.id)
         if (iconDataResult && iconDataResult.iconGenerateData) {
+          console.log('[WebsiteIcon] 切换到 iconGenerateData:', {
+            id: props.website.id,
+            name: props.website.name,
+            iconGenerateDataLength: iconDataResult.iconGenerateData.length
+          })
           currentIcon.value = iconDataResult.iconGenerateData
           return
         }
@@ -96,11 +158,16 @@ async function onImageError() {
 
 <template>
   <img
+    v-if="!isLoading && currentIcon"
     :src="currentIcon"
     :alt="website?.name || 'icon'"
     class="website-icon"
+    @load="onImageLoad"
     @error="onImageError"
   >
+  <div v-else class="website-icon-placeholder">
+    {{ website?.name?.charAt(0) || '?' }}
+  </div>
 </template>
 
 <style scoped>
@@ -110,5 +177,19 @@ async function onImageError() {
   object-fit: contain;
   background-color: var(--color-bg-page);
   border-radius: 8px;
+}
+
+.website-icon-placeholder {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-page);
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  background-color: #999;
 }
 </style>

@@ -287,6 +287,11 @@ export const useWebsiteStore = defineStore('website', () => {
     // 检查缓存
     const cached = getIconFromCache(id)
     if (cached) {
+      console.log('[websiteStore] 从缓存获取图标:', {
+        id,
+        iconDataLength: cached.iconData ? cached.iconData.length : 0,
+        iconGenerateDataLength: cached.iconGenerateData ? cached.iconGenerateData.length : 0
+      })
       return cached
     }
 
@@ -294,6 +299,11 @@ export const useWebsiteStore = defineStore('website', () => {
     try {
       const website = await db.getWebsiteById(id)
       if (website) {
+        console.log('[websiteStore] 从数据库获取图标:', {
+          id,
+          iconDataLength: website.iconData ? website.iconData.length : 0,
+          iconGenerateDataLength: website.iconGenerateData ? website.iconGenerateData.length : 0
+        })
         updateIconCache(id, website.iconData, website.iconGenerateData)
         return {
           iconData: website.iconData,
