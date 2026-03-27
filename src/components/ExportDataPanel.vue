@@ -121,6 +121,8 @@ const operatorOptions = [
   { value: 'notContains', label: '不包含' },
   { value: 'isEmpty', label: '为空' },
   { value: 'notEmpty', label: '不为空' },
+  { value: 'valid', label: '有效值' },
+  { value: 'invalid', label: '无效值' },
   { value: 'greaterThan', label: '大于' },
   { value: 'lessThan', label: '小于' }
 ]
@@ -228,6 +230,15 @@ watch(() => exportMode.value, (newMode) => {
   updateFilteredCount()
 })
 
+// 判断图标数据是否有效
+function isValidIconData(iconData) {
+  if (!iconData || typeof iconData !== 'string') {
+    return false
+  }
+  // 检查是否是有效的 Base64 编码的图片数据
+  return iconData.startsWith('data:image/') && iconData.includes('base64,')
+}
+
 // 评估单个条件
 function evaluateCondition(website, condition) {
   const { field, operator, value } = condition
@@ -246,6 +257,20 @@ function evaluateCondition(website, condition) {
       return !fieldValue || fieldValue === '' || (Array.isArray(fieldValue) && fieldValue.length === 0)
     case 'notEmpty':
       return fieldValue && fieldValue !== '' && (!Array.isArray(fieldValue) || fieldValue.length > 0)
+    case 'valid':
+      // 对于图标数据，判断是否是有效的 Base64 编码
+      if (field === 'iconData' || field === 'iconGenerateData') {
+        return isValidIconData(fieldValue)
+      }
+      // 对于其他字段，非空即为有效
+      return fieldValue !== undefined && fieldValue !== null && fieldValue !== ''
+    case 'invalid':
+      // 对于图标数据，判断是否是无效的 Base64 编码
+      if (field === 'iconData' || field === 'iconGenerateData') {
+        return !isValidIconData(fieldValue)
+      }
+      // 对于其他字段，空值即为无效
+      return fieldValue === undefined || fieldValue === null || fieldValue === ''
     case 'greaterThan':
       return parseFloat(fieldValue) > parseFloat(value)
     case 'lessThan':
