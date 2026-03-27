@@ -38,43 +38,10 @@ async function loadIcon() {
     try {
       const iconDataResult = await websiteStore.loadWebsiteIcon(props.website.id)
       if (iconDataResult) {
-        // 添加调试日志
-        console.log('[WebsiteIcon] 加载图标数据:', {
-          id: props.website.id,
-          name: props.website.name,
-          iconDataLength: iconDataResult.iconData ? iconDataResult.iconData.length : 0,
-          iconGenerateDataLength: iconDataResult.iconGenerateData ? iconDataResult.iconGenerateData.length : 0
-        })
-        
         // 优先使用 iconData，只有当它不是空字符串时才使用
         if (iconDataResult.iconData && iconDataResult.iconData.trim() !== '') {
-          console.log('[WebsiteIcon] ✓ 使用 iconData:', {
-            id: props.website.id,
-            name: props.website.name,
-            iconDataLength: iconDataResult.iconData.length,
-            iconDataPreview: iconDataResult.iconData.substring(0, 50),
-            triedIconGenerateData: triedIconGenerateData.value
-          })
           currentIcon.value = iconDataResult.iconData
-          console.log('[WebsiteIcon] currentIcon 已设置为 iconData:', {
-            length: currentIcon.value.length,
-            preview: currentIcon.value.substring(0, 50),
-            type: typeof currentIcon.value
-          })
-          
-          // 立即检查 img 元素的状态
-          setTimeout(() => {
-            console.log('[WebsiteIcon] 延迟检查 - currentIcon:', {
-              length: currentIcon.value.length,
-              preview: currentIcon.value.substring(0, 50)
-            })
-          }, 100)
         } else if (iconDataResult.iconGenerateData) {
-          console.log('[WebsiteIcon] 使用 iconGenerateData:', {
-            id: props.website.id,
-            name: props.website.name,
-            iconGenerateDataLength: iconDataResult.iconGenerateData.length
-          })
           currentIcon.value = iconDataResult.iconGenerateData
           triedIconGenerateData.value = true
         }
@@ -99,27 +66,11 @@ onMounted(() => {
 
 // 图片加载成功时的处理
 function onImageLoad() {
-  console.log('[WebsiteIcon] ✓ 图片加载成功:', {
-    id: props.website.id,
-    name: props.website.name,
-    srcType: currentIcon.value.startsWith('data:image/svg') ? 'SVG' : (currentIcon.value.startsWith('data:image/x-icon') ? 'ICO' : '其他'),
-    srcPreview: currentIcon.value.substring(0, 50),
-    srcLength: currentIcon.value.length
-  })
+  // 图片加载成功，无需处理
 }
 
 // 图片加载失败时的处理
 async function onImageError() {
-  console.error('[WebsiteIcon] ✗ 图片加载失败，准备切换备用方案:', {
-    id: props.website.id,
-    name: props.website.name,
-    currentSrcValue: currentIcon.value, // 打印完整值用于调试
-    currentSrcType: currentIcon.value && currentIcon.value.startsWith ? (currentIcon.value.startsWith('data:image/svg') ? 'SVG' : (currentIcon.value.startsWith('data:image/x-icon') ? 'ICO' : '其他')) : '未知类型',
-    currentSrcPreview: currentIcon.value ? currentIcon.value.substring(0, 50) : '空字符串',
-    currentSrcLength: currentIcon.value ? currentIcon.value.length : 0,
-    triedIconGenerateData: triedIconGenerateData.value
-  })
-  
   // 如果还没有尝试过 iconGenerateData，先尝试使用它
   if (!triedIconGenerateData.value) {
     triedIconGenerateData.value = true
@@ -129,11 +80,6 @@ async function onImageError() {
       try {
         const iconDataResult = await websiteStore.loadWebsiteIcon(props.website.id)
         if (iconDataResult && iconDataResult.iconGenerateData) {
-          console.log('[WebsiteIcon] 切换到 iconGenerateData:', {
-            id: props.website.id,
-            name: props.website.name,
-            iconGenerateDataLength: iconDataResult.iconGenerateData.length
-          })
           currentIcon.value = iconDataResult.iconGenerateData
           return
         }

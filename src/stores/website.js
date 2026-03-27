@@ -45,7 +45,7 @@ export const useWebsiteStore = defineStore('website', () => {
       const { iconData, iconGenerateData, ...coreData } = website
       return createWebsiteObject(coreData)
     })
-    
+
     // 优先缓存标记的网站
     data.forEach(website => {
       if (website.isMarked && (website.iconData !== undefined || website.iconGenerateData !== undefined)) {
@@ -120,7 +120,7 @@ export const useWebsiteStore = defineStore('website', () => {
     if (index !== -1) {
       // 从数据库获取完整的网站数据，包括图标数据
       const fullWebsiteData = await db.getWebsiteById(id)
-      
+
       // 创建一个新的网站对象，确保数组类型的字段也被正确更新
       const updatedWebsite = {
         ...fullWebsiteData, // 使用完整的数据库数据作为基础
@@ -163,7 +163,7 @@ export const useWebsiteStore = defineStore('website', () => {
       website.isMarked = true
       website.markOrder = order
       website.updatedAt = new Date()
-      
+
       // 当网站被标记时，优先缓存其图标数据
       try {
         const iconData = await loadWebsiteIcon(id)
@@ -287,11 +287,11 @@ export const useWebsiteStore = defineStore('website', () => {
     // 检查缓存
     const cached = getIconFromCache(id)
     if (cached) {
-      console.log('[websiteStore] 从缓存获取图标:', {
-        id,
-        iconDataLength: cached.iconData ? cached.iconData.length : 0,
-        iconGenerateDataLength: cached.iconGenerateData ? cached.iconGenerateData.length : 0
-      })
+      // console.log('[websiteStore] 从缓存获取图标:', {
+      //   id,
+      //   iconDataLength: cached.iconData ? cached.iconData.length : 0,
+      //   iconGenerateDataLength: cached.iconGenerateData ? cached.iconGenerateData.length : 0
+      // })
       return cached
     }
 
@@ -299,11 +299,6 @@ export const useWebsiteStore = defineStore('website', () => {
     try {
       const website = await db.getWebsiteById(id)
       if (website) {
-        console.log('[websiteStore] 从数据库获取图标:', {
-          id,
-          iconDataLength: website.iconData ? website.iconData.length : 0,
-          iconGenerateDataLength: website.iconGenerateData ? website.iconGenerateData.length : 0
-        })
         updateIconCache(id, website.iconData, website.iconGenerateData)
         return {
           iconData: website.iconData,
