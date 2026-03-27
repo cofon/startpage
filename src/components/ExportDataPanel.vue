@@ -151,30 +151,64 @@ const sortOrderOptions = [
   { value: 'desc', label: '降序' }
 ]
 
-// 存储从数据库获取的完整网站数据
-const allWebsites = ref([])
+// 存储数据加载状态
+const isLoadingWebsites = ref(false)
+// 存储符合条件的网站数量
+const filteredWebsitesCount = ref(0)
 
-// 从数据库加载完整网站数据
-async function loadAllWebsites() {
+// 从数据库获取网站数据并应用筛选
+async function getFilteredWebsites() {
+  isLoadingWebsites.value = true
   try {
     const db = await import('../utils/database')
-    allWebsites.value = await db.default.getAllWebsites()
+    const allWebsites = await db.default.getAllWebsites()
+    
+    if (exportMode.value === 'basic') {
+      return allWebsites
+    }
+    
+    // 应用筛选条件
+    return allWebsites.filter(website => {
+      if (exportConfig.value.conditionGroups.length === 0) {
+        return true
+      }
+      
+      // 所有组都必须满足（组间是 AND 关系）
+      return exportConfig.value.conditionGroups.every(group => {
+        if (group.conditions.length === 0) {
+          return true
+        }
+        
+        // 组内至少有一个条件满足（组内是 OR 关系）
+        return group.conditions.some(condition => {
+          return evaluateCondition(website, condition)
+        })
+      })
+    })
   } catch (error) {
-    console.error('加载网站数据失败:', error)
-    allWebsites.value = []
+    console.error('获取网站数据失败:', error)
+    return []
+  } finally {
+    isLoadingWebsites.value = false
   }
 }
 
-// 组件挂载时加载数据
+// 更新符合条件的网站数量
+async function updateFilteredCount() {
+  const filteredWebsites = await getFilteredWebsites()
+  filteredWebsitesCount.value = filteredWebsites.length
+}
+
+// 组件挂载时更新计数
 import { onMounted } from 'vue'
 onMounted(() => {
-  loadAllWebsites()
+  updateFilteredCount()
 })
 
-// 监听条件变化时重新加载数据
+// 监听条件变化时更新计数
 import { watch } from 'vue'
 watch(() => exportConfig.value.conditionGroups, () => {
-  loadAllWebsites()
+  updateFilteredCount()
 }, { deep: true })
 
 // 监听导出模式变化
@@ -191,32 +225,7 @@ watch(() => exportMode.value, (newMode) => {
     exportConfig.value.conditionGroups = JSON.parse(JSON.stringify(exportConfig.value.customConditionGroups))
     exportConfig.value.includeOtherTables = false
   }
-  loadAllWebsites()
-})
-
-// 计算符合条件的网站数量
-const filteredWebsitesCount = computed(() => {
-  if (exportMode.value === 'basic') {
-    return allWebsites.value.length
-  }
-  
-  return allWebsites.value.filter(website => {
-    if (exportConfig.value.conditionGroups.length === 0) {
-      return true
-    }
-    
-    // 所有组都必须满足（组间是 AND 关系）
-    return exportConfig.value.conditionGroups.every(group => {
-      if (group.conditions.length === 0) {
-        return true
-      }
-      
-      // 组内至少有一个条件满足（组内是 OR 关系）
-      return group.conditions.some(condition => {
-        return evaluateCondition(website, condition)
-      })
-    })
-  }).length
+  updateFilteredCount()
 })
 
 // 评估单个条件
@@ -316,47 +325,23 @@ async function handleExport() {
       exportDate: new Date().toISOString()
     }
     
-    // 确保使用最新的网站数据
-    await loadAllWebsites()
+    // 获取符合条件的网站数据
+    const websites = await getFilteredWebsites()
     
-    // 导出网站数据
-    let websites = [...allWebsites.value]
-    
-    // 如果是高级模式，应用筛选条件
-    if (exportMode.value === 'advanced') {
-      websites = websites.filter(website => {
-        if (exportConfig.value.conditionGroups.length === 0) {
-          return true
-        }
+    // 排序
+    if (exportConfig.value.sortBy) {
+      websites.sort((a, b) => {
+        const aValue = a[exportConfig.value.sortBy]
+        const bValue = b[exportConfig.value.sortBy]
         
-        // 所有组都必须满足（组间是 AND 关系）
-        return exportConfig.value.conditionGroups.every(group => {
-          if (group.conditions.length === 0) {
-            return true
-          }
-          
-          // 组内至少有一个条件满足（组内是 OR 关系）
-          return group.conditions.some(condition => {
-            return evaluateCondition(website, condition)
-          })
-        })
+        if (aValue < bValue) {
+          return exportConfig.value.sortOrder === 'asc' ? -1 : 1
+        }
+        if (aValue > bValue) {
+          return exportConfig.value.sortOrder === 'asc' ? 1 : -1
+        }
+        return 0
       })
-      
-      // 排序
-      if (exportConfig.value.sortBy) {
-        websites.sort((a, b) => {
-          const aValue = a[exportConfig.value.sortBy]
-          const bValue = b[exportConfig.value.sortBy]
-          
-          if (aValue < bValue) {
-            return exportConfig.value.sortOrder === 'asc' ? -1 : 1
-          }
-          if (aValue > bValue) {
-            return exportConfig.value.sortOrder === 'asc' ? 1 : -1
-          }
-          return 0
-        })
-      }
     }
     
     // 过滤网站字段
@@ -631,7 +616,8 @@ function generateCSV(websites) {
       
       <!-- 预览信息 -->
       <div class="preview-info">
-        <p>符合条件的网站数量：{{ filteredWebsitesCount }}</p>
+        <p v-if="isLoadingWebsites">加载数据中...</p>
+        <p v-else>符合条件的网站数量：{{ filteredWebsitesCount }}</p>
       </div>
     </div>
     
