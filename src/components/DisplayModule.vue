@@ -12,6 +12,7 @@ import SearchSettings from './SearchSettings.vue'
 import AddWebsitePanel from './AddWebsitePanel.vue'
 import ImportDataPanel from './ImportDataPanel.vue'
 import ExportDataPanel from './ExportDataPanel.vue'
+import BatchEditPanel from './BatchEditPanel.vue'
 import HelpPanel from './HelpPanel.vue'
 
 const searchStore = useSearchStore()
@@ -91,6 +92,11 @@ defineExpose({
       <!-- 导出面板 -->
       <div v-else-if="searchStore.commandMode === 'export'" class="settings-panel-content">
         <ExportDataPanel />
+      </div>
+
+      <!-- 批量编辑面板 -->
+      <div v-else-if="searchStore.commandMode === 'batch'" class="settings-panel-content">
+        <BatchEditPanel />
       </div>
     </div>
 

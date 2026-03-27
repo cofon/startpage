@@ -145,7 +145,7 @@ export const useSearchStore = defineStore('search', () => {
     }
 
     // 检查是否是已知的命令
-    const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'layout', 'all', 'active', 'title', 'desc', 'name', 'url']
+    const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'batch', 'layout', 'all', 'active', 'title', 'desc', 'name', 'url']
 
     // 如果不是已知命令，当作普通搜索处理（使用完整的输入内容）
     if (!knownCommands.includes(mainCmd)) {
@@ -178,6 +178,10 @@ export const useSearchStore = defineStore('search', () => {
         break
       case 'export':
         commandMode.value = 'export'
+        setDisplayMode('settings')
+        break
+      case 'batch':
+        commandMode.value = 'batch'
         setDisplayMode('settings')
         break
       case 'layout':
