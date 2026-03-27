@@ -8,7 +8,7 @@ const settingStore = useSettingStore()
 const notificationStore = useNotificationStore()
 const websiteStore = useWebsiteStore()
 
-// 导出模式：basic（全部导出）或 advanced（条件导出）
+// 导出模式：basic（全部导出）、default（默认条件导出）或 custom（自定义条件导出）
 const exportMode = ref('basic')
 
 // 导出配置
@@ -17,28 +17,84 @@ const exportConfig = ref({
   format: 'json', // json 或 csv
   includeOtherTables: true, // 是否包含其他表（settings、themes、searchEngines）
   
-  // 高级设置
-  conditions: [
+  // 默认条件导出的条件组
+  defaultConditionGroups: [
     {
-      id: 'cond1',
-      field: 'name',
-      operator: 'notEmpty',
-      value: '',
-      logic: 'AND'
+      id: 'group1',
+      conditions: [
+        {
+          id: 'cond1',
+          field: 'url',
+          operator: 'notEmpty',
+          value: ''
+        }
+      ]
+    },
+    {
+      id: 'group2',
+      conditions: [
+        {
+          id: 'cond2',
+          field: 'name',
+          operator: 'notEmpty',
+          value: ''
+        }
+      ]
+    },
+    {
+      id: 'group3',
+      conditions: [
+        {
+          id: 'cond3-1',
+          field: 'title',
+          operator: 'notEmpty',
+          value: ''
+        },
+        {
+          id: 'cond3-2',
+          field: 'description',
+          operator: 'notEmpty',
+          value: ''
+        }
+      ]
+    },
+    {
+      id: 'group4',
+      conditions: [
+        {
+          id: 'cond4',
+          field: 'iconGenerateData',
+          operator: 'notEmpty',
+          value: ''
+        }
+      ]
     }
   ],
+  
+  // 自定义条件导出的条件组
+  customConditionGroups: [
+    {
+      id: 'group1',
+      conditions: [
+        {
+          id: 'cond1',
+          field: 'url',
+          operator: 'notEmpty',
+          value: ''
+        }
+      ]
+    }
+  ],
+  
+  // 当前使用的条件组
+  conditionGroups: [],
+  
   fields: ['name', 'url', 'title', 'description', 'iconData', 'iconGenerateData', 'tags', 'isMarked', 'isActive', 'isHidden'],
   sortBy: 'createdAt',
   sortOrder: 'desc'
 })
 
-// 预设条件模板
-const presetTemplates = [
-  { name: '完整网站', conditions: [{ field: 'name', operator: 'notEmpty', value: '', logic: 'AND' }, { field: 'url', operator: 'notEmpty', value: '', logic: 'AND' }] },
-  { name: '不完整网站', conditions: [{ field: 'title', operator: 'isEmpty', value: '', logic: 'OR' }, { field: 'description', operator: 'isEmpty', value: '', logic: 'OR' }] },
-  { name: '无图标网站', conditions: [{ field: 'iconData', operator: 'isEmpty', value: '', logic: 'AND' }] },
-  { name: '未访问网站', conditions: [{ field: 'visitCount', operator: 'equals', value: '0', logic: 'AND' }] }
-]
+
 
 // 字段选项
 const fieldOptions = [
@@ -117,9 +173,26 @@ onMounted(() => {
 
 // 监听条件变化时重新加载数据
 import { watch } from 'vue'
-watch(() => exportConfig.value.conditions, () => {
+watch(() => exportConfig.value.conditionGroups, () => {
   loadAllWebsites()
 }, { deep: true })
+
+// 监听导出模式变化
+watch(() => exportMode.value, (newMode) => {
+  if (newMode === 'basic') {
+    // 全部导出：默认包含其他表
+    exportConfig.value.includeOtherTables = true
+  } else if (newMode === 'default') {
+    // 默认条件导出：使用默认条件组，不包含其他表
+    exportConfig.value.conditionGroups = JSON.parse(JSON.stringify(exportConfig.value.defaultConditionGroups))
+    exportConfig.value.includeOtherTables = false
+  } else if (newMode === 'custom') {
+    // 自定义条件导出：使用自定义条件组，不包含其他表
+    exportConfig.value.conditionGroups = JSON.parse(JSON.stringify(exportConfig.value.customConditionGroups))
+    exportConfig.value.includeOtherTables = false
+  }
+  loadAllWebsites()
+})
 
 // 计算符合条件的网站数量
 const filteredWebsitesCount = computed(() => {
@@ -128,24 +201,21 @@ const filteredWebsitesCount = computed(() => {
   }
   
   return allWebsites.value.filter(website => {
-    if (exportConfig.value.conditions.length === 0) {
+    if (exportConfig.value.conditionGroups.length === 0) {
       return true
     }
     
-    let result = evaluateCondition(website, exportConfig.value.conditions[0])
-    
-    for (let i = 1; i < exportConfig.value.conditions.length; i++) {
-      const condition = exportConfig.value.conditions[i]
-      const conditionResult = evaluateCondition(website, condition)
-      
-      if (condition.logic === 'AND') {
-        result = result && conditionResult
-      } else if (condition.logic === 'OR') {
-        result = result || conditionResult
+    // 所有组都必须满足（组间是 AND 关系）
+    return exportConfig.value.conditionGroups.every(group => {
+      if (group.conditions.length === 0) {
+        return true
       }
-    }
-    
-    return result
+      
+      // 组内至少有一个条件满足（组内是 OR 关系）
+      return group.conditions.some(condition => {
+        return evaluateCondition(website, condition)
+      })
+    })
   }).length
 })
 
@@ -176,31 +246,64 @@ function evaluateCondition(website, condition) {
   }
 }
 
-// 添加条件
-function addCondition() {
-  const newId = `cond${exportConfig.value.conditions.length + 1}`
-  exportConfig.value.conditions.push({
-    id: newId,
-    field: 'name',
-    operator: 'notEmpty',
-    value: '',
-    logic: 'AND'
+// 添加条件组
+function addGroup() {
+  const newGroupId = `group${exportConfig.value.conditionGroups.length + 1}`
+  exportConfig.value.conditionGroups.push({
+    id: newGroupId,
+    conditions: [
+      {
+        id: `cond${newGroupId}-1`,
+        field: 'name',
+        operator: 'notEmpty',
+        value: ''
+      }
+    ]
   })
 }
 
-// 删除条件
-function removeCondition(id) {
-  exportConfig.value.conditions = exportConfig.value.conditions.filter(cond => cond.id !== id)
+// 在指定组中添加条件
+function addCondition(groupId) {
+  const group = exportConfig.value.conditionGroups.find(g => g.id === groupId)
+  if (group) {
+    const newId = `cond${groupId}-${group.conditions.length + 1}`
+    group.conditions.push({
+      id: newId,
+      field: 'name',
+      operator: 'notEmpty',
+      value: ''
+    })
+  }
 }
 
-// 应用预设模板
-function applyTemplate(template) {
-  exportConfig.value.conditions = template.conditions.map((cond, index) => ({
-    ...cond,
-    id: `cond${index + 1}`,
-    logic: index === 0 ? 'AND' : cond.logic
-  }))
+// 删除条件
+function removeCondition(groupId, conditionId) {
+  const group = exportConfig.value.conditionGroups.find(g => g.id === groupId)
+  if (group) {
+    group.conditions = group.conditions.filter(cond => cond.id !== conditionId)
+    // 如果组内没有条件，删除该组
+    if (group.conditions.length === 0) {
+      removeGroup(groupId)
+    }
+  }
 }
+
+// 删除条件组
+function removeGroup(groupId) {
+  exportConfig.value.conditionGroups = exportConfig.value.conditionGroups.filter(g => g.id !== groupId)
+}
+
+// 重置条件
+function resetConditions() {
+  if (exportMode.value === 'default') {
+    exportConfig.value.conditionGroups = JSON.parse(JSON.stringify(exportConfig.value.defaultConditionGroups))
+  } else if (exportMode.value === 'custom') {
+    exportConfig.value.conditionGroups = JSON.parse(JSON.stringify(exportConfig.value.customConditionGroups))
+  }
+  loadAllWebsites()
+}
+
+
 
 // 导出数据
 async function handleExport() {
@@ -222,24 +325,21 @@ async function handleExport() {
     // 如果是高级模式，应用筛选条件
     if (exportMode.value === 'advanced') {
       websites = websites.filter(website => {
-        if (exportConfig.value.conditions.length === 0) {
+        if (exportConfig.value.conditionGroups.length === 0) {
           return true
         }
         
-        let result = evaluateCondition(website, exportConfig.value.conditions[0])
-        
-        for (let i = 1; i < exportConfig.value.conditions.length; i++) {
-          const condition = exportConfig.value.conditions[i]
-          const conditionResult = evaluateCondition(website, condition)
-          
-          if (condition.logic === 'AND') {
-            result = result && conditionResult
-          } else if (condition.logic === 'OR') {
-            result = result || conditionResult
+        // 所有组都必须满足（组间是 AND 关系）
+        return exportConfig.value.conditionGroups.every(group => {
+          if (group.conditions.length === 0) {
+            return true
           }
-        }
-        
-        return result
+          
+          // 组内至少有一个条件满足（组内是 OR 关系）
+          return group.conditions.some(condition => {
+            return evaluateCondition(website, condition)
+          })
+        })
       })
       
       // 排序
@@ -357,8 +457,12 @@ function generateCSV(websites) {
         全部导出
       </label>
       <label>
-        <input type="radio" v-model="exportMode" value="advanced" />
-        条件导出
+        <input type="radio" v-model="exportMode" value="default" />
+        默认条件导出
+      </label>
+      <label>
+        <input type="radio" v-model="exportMode" value="custom" />
+        自定义条件导出
       </label>
     </div>
     
@@ -385,66 +489,78 @@ function generateCSV(websites) {
       </div>
     </div>
     
-    <!-- 高级导出选项 -->
-    <div v-else class="export-options advanced-export">
-      <!-- 预设条件模板 -->
-      <div class="preset-templates">
-        <label>预设条件：</label>
-        <div class="template-buttons">
-          <button 
-            v-for="template in presetTemplates" 
-            :key="template.name" 
-            class="template-button"
-            @click="applyTemplate(template)"
-          >
-            {{ template.name }}
-          </button>
-        </div>
-      </div>
+    <!-- 条件导出选项 -->
+    <div v-else-if="exportMode === 'default' || exportMode === 'custom'" class="export-options advanced-export">
+
       
       <!-- 条件编辑 -->
       <div class="conditions-editor">
         <h4>筛选条件</h4>
         <div 
-          v-for="(condition, index) in exportConfig.conditions" 
-          :key="condition.id"
-          class="condition-item"
+          v-for="(group, groupIndex) in exportConfig.conditionGroups" 
+          :key="group.id"
+          class="condition-group"
         >
-          <div v-if="index > 0" class="logic-selector">
-            <select v-model="condition.logic">
-              <option v-for="option in logicOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
-          <div class="condition-fields">
-            <select v-model="condition.field" class="field-selector">
-              <option v-for="option in fieldOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-            <select v-model="condition.operator" class="operator-selector">
-              <option v-for="option in operatorOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-            <input 
-              v-model="condition.value" 
-              type="text" 
-              class="value-input"
-              placeholder="输入值"
-            />
+          <div class="group-header">
+            <span class="group-label">条件组 {{ groupIndex + 1 }}</span>
             <button 
-              class="remove-condition-button"
-              @click="removeCondition(condition.id)"
+              class="remove-group-button"
+              @click="removeGroup(group.id)"
+              v-if="exportConfig.conditionGroups.length > 1"
             >
               ×
             </button>
           </div>
+          <div class="group-conditions">
+            <div 
+              v-for="(condition, condIndex) in group.conditions" 
+              :key="condition.id"
+              class="condition-item"
+            >
+              <div class="condition-fields">
+                <select v-model="condition.field" class="field-selector">
+                  <option v-for="option in fieldOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <select v-model="condition.operator" class="operator-selector">
+                  <option v-for="option in operatorOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <input 
+                  v-model="condition.value" 
+                  type="text" 
+                  class="value-input"
+                  placeholder="输入值"
+                />
+                <button 
+                  class="remove-condition-button"
+                  @click="removeCondition(group.id, condition.id)"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <button 
+              class="add-condition-button"
+              @click="addCondition(group.id)"
+            >
+              + 添加条件（OR）
+            </button>
+          </div>
         </div>
-        <button class="add-condition-button" @click="addCondition">
-          + 添加条件
-        </button>
+        <div class="condition-actions">
+          <button class="add-group-button" @click="addGroup">
+            + 添加条件组（AND）
+          </button>
+          <button 
+            class="reset-conditions-button"
+            @click="resetConditions"
+          >
+            重置条件
+          </button>
+        </div>
       </div>
       
       <!-- 导出配置 -->
@@ -563,6 +679,7 @@ function generateCSV(websites) {
   justify-content: center;
   gap: 20px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .export-mode-selector label {
@@ -570,6 +687,7 @@ function generateCSV(websites) {
   align-items: center;
   gap: 5px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 /* 导出选项 */
@@ -607,59 +725,52 @@ function generateCSV(websites) {
   border-radius: 8px;
 }
 
-/* 预设模板 */
-.preset-templates {
-  margin-bottom: 16px;
-}
 
-.preset-templates label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.template-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.template-button {
-  padding: 6px 12px;
-  background-color: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
-
-.template-button:hover {
-  background-color: var(--color-bg-active);
-}
 
 /* 条件编辑器 */
 .conditions-editor {
   margin-bottom: 16px;
 }
 
-.condition-item {
+/* 条件组 */
+.condition-group {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.group-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
 
-.logic-selector {
-  margin-right: 10px;
+.group-label {
+  font-weight: 500;
+  color: var(--color-text-main);
 }
 
-.logic-selector select {
-  padding: 6px 10px;
-  border: 1px solid var(--color-border);
+.remove-group-button {
+  padding: 4px 8px;
+  background-color: var(--color-danger);
+  color: white;
+  border: none;
   border-radius: 4px;
-  background-color: var(--color-bg-input);
-  color: var(--color-text-main);
-  width: 80px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.group-conditions {
+  margin-top: 10px;
+}
+
+/* 条件项 */
+.condition-item {
+  margin-bottom: 10px;
 }
 
 .condition-fields {
@@ -699,6 +810,45 @@ function generateCSV(websites) {
 }
 
 .add-condition-button {
+  padding: 6px 12px;
+  background-color: var(--color-bg-hover);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.add-condition-button:hover {
+  background-color: var(--color-bg-active);
+}
+
+.add-group-button {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.add-group-button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* 条件操作按钮容器 */
+.condition-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* 重置条件按钮 */
+.reset-conditions-button {
   padding: 8px 16px;
   background-color: var(--color-bg-hover);
   border: 1px solid var(--color-border);
@@ -708,7 +858,7 @@ function generateCSV(websites) {
   transition: all 0.2s ease;
 }
 
-.add-condition-button:hover {
+.reset-conditions-button:hover {
   background-color: var(--color-bg-active);
 }
 
