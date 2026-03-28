@@ -1,19 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "起始页网站管理",
+  "name": "cofon-startpage",
   "version": "1.0.0",
-  "description": "在任意标签页快速添加网站到起始页",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "tabs",
-    "storage",
-    "offscreen"
-  ],
+  "description": "配合起始页添加网站的扩展",
+  "permissions": ["activeTab", "scripting", "tabs", "storage", "offscreen"],
   "host_permissions": [
     "http://localhost:5173/",
-    "https://*/*",
-    "http://*/*"
+    "http://localhost:5174/",
+    "http://localhost:5175/",
+    "https://dgf.cc.cd/",
+    "http://dgf.cc.cd/"
   ],
   "action": {
     "default_popup": "popup.html"
