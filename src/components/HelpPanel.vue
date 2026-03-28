@@ -42,10 +42,6 @@ function closePanel() {
             <span class="description">打开批量修改数据面板</span>
           </div>
           <div class="command-item">
-            <code class="command">--layout</code>
-            <span class="description">打开布局切换面板</span>
-          </div>
-          <div class="command-item">
             <code class="command">--help</code>
             <span class="description">显示此帮助信息</span>
           </div>
