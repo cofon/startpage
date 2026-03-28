@@ -111,6 +111,16 @@ async function init() {
       elements.title.value = metadata.title || ''
       elements.description.value = metadata.description || ''
       elements.iconData.value = metadata.iconData || ''
+      
+      // 填充 name 输入框：如果 title 不为空，使用 title；如果 title 为空，description 不为空，使用 description；如果两者都为空，不填充
+      if (metadata.title) {
+        elements.name.value = metadata.title
+      } else if (metadata.description) {
+        // 取 description 的前 30 个字符作为 name，避免过长
+        elements.name.value = metadata.description.substring(0, 30)
+      } else {
+        elements.name.value = ''
+      }
 
       // 显示图标预览
       if (metadata.iconData) {
