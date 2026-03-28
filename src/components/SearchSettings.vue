@@ -426,7 +426,7 @@ function handleDragEnd() {
 }
 
 .delete-button:hover {
-  color: #ef4444;
+  color: var(--color-danger, #ef4444);
 }
 
 .engine-editor {

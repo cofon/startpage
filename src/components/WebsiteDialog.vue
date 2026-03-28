@@ -443,14 +443,15 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .dialog {
-  background-color: white;
+  background-color: var(--color-bg-card);
   border-radius: 16px;
   width: 90%;
   max-width: 700px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-dark);
+  color: var(--color-text-main);
 }
 
 .dialog-header {
@@ -458,7 +459,7 @@ watch(() => props.modelValue, (newVal) => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-base);
   flex-shrink: 0;
 }
 
@@ -466,6 +467,7 @@ watch(() => props.modelValue, (newVal) => {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+  color: var(--color-text-main);
 }
 
 .close-button {
@@ -475,7 +477,7 @@ watch(() => props.modelValue, (newVal) => {
   background: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -484,7 +486,7 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .close-button:hover {
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-hover);
 }
 
 .dialog-body {
@@ -504,22 +506,25 @@ watch(() => props.modelValue, (newVal) => {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-main);
 }
 
 .form-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s ease;
   box-sizing: border-box;
+  background-color: var(--color-bg-page);
+  color: var(--color-text-main);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #409eff;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .tags-input-container {
@@ -529,8 +534,8 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .tags-dropdown {
-  background-color: white;
-  border: 1px solid #ddd;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   padding: 8px;
   display: flex;
@@ -548,33 +553,26 @@ watch(() => props.modelValue, (newVal) => {
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #333;
-  background-color: #f0f0f0;
+  color: var(--color-text-main);
+  background-color: var(--color-bg-hover);
   font-size: 13px;
   white-space: nowrap;
 }
 
 .tag-item:hover {
-  background-color: #e0e0e0;
+  background-color: var(--color-bg-active);
   transform: translateY(-1px);
 }
 
 .tag-item.tag-added {
-  background-color: #409eff;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
 }
 
 .form-hint {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-secondary);
   margin-top: 4px;
-}
-
-.added-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
 }
 
 .added-tag {
@@ -582,8 +580,8 @@ watch(() => props.modelValue, (newVal) => {
   align-items: center;
   padding: 6px 12px;
   border-radius: 16px;
-  background-color: #409eff;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -612,7 +610,7 @@ watch(() => props.modelValue, (newVal) => {
   align-items: center;
   cursor: pointer;
   font-size: 14px;
-  color: #333;
+  color: var(--color-text-main);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -631,9 +629,10 @@ watch(() => props.modelValue, (newVal) => {
   width: 48px;
   height: 48px;
   margin-top: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   overflow: hidden;
+  background-color: var(--color-bg-page);
 }
 
 .icon-preview-small img {
@@ -657,7 +656,7 @@ watch(() => props.modelValue, (newVal) => {
 
 .icon-placeholder-small {
   font-size: 24px;
-  color: #999;
+  color: var(--color-text-secondary);
   font-weight: bold;
 }
 
@@ -665,7 +664,7 @@ watch(() => props.modelValue, (newVal) => {
   display: flex;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--color-border-base);
   flex-shrink: 0;
 }
 
@@ -684,16 +683,16 @@ watch(() => props.modelValue, (newVal) => {
 }
 
 .button-secondary {
-  background-color: #f0f0f0;
-  color: #333;
-  border: 1px solid #ddd;
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border-base);
 }
 
 .button-secondary:hover {
-  background-color: #e0e0e0;
-  border-color: #ccc;
+  background-color: var(--color-bg-active);
+  border-color: var(--color-border-base);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-medium);
 }
 
 .button-secondary:active {

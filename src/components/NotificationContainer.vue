@@ -74,22 +74,22 @@ const notificationStore = useNotificationStore()
 }
 
 .notification.success .notification-icon {
-  background-color: #10b981;
+  background-color: var(--color-success, #10b981);
   color: white;
 }
 
 .notification.error .notification-icon {
-  background-color: #ef4444;
+  background-color: var(--color-danger, #ef4444);
   color: white;
 }
 
 .notification.warning .notification-icon {
-  background-color: #f59e0b;
+  background-color: var(--color-warning, #f59e0b);
   color: white;
 }
 
 .notification.info .notification-icon {
-  background-color: #3b82f6;
+  background-color: var(--color-info, #3b82f6);
   color: white;
 }
 

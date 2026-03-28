@@ -847,7 +847,7 @@ function handleCancel() {
 }
 
 .required {
-  color: #ef4444;
+  color: var(--color-danger, #ef4444);
   margin-left: 4px;
 }
 
@@ -946,20 +946,27 @@ function handleCancel() {
   border-color: var(--color-border-focus);
 }
 
+.form-input:disabled {
+  background-color: var(--color-bg-disabled);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  border-color: var(--color-border-base);
+}
+
 /* URL 验证状态样式 */
 .form-input.url-invalid {
-  border-color: #ef4444;
-  background-color: #fef2f2;
+  border-color: var(--color-danger, #ef4444);
+  background-color: rgba(239, 68, 68, 0.05);
 }
 
 .form-input.url-exists {
-  border-color: #f59e0b;
-  background-color: #fffbeb;
+  border-color: var(--color-warning, #f59e0b);
+  background-color: rgba(245, 158, 11, 0.05);
 }
 
 .form-input.url-valid {
-  border-color: #10b981;
-  background-color: #ecfdf5;
+  border-color: var(--color-success, #10b981);
+  background-color: rgba(16, 185, 129, 0.05);
 }
 
 /* 核心：提示信息（紧贴输入框下方） */
@@ -970,7 +977,7 @@ function handleCancel() {
   top: calc(100% + 2px); /* 输入框底部 + 2px（极近间距） */
   /* 2. 消除提示文本自身的间距 */
   font-size: 12px;
-  color: #ef4444;
+  color: var(--color-danger, #ef4444);
   line-height: 1.2; /* 紧凑行高，减少文本自身高度 */
   padding: 0; /* 去掉默认内边距 */
   margin: 0; /* 去掉默认外边距 */
@@ -988,7 +995,7 @@ function handleCancel() {
   top: calc(100% + 2px); /* 输入框底部 + 2px（极近间距） */
   /* 2. 消除提示文本自身的间距 */
   font-size: 12px;
-  color: #f59e0b;
+  color: var(--color-warning, #f59e0b);
   line-height: 1.2; /* 紧凑行高，减少文本自身高度 */
   padding: 0; /* 去掉默认内边距 */
   margin: 0; /* 去掉默认外边距 */

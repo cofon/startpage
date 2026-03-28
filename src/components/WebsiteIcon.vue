@@ -131,11 +131,10 @@ async function onImageError() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-bg-page);
   border-radius: 8px;
   font-size: 24px;
   font-weight: bold;
   color: white;
-  background-color: #999;
+  background-color: var(--color-text-disabled);
 }
 </style>

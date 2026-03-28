@@ -8,15 +8,14 @@ const settingStore = useSettingStore()
 const notificationStore = useNotificationStore()
 const websiteStore = useWebsiteStore()
 
-// 导出模式：basic（全部导出）、default（默认条件导出）或 custom（自定义条件导出）
+// 导出模式：basic（全部导出）、default（默认条件导出）、custom（自定义条件导出）
 const exportMode = ref('basic')
 
 // 导出配置
 const exportConfig = ref({
   // 基础设置
-  format: 'json', // json 或 csv
-  includeOtherTables: true, // 是否包含其他表（settings、themes、searchEngines）
-  
+  format: 'json', // json、csv
+  includeOtherTables: true, // 是否包含其他表（settings、themes、searchEngines）  
   // 默认条件导出的条件组
   defaultConditionGroups: [
     {
@@ -121,8 +120,8 @@ const operatorOptions = [
   { value: 'notContains', label: '不包含' },
   { value: 'isEmpty', label: '为空' },
   { value: 'notEmpty', label: '不为空' },
-  { value: 'valid', label: '有效值' },
-  { value: 'invalid', label: '无效值' },
+  { value: 'valid', label: '有效' },
+  { value: 'invalid', label: '无效' },
   { value: 'greaterThan', label: '大于' },
   { value: 'lessThan', label: '小于' }
 ]
@@ -235,7 +234,7 @@ function isValidIconData(iconData) {
   if (!iconData || typeof iconData !== 'string') {
     return false
   }
-  // 检查是否是有效的 Base64 编码的图片数据
+  // 检查是否是有效Base64编码的图片数据
   return iconData.startsWith('data:image/') && iconData.includes('base64,')
 }
 
@@ -258,14 +257,14 @@ function evaluateCondition(website, condition) {
     case 'notEmpty':
       return fieldValue && fieldValue !== '' && (!Array.isArray(fieldValue) || fieldValue.length > 0)
     case 'valid':
-      // 对于图标数据，判断是否是有效的 Base64 编码
+      // 对于图标数据，判断是否是有效Base64编码
       if (field === 'iconData' || field === 'iconGenerateData') {
         return isValidIconData(fieldValue)
       }
       // 对于其他字段，非空即为有效
       return fieldValue !== undefined && fieldValue !== null && fieldValue !== ''
     case 'invalid':
-      // 对于图标数据，判断是否是无效的 Base64 编码
+      // 对于图标数据，判断是否是无效Base64编码
       if (field === 'iconData' || field === 'iconGenerateData') {
         return !isValidIconData(fieldValue)
       }
@@ -410,7 +409,7 @@ async function handleExport() {
     // 更新备份时间
     settingStore.updateLastBackupTime()
     await settingStore.saveSettings()
-    notificationStore.success('导出成功！')
+    notificationStore.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
     notificationStore.error('导出失败，请查看控制台获取详细信息')
@@ -478,7 +477,7 @@ function generateCSV(websites) {
     
     <!-- 基础导出选项 -->
     <div v-if="exportMode === 'basic'" class="export-options">
-      <p class="description">导出所有网站和设置数据到备份文件。</p>
+      <p class="description">导出所有网站和设置数据到备份文件</p>
       
       <!-- 其他表导出选项 -->
       <div class="export-option">
@@ -512,7 +511,7 @@ function generateCSV(websites) {
           class="condition-group"
         >
           <div class="group-header">
-            <span class="group-label">条件组 {{ groupIndex + 1 }}</span>
+            <span class="group-label">条件组{{ groupIndex + 1 }}</span>
             <button 
               class="remove-group-button"
               @click="removeGroup(group.id)"
@@ -723,9 +722,9 @@ function generateCSV(websites) {
 
 .export-option select {
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
-  background-color: var(--color-bg-input);
+  background-color: var(--color-bg-page);
   color: var(--color-text-main);
 }
 
@@ -746,7 +745,7 @@ function generateCSV(websites) {
 /* 条件组 */
 .condition-group {
   background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
@@ -766,7 +765,7 @@ function generateCSV(websites) {
 
 .remove-group-button {
   padding: 4px 8px;
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, #ef4444);
   color: white;
   border: none;
   border-radius: 4px;
@@ -793,25 +792,25 @@ function generateCSV(websites) {
 .field-selector,
 .operator-selector {
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
-  background-color: var(--color-bg-input);
+  background-color: var(--color-bg-page);
   color: var(--color-text-main);
   flex: 1;
 }
 
 .value-input {
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
-  background-color: var(--color-bg-input);
+  background-color: var(--color-bg-page);
   color: var(--color-text-main);
   flex: 2;
 }
 
 .remove-condition-button {
   padding: 6px 10px;
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, #ef4444);
   color: white;
   border: none;
   border-radius: 4px;
@@ -823,7 +822,7 @@ function generateCSV(websites) {
 .add-condition-button {
   padding: 6px 12px;
   background-color: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -862,7 +861,7 @@ function generateCSV(websites) {
 .reset-conditions-button {
   padding: 8px 16px;
   background-color: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
@@ -910,9 +909,9 @@ function generateCSV(websites) {
 
 .sort-option select {
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
-  background-color: var(--color-bg-input);
+  background-color: var(--color-bg-page);
   color: var(--color-text-main);
   min-width: 120px;
 }

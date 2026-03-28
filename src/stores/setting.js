@@ -88,6 +88,12 @@ export const useSettingStore = defineStore('setting', () => {
         })
       }
     }
+
+    // 设置状态颜色变量（与主题无关，保持一致）
+    root.style.setProperty('--color-success', '#10b981')
+    root.style.setProperty('--color-danger', '#ef4444')
+    root.style.setProperty('--color-warning', '#f59e0b')
+    root.style.setProperty('--color-info', '#3b82f6')
   }
 
   // 设置主题

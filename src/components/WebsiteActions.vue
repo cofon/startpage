@@ -105,12 +105,12 @@ function handleRestore(event) {
 }
 
 .action-icon-button.delete:hover {
-  background-color: #ff4d4f;
+  background-color: var(--color-danger, #ef4444);
   color: white;
 }
 
 .action-icon-button.restore:hover {
-  background-color: #52c41a;
+  background-color: var(--color-success, #10b981);
   color: white;
 }
 </style>

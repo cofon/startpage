@@ -6,7 +6,7 @@ import { useNotificationStore } from '../stores/notification'
 const websiteStore = useWebsiteStore()
 const notificationStore = useNotificationStore()
 
-// 步骤控制：1-筛选条件, 2-选择操作, 3-预览修改
+// 步骤控制器: 1-筛选条件, 2-选择操作, 3-预览修改
 const currentStep = ref(1)
 
 // 筛选条件配置（复用导出功能的条件结构）
@@ -70,8 +70,8 @@ const operatorOptions = [
   { value: 'notContains', label: '不包含' },
   { value: 'isEmpty', label: '为空' },
   { value: 'notEmpty', label: '不为空' },
-  { value: 'valid', label: '有效值' },
-  { value: 'invalid', label: '无效值' },
+  { value: 'valid', label: '有效' },
+  { value: 'invalid', label: '无效' },
   { value: 'greaterThan', label: '大于' },
   { value: 'lessThan', label: '小于' }
 ]
@@ -495,7 +495,7 @@ onMounted(() => {
           class="condition-group"
         >
           <div class="group-header">
-            <span class="group-label">条件组 {{ groupIndex + 1 }}</span>
+            <span class="group-label">条件组{{ groupIndex + 1 }}</span>
             <button 
               class="remove-group-button"
               @click="removeGroup(group.id)"
@@ -526,7 +526,7 @@ onMounted(() => {
                   type="text" 
                   class="value-input"
                   placeholder="输入值"
-                  v-if="!['isEmpty', 'notEmpty', 'valid', 'invalid'].includes(condition.operator)"
+                  v-if="![ 'isEmpty', 'notEmpty', 'valid', 'invalid' ].includes(condition.operator)"
                 />
                 <button 
                   class="remove-condition-button"
@@ -577,7 +577,7 @@ onMounted(() => {
             :key="group.id"
             class="condition-group-preview"
           >
-            <div class="group-label">条件组 {{ groupIndex + 1 }}：</div>
+            <div class="group-label">条件组{{ groupIndex + 1 }}：</div>
             <div class="group-conditions-preview">
               <div 
                 v-for="(condition, condIndex) in group.conditions" 
@@ -586,7 +586,7 @@ onMounted(() => {
               >
                 {{ fieldOptions.find(f => f.value === condition.field)?.label }} 
                 {{ operatorOptions.find(o => o.value === condition.operator)?.label }}
-                <span v-if="!['isEmpty', 'notEmpty', 'valid', 'invalid'].includes(condition.operator)">
+                <span v-if="![ 'isEmpty', 'notEmpty', 'valid', 'invalid' ].includes(condition.operator)">
                   "{{ condition.value }}"
                 </span>
               </div>
@@ -612,30 +612,30 @@ onMounted(() => {
           <div v-if="operationConfig.type === 'field'">
             修改 <strong>{{ fieldOptions.find(f => f.value === operationConfig.field)?.label }}</strong> 字段：
             <span v-if="operationConfig.action === 'replace'">
-              将 "{{ truncateText(operationConfig.find) }}" 替换为 "{{ truncateText(operationConfig.replace) }}"
+              将"{{ truncateText(operationConfig.find) }}" 替换为"{{ truncateText(operationConfig.replace) }}"
             </span>
             <span v-else-if="operationConfig.action === 'prefix'">
-              在开头添加 "{{ truncateText(operationConfig.prefix) }}"
+              在开头添加"{{ truncateText(operationConfig.prefix) }}"
             </span>
             <span v-else-if="operationConfig.action === 'suffix'">
-              在末尾添加 "{{ truncateText(operationConfig.suffix) }}"
+              在末尾添加"{{ truncateText(operationConfig.suffix) }}"
             </span>
             <span v-else-if="operationConfig.action === 'set'">
-              设置为 "{{ truncateText(operationConfig.newValue) }}"
+              设置为"{{ truncateText(operationConfig.newValue) }}"
             </span>
             <span v-else-if="operationConfig.action === 'clear'">
-              清空字段值
+              清空字段
             </span>
           </div>
           <div v-else-if="operationConfig.type === 'tag'">
             <span v-if="operationConfig.action === 'add'">
-              为网站添加标签 "{{ operationConfig.newTag }}"
+              为网站添加标签"{{ operationConfig.newTag }}"
             </span>
             <span v-else-if="operationConfig.action === 'remove'">
-              从网站移除标签 "{{ operationConfig.oldTag }}"
+              从网站移除标签"{{ operationConfig.oldTag }}"
             </span>
             <span v-else-if="operationConfig.action === 'replace'">
-              将标签 "{{ operationConfig.oldTag }}" 替换为 "{{ operationConfig.newTag }}"
+              将标签"{{ operationConfig.oldTag }}" 替换为"{{ operationConfig.newTag }}"
             </span>
           </div>
           <div v-else-if="operationConfig.type === 'icon'">
@@ -643,7 +643,7 @@ onMounted(() => {
               重新从网站获取图标数据（iconData）
             </span>
             <span v-else-if="operationConfig.action === 'default'">
-              将图标设置为默认的 SVG 图标（清空 iconData，保留或生成 iconGenerateData）
+              将图标设置为默认 SVG 图标（清空 iconData，保留或生成 iconGenerateData）
             </span>
             <span v-else-if="operationConfig.action === 'clear'">
               清除所有图标数据（同时清空 iconData 和 iconGenerateData）
@@ -717,7 +717,7 @@ onMounted(() => {
           <label>新标签：</label>
           <input v-model="operationConfig.newTag" type="text" placeholder="要添加的标签" />
         </div>
-        <div v-if="['remove', 'replace'].includes(operationConfig.action)" class="config-row">
+        <div v-if="[ 'remove', 'replace' ].includes(operationConfig.action)" class="config-row">
           <label>旧标签：</label>
           <input v-model="operationConfig.oldTag" type="text" placeholder="要移除/替换的标签" />
         </div>
@@ -787,9 +787,9 @@ onMounted(() => {
             </div>
             <div v-if="operationConfig.type === 'tag'" class="change-row">
               <span class="field-name">标签:</span>
-              <span class="original-value">{{ item._originalTags?.join(', ') || '(无)' }}</span>
+              <span class="original-value">{{ item._originalTags?.join(', ') || '(空)' }}</span>
               <span class="arrow">→</span>
-              <span class="new-value">{{ item._newTags?.join(', ') || '(无)' }}</span>
+              <span class="new-value">{{ item._newTags?.join(', ') || '(空)' }}</span>
             </div>
           </div>
         </div>
@@ -900,7 +900,7 @@ onMounted(() => {
 .step-line {
   width: 60px;
   height: 2px;
-  background-color: var(--color-border);
+  background-color: var(--color-border-base);
   margin: 0 10px;
   margin-bottom: 16px;
 }
@@ -919,8 +919,8 @@ onMounted(() => {
 }
 
 .condition-group {
-  background-color: var(--color-bg-input);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-page);
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
@@ -940,7 +940,7 @@ onMounted(() => {
 
 .remove-group-button {
   padding: 4px 8px;
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, #ef4444);
   color: white;
   border: none;
   border-radius: 4px;
@@ -962,7 +962,7 @@ onMounted(() => {
 .field-selector,
 .operator-selector {
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
   background-color: var(--color-bg-card);
   color: var(--color-text-main);
@@ -971,7 +971,7 @@ onMounted(() => {
 
 .value-input {
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
   background-color: var(--color-bg-card);
   color: var(--color-text-main);
@@ -980,7 +980,7 @@ onMounted(() => {
 
 .remove-condition-button {
   padding: 6px 10px;
-  background-color: var(--color-danger);
+  background-color: var(--color-danger, #ef4444);
   color: white;
   border: none;
   border-radius: 4px;
@@ -992,7 +992,7 @@ onMounted(() => {
 .add-condition-button {
   padding: 6px 12px;
   background-color: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -1041,7 +1041,7 @@ onMounted(() => {
   margin-top: 12px;
   padding: 6px 12px;
   background-color: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -1068,8 +1068,8 @@ onMounted(() => {
 
 /* 选择的筛选条件 */
 .selected-conditions {
-  background-color: var(--color-bg-input);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-page);
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 16px;
@@ -1109,7 +1109,7 @@ onMounted(() => {
 /* 操作描述 */
 .operation-description {
   background-color: var(--color-bg-hover);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 16px;
@@ -1142,9 +1142,9 @@ onMounted(() => {
 .config-row input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
   border-radius: 4px;
-  background-color: var(--color-bg-input);
+  background-color: var(--color-bg-page);
   color: var(--color-text-main);
 }
 
@@ -1174,8 +1174,8 @@ onMounted(() => {
 }
 
 .preview-item {
-  background-color: var(--color-bg-input);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-page);
+  border: 1px solid var(--color-border-base);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 10px;
@@ -1187,7 +1187,7 @@ onMounted(() => {
   gap: 4px;
   margin-bottom: 8px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-base);
 }
 
 .preview-name {
@@ -1228,7 +1228,7 @@ onMounted(() => {
 }
 
 .new-value {
-  color: var(--color-success);
+  color: var(--color-success, #10b981);
   font-weight: 500;
   max-width: 200px;
   overflow: hidden;
@@ -1277,7 +1277,7 @@ onMounted(() => {
 .secondary-button {
   background-color: var(--color-bg-hover);
   color: var(--color-text-main);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-base);
 }
 
 .secondary-button:hover:not(:disabled) {
@@ -1285,14 +1285,14 @@ onMounted(() => {
 }
 
 .execute-button {
-  background-color: var(--color-bg-hover);
-  color: var(--color-text-main);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
 }
 
 .execute-button:hover:not(:disabled) {
-  background-color: var(--color-bg-active);
-  color: var(--color-text-main);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-primary-hover);
+  color: var(--color-text-on-primary);
+  border: none;
 }
 </style>
