@@ -12,7 +12,7 @@ import {
   handleWebsiteRestored,
   handleWebsiteMarkToggled,
 } from './utils/ui/displayModeManager'
-import { isExtensionInstalled, sendMessageToExtension } from './services/websiteMetadataService'
+import { sendMessageToExtension } from './services/websiteMetadataService'
 import { extractSiteNameFromUrl } from './utils/website/websiteUtils'
 import SearchModule from './components/SearchModule.vue'
 import DisplayModule from './components/DisplayModule.vue'
@@ -212,13 +212,13 @@ async function toggleWebsiteMark(website) {
 
 // 处理来自扩展的消息
 function handleExtensionMessage(event) {
-  const { type, payload, requestId } = event.detail;
-  console.log('[App] 收到扩展消息:', type, payload);
+  const { type, payload, requestId } = event.detail
+  console.log('[App] 收到扩展消息:', type, payload)
 
   // 只处理来自扩展的消息，忽略来自起始页内部的消息
   if (type === 'EXTENSION_SUBMIT_WEBSITE_META') {
     // 处理扩展提交的网站元数据
-    handleExtensionSubmitWebsiteMeta(payload, requestId);
+    handleExtensionSubmitWebsiteMeta(payload, requestId)
   }
 }
 
@@ -226,10 +226,10 @@ function handleExtensionMessage(event) {
 async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
   try {
     // 检查 URL 是否已存在
-    const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
+    const existingWebsite = websiteStore.websites.find((w) => w.url === meta.url)
     if (!existingWebsite) {
       // 创建新网站，使用从扩展传递过来的字段
-      const siteName = meta.name || extractSiteNameFromUrl(meta.url);
+      const siteName = meta.name || extractSiteNameFromUrl(meta.url)
       const newWebsite = {
         name: siteName,
         title: meta.title || siteName,
@@ -243,49 +243,49 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
         createdAt: new Date(),
         updatedAt: new Date(),
         visitCount: 0,
-        lastVisited: null
-      };
+        lastVisited: null,
+      }
 
       // 添加到 store（已包含数据库保存逻辑和 SVG 生成）
-      await websiteStore.addWebsite(newWebsite);
+      await websiteStore.addWebsite(newWebsite)
 
-      console.log('[App] 已添加从扩展提交的网站:', siteName);
-      notificationStore.success(`已从扩展添加网站：${siteName}`);
+      console.log('[App] 已添加从扩展提交的网站:', siteName)
+      notificationStore.success(`已从扩展添加网站：${siteName}`)
 
       // 发送响应
       const responseEvent = new CustomEvent('StartPageAPI-Response', {
         detail: {
           success: true,
           message: '网站添加成功',
-          requestId
-        }
-      });
-      window.dispatchEvent(responseEvent);
+          requestId,
+        },
+      })
+      window.dispatchEvent(responseEvent)
     } else {
-      console.log('[App] 网站已存在:', meta.url);
+      console.log('[App] 网站已存在:', meta.url)
 
       // 发送响应
       const responseEvent = new CustomEvent('StartPageAPI-Response', {
         detail: {
           success: false,
           error: '网站已存在',
-          requestId
-        }
-      });
-      window.dispatchEvent(responseEvent);
+          requestId,
+        },
+      })
+      window.dispatchEvent(responseEvent)
     }
   } catch (error) {
-    console.error('[App] 处理扩展提交网站元数据失败:', error);
+    console.error('[App] 处理扩展提交网站元数据失败:', error)
 
     // 发送响应
     const responseEvent = new CustomEvent('StartPageAPI-Response', {
       detail: {
         success: false,
         error: error.message,
-        requestId
-      }
-    });
-    window.dispatchEvent(responseEvent);
+        requestId,
+      },
+    })
+    window.dispatchEvent(responseEvent)
   }
 }
 
@@ -293,7 +293,7 @@ async function handleExtensionSubmitWebsiteMeta(meta, requestId) {
 onMounted(async () => {
   try {
     // 注册扩展消息监听器
-    window.addEventListener('StartPageAPI-Call', handleExtensionMessage);
+    window.addEventListener('StartPageAPI-Call', handleExtensionMessage)
 
     // ========== 1. 初始化 IndexedDB（基础依赖） ==========
     await db.init()
@@ -316,60 +316,84 @@ onMounted(async () => {
     }
 
     // ========== 4. 从扩展获取未同步的元数据 ==========
-    try {
-      console.log('[App] 尝试从扩展获取未同步的元数据');
-      const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS');
-      if (response.success && response.data && response.data.length > 0) {
-        console.log('[App] 从扩展获取到未同步的元数据:', response.data.length, '条');
-        const syncedWebsiteIds = [];
-        for (const meta of response.data) {
-          // 检查 URL 是否已存在
-          const existingWebsite = websiteStore.websites.find(w => w.url === meta.url);
-          if (!existingWebsite) {
-            // 创建新网站
-            const siteName = extractSiteNameFromUrl(meta.url);
-            const newWebsite = {
-              name: siteName,
-              title: meta.title || siteName,
-              url: meta.url,
-              description: meta.description || '',
-              tags: ['new'],
-              isMarked: false,
-              isActive: true,
-              isHidden: false,
-              iconData: meta.iconData || '',
-              iconGenerateData: '',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              visitCount: 0,
-              lastVisited: null
-            };
+    let syncSuccess = false
+    let syncAttempts = 0
+    const maxSyncAttempts = 10
 
-            // 添加到 store（已包含数据库保存逻辑）
-            await websiteStore.addWebsite(newWebsite);
-
-            console.log('[App] 已添加从扩展同步的网站:', siteName);
-            notificationStore.success(`已从扩展同步网站：${siteName}`);
-          } else {
-            console.log('[App] 网站已存在，跳过添加:', meta.url);
-          }
-
-          // 无论网站是否已存在，都记录为已同步
-          // 这样扩展会删除本地存储中的对应数据
-          syncedWebsiteIds.push(meta.url);
-        }
-
-        // 通知扩展数据已同步
-        if (syncedWebsiteIds.length > 0) {
-          console.log('[App] 通知扩展数据已同步:', syncedWebsiteIds.length, '条');
-          await sendMessageToExtension('START_PAGE_SYNC_COMPLETE', {
-            syncedWebsiteIds: syncedWebsiteIds
-          });
-        }
+    async function trySyncWithExtension() {
+      if (syncSuccess || syncAttempts >= maxSyncAttempts) {
+        return
       }
-    } catch (error) {
-      console.error('[App] 从扩展获取未同步元数据失败:', error);
+
+      syncAttempts++
+      console.log(`[App] 第 ${syncAttempts}/${maxSyncAttempts} 次尝试同步扩展数据...`)
+
+      try {
+        // 直接发送同步请求，让 content.js 处理 Service Worker 未启动的情况
+        const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS')
+        if (response.success) {
+          syncSuccess = true
+          console.log('[App] ✓ 同步扩展数据成功！获取到数据:', response.data?.length || 0, '条')
+          if (response.data && response.data.length > 0) {
+            const syncedWebsiteIds = []
+            for (const meta of response.data) {
+              // 检查 URL 是否已存在
+              const existingWebsite = websiteStore.websites.find((w) => w.url === meta.url)
+              if (!existingWebsite) {
+                // 创建新网站
+                const siteName = extractSiteNameFromUrl(meta.url)
+                const newWebsite = {
+                  name: siteName,
+                  title: meta.title || siteName,
+                  url: meta.url,
+                  description: meta.description || '',
+                  tags: ['new'],
+                  isMarked: false,
+                  isActive: true,
+                  isHidden: false,
+                  iconData: meta.iconData || '',
+                  iconGenerateData: '',
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  visitCount: 0,
+                  lastVisited: null,
+                }
+
+                // 添加到 store（已包含数据库保存逻辑）
+                await websiteStore.addWebsite(newWebsite)
+
+                console.log('[App] 已添加从扩展同步的网站:', siteName)
+                notificationStore.success(`已从扩展同步网站：${siteName}`)
+              } else {
+                console.log('[App] 网站已存在，跳过添加:', meta.url)
+              }
+
+              // 无论网站是否已存在，都记录为已同步
+              // 这样扩展会删除本地存储中的对应数据
+              syncedWebsiteIds.push(meta.url)
+            }
+
+            // 通知扩展数据已同步
+            if (syncedWebsiteIds.length > 0) {
+              console.log('[App] 通知扩展数据已同步:', syncedWebsiteIds.length, '条')
+              await sendMessageToExtension('START_PAGE_SYNC_COMPLETE', {
+                syncedWebsiteIds: syncedWebsiteIds,
+              })
+            }
+          }
+        }
+      } catch (error) {
+        console.log('[App] ✗ 同步扩展数据失败:', error.message)
+        // 失败后等待一段时间后重试，使用指数退避
+        const delay = Math.min(1000 * Math.pow(1.5, syncAttempts - 1), 5000)
+        console.log(`[App] 等待 ${delay}ms 后重试...`)
+        setTimeout(trySyncWithExtension, delay)
+      }
     }
+
+    // 立即开始
+    console.log('[App] ========== 开始同步扩展数据 ==========')
+    trySyncWithExtension()
 
     // ========== 5. 加载搜索引擎图标 ==========
     await searchStore.loadEngineIcons()
@@ -499,5 +523,3 @@ onMounted(async () => {
   top: -9999px !important;
 }
 </style>
-
-

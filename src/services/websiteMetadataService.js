@@ -72,6 +72,52 @@ export async function sendMessageToExtension(type, payload = {}) {
 }
 
 /**
+ * 检查扩展是否就绪
+ * 通过发送一个 PING 消息来检查 Service Worker 是否已启动
+ * @returns {Promise<boolean>} 扩展是否就绪
+ */
+export async function checkExtensionReady() {
+  return new Promise((resolve) => {
+    const requestId = Date.now() + '-' + Math.random();
+    let resolved = false;
+
+    // 监听响应
+    const handleResponse = (event) => {
+      if (event.detail && event.detail.requestId === requestId) {
+        window.removeEventListener('StartPageAPI-Response', handleResponse);
+        if (!resolved) {
+          resolved = true;
+          // 只要能收到响应（无论成功失败），说明 Service Worker 已启动
+          resolve(true);
+        }
+      }
+    };
+
+    window.addEventListener('StartPageAPI-Response', handleResponse);
+
+    // 发送 PING 消息
+    const event = new CustomEvent('StartPageAPI-Call', {
+      detail: {
+        type: 'PING',
+        payload: {},
+        requestId
+      }
+    });
+
+    window.dispatchEvent(event);
+
+    // 2秒后超时，如果没收到响应，说明 Service Worker 未启动
+    setTimeout(() => {
+      window.removeEventListener('StartPageAPI-Response', handleResponse);
+      if (!resolved) {
+        resolved = true;
+        resolve(false);
+      }
+    }, 2000);
+  });
+}
+
+/**
  * 从扩展获取网站元数据
  * @param {string} url - 网站 URL
  * @returns {Promise<Object|null>} 元数据对象 { title, description, iconData }
