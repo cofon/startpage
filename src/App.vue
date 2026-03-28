@@ -468,7 +468,7 @@ onMounted(async () => {
   z-index: 1000;
   display: flex;
   justify-content: center;
-  background: var(--color-bg-page);
+  background: transparent;
 }
 
 /* 非 marked 模式下的占位空白 - 填补固定搜索模块的高度和顶部空白 */
