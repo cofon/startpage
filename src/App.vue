@@ -391,7 +391,7 @@ onMounted(async () => {
       }
     }
 
-    // 立即开始
+    // 立即开始同步扩展数据
     console.log('[App] ========== 开始同步扩展数据 ==========')
     trySyncWithExtension()
 
