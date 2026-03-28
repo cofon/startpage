@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useSettingStore } from '../stores/setting'
 import { useNotificationStore } from '../stores/notification'
 
@@ -159,6 +159,13 @@ async function deleteTheme(themeId) {
 //   const theme = settingStore.themes.find(t => t.id === settingStore.selectedThemeId)
 //   return theme?.defaultColors?.[key] || '#000000'
 // }
+
+// 组件挂载时加载当前主题数据
+onMounted(() => {
+  if (currentTheme.value) {
+    loadThemeData(currentTheme.value)
+  }
+})
 </script>
 
 <template>

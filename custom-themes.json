@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "exportDate": "2026-03-28T00:00:00.000Z",
+  "themes": [
+    {
+      "id": "modern",
+      "name": "现代简约",
+      "colors": {
+        "primary": "#8b5cf6",
+        "primaryHover": "#7c3aed",
+        "primaryActive": "#6d28d9",
+        "textMain": "#1f2937",
+        "textSecondary": "#4b5563",
+        "textDisabled": "#9ca3af",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#f9fafb",
+        "bgCard": "#ffffff",
+        "bgHover": "#f3f4f6",
+        "bgActive": "#e5e7eb",
+        "borderBase": "#d1d5db",
+        "borderFocus": "#a78bfa",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "id": "warm",
+      "name": "暖色调",
+      "colors": {
+        "primary": "#f97316",
+        "primaryHover": "#ea580c",
+        "primaryActive": "#c2410c",
+        "textMain": "#292524",
+        "textSecondary": "#57534e",
+        "textDisabled": "#a8a29e",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#fffbeb",
+        "bgCard": "#ffffff",
+        "bgHover": "#fef3c7",
+        "bgActive": "#fde68a",
+        "borderBase": "#d6d3d1",
+        "borderFocus": "#fb923c",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "id": "green",
+      "name": "清新绿色",
+      "colors": {
+        "primary": "#10b981",
+        "primaryHover": "#059669",
+        "primaryActive": "#047857",
+        "textMain": "#134e4a",
+        "textSecondary": "#334155",
+        "textDisabled": "#64748b",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#f0fdf4",
+        "bgCard": "#ffffff",
+        "bgHover": "#dcfce7",
+        "bgActive": "#bbf7d0",
+        "borderBase": "#d1d5db",
+        "borderFocus": "#34d399",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "id": "purple",
+      "name": "紫色优雅",
+      "colors": {
+        "primary": "#7e22ce",
+        "primaryHover": "#6b21a8",
+        "primaryActive": "#581c87",
+        "textMain": "#1e1b4b",
+        "textSecondary": "#4338ca",
+        "textDisabled": "#9333ea",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#faf5ff",
+        "bgCard": "#ffffff",
+        "bgHover": "#f3e8ff",
+        "bgActive": "#e9d5ff",
+        "borderBase": "#d8b4fe",
+        "borderFocus": "#a855f7",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "id": "neutral",
+      "name": "中性灰色",
+      "colors": {
+        "primary": "#6b7280",
+        "primaryHover": "#4b5563",
+        "primaryActive": "#374151",
+        "textMain": "#111827",
+        "textSecondary": "#374151",
+        "textDisabled": "#9ca3af",
+        "textOnPrimary": "#ffffff",
+        "bgPage": "#f3f4f6",
+        "bgCard": "#ffffff",
+        "bgHover": "#e5e7eb",
+        "bgActive": "#d1d5db",
+        "borderBase": "#e5e7eb",
+        "borderFocus": "#9ca3af",
+        "shadowLight": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        "shadowMedium": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "shadowDark": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+      },
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z"
+    }
+  ]
+}
