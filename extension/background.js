@@ -797,9 +797,9 @@ async function checkStartPageInstance() {
       console.log('[checkStartPageInstance] 标签页 URL:', tab.url)
     }
 
-    // 查找起始页标签页（这里假设起始页的URL包含 localhost:5173 或其他特定标识）
+    // 查找起始页标签页（这里假设起始页的URL包含 localhost:5173、dgf.cc.cd 或其他特定标识）
     for (const tab of tabs) {
-      if (tab.url && (tab.url.includes('localhost:5173') || tab.url.includes('startpage'))) {
+      if (tab.url && (tab.url.includes('localhost:5173') || tab.url.includes('dgf.cc.cd') || tab.url.includes('startpage'))) {
         console.log('[checkStartPageInstance] 找到起始页标签页:', tab.url)
         return tab
       }
