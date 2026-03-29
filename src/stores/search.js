@@ -57,12 +57,15 @@ export const useSearchStore = defineStore('search', () => {
   })
 
   // 监听搜索引擎切换
-  watch(() => settingStore.selectedSearchEngineId, (newEngine, oldEngine) => {
-    // 切换搜索引擎，清空输入框并显示 marked list
-    query.value = ''
-    displayMode.value = 'marked'
-    results.value = websiteStore.markedWebsites
-  })
+  watch(
+    () => settingStore.selectedSearchEngineId,
+    (newEngine, oldEngine) => {
+      // 切换搜索引擎，清空输入框并显示 marked list
+      query.value = ''
+      displayMode.value = 'marked'
+      results.value = websiteStore.markedWebsites
+    },
+  )
 
   // 监听查询变化
   watch(query, () => {
@@ -129,135 +132,25 @@ export const useSearchStore = defineStore('search', () => {
 
   // 处理命令模式
   function handleCommand(command) {
+    const parsed = websiteStore.searchWebsites(command)
+
+    // 检查是否是页面命令
+    const pageCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'batch']
     const cmd = command.toLowerCase().substring(2).trim()
+    const mainCmd = cmd.split(/\s+/)[0]
 
-    // 检查是否是带参数的命令（如 --title abc）
-    const cmdParts = cmd.split(/\s+/)
-    const mainCmd = cmdParts[0]
-    const cmdArgs = cmdParts.slice(1).join(' ')
-
-    // 如果只有 -- 没有后续内容，当作普通搜索处理
-    if (!mainCmd) {
-      results.value = websiteStore.searchWebsites(query.value)
-      setDisplayMode('search')
-      commandMode.value = null
-      return
-    }
-
-    // 检查是否是已知的命令
-    const knownCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'batch', 'layout', 'all', 'active', 'title', 'desc', 'name', 'url']
-
-    // 如果不是已知命令，当作普通搜索处理（使用完整的输入内容）
-    if (!knownCommands.includes(mainCmd)) {
-      results.value = websiteStore.searchWebsites(query.value)
-      setDisplayMode('search')
-      commandMode.value = null
-      return
-    }
-
-    switch (mainCmd) {
-      case 'theme':
-        commandMode.value = 'theme'
-        setDisplayMode('settings')
-        break
-      case 'search':
-        commandMode.value = 'search'
-        setDisplayMode('settings')
-        break
-      case 'help':
-        commandMode.value = 'help'
+    if (pageCommands.includes(mainCmd)) {
+      commandMode.value = mainCmd
+      if (mainCmd === 'help') {
         setDisplayMode('help')
-        break
-      case 'add':
-        commandMode.value = 'add'
+      } else {
         setDisplayMode('settings')
-        break
-      case 'import':
-        commandMode.value = 'import'
-        setDisplayMode('settings')
-        break
-      case 'export':
-        commandMode.value = 'export'
-        setDisplayMode('settings')
-        break
-      case 'batch':
-        commandMode.value = 'batch'
-        setDisplayMode('settings')
-        break
-      case 'layout':
-        commandMode.value = 'layout'
-        setDisplayMode('settings')
-        break
-      case 'all':
-        // 显示所有活跃且非隐藏的网站
-        results.value = websiteStore.websites.filter(w => w.isActive && !w.isHidden)
-        setDisplayMode('search')
-        commandMode.value = null
-        break
-      case 'active':
-        // 显示所有活跃网站
-        results.value = websiteStore.activeWebsites
-        setDisplayMode('search')
-        commandMode.value = null
-        break
-      case 'title':
-        // 只搜索 title 字段
-        if (cmdArgs) {
-          results.value = websiteStore.websites.filter(w => 
-            w.isActive && 
-            !w.isHidden && 
-            w.title && 
-            w.title.toLowerCase().includes(cmdArgs.toLowerCase())
-          )
-        }
-        setDisplayMode('search')
-        commandMode.value = null
-        break
-      case 'desc':
-        // 只搜索 description 字段
-        if (cmdArgs) {
-          results.value = websiteStore.websites.filter(w => 
-            w.isActive && 
-            !w.isHidden && 
-            w.description && 
-            w.description.toLowerCase().includes(cmdArgs.toLowerCase())
-          )
-        }
-        setDisplayMode('search')
-        commandMode.value = null
-        break
-      case 'name':
-        // 只搜索 name 字段
-        if (cmdArgs) {
-          results.value = websiteStore.websites.filter(w => 
-            w.isActive && 
-            !w.isHidden && 
-            w.name && 
-            w.name.toLowerCase().includes(cmdArgs.toLowerCase())
-          )
-        }
-        setDisplayMode('search')
-        commandMode.value = null
-        break
-      case 'url':
-        // 只搜索 url 字段
-        if (cmdArgs) {
-          results.value = websiteStore.websites.filter(w => 
-            w.isActive && 
-            !w.isHidden && 
-            w.url && 
-            w.url.toLowerCase().includes(cmdArgs.toLowerCase())
-          )
-        }
-        setDisplayMode('search')
-        commandMode.value = null
-        break
-      default:
-        // 其他命令（如 --inactive, --active false）传递给现有的搜索逻辑
-        results.value = websiteStore.searchWebsites(command)
-        setDisplayMode('search')
-        commandMode.value = null
-        break
+      }
+    } else {
+      // 执行搜索
+      results.value = parsed
+      setDisplayMode('search')
+      commandMode.value = null
     }
   }
 
@@ -328,6 +221,6 @@ export const useSearchStore = defineStore('search', () => {
     setDisplayMode,
     getDisplayMode,
     handleCommand,
-    clearCommandMode
+    clearCommandMode,
   }
 })

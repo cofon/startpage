@@ -5,7 +5,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { parseSearchQuery, applyFilters } from '../utils/search/searchParser'
+import { parseSearchQuery, applyFilters } from '../utils/search/searchParser.js'
 import { createWebsiteObject, normalizeWebsiteData } from '../utils/website/websiteUtils'
 import db from '../utils/database'
 
@@ -204,7 +204,7 @@ export const useWebsiteStore = defineStore('website', () => {
 
     // 如果是高级搜索（特殊命令）
     if (parsed.isAdvanced) {
-      return applyFilters(websites.value, parsed.filters)
+      return applyFilters(websites.value, parsed.filters, allTags.value)
     }
 
     // 普通搜索：支持多个关键词（空格分隔，AND关系）
