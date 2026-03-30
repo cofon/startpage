@@ -66,13 +66,15 @@ window.addEventListener('StartPageAPI-Call', (event) => {
   function sendMessageWithRetry(retryCount = 0, maxRetries = 5) {
     try {
       chrome.runtime.sendMessage({ type, payload }, (response) => {
-        // 检查是否有错误
-        if (chrome.runtime.lastError) {
-          console.error('[Content Script] 发送消息到扩展失败:', chrome.runtime.lastError.message)
+        // 检查是否有错误 - 使用 void 操作符避免触发 Chrome 的错误显示
+        const lastError = chrome.runtime.lastError
+        if (lastError) {
+          // 打印普通信息而不是错误
+          console.log('[Content Script] 发送消息到扩展失败:', lastError.message)
 
           // 如果是 "Receiving end does not exist" 错误，且还有重试次数，则重试
           if (
-            chrome.runtime.lastError.message.includes('Receiving end does not exist') &&
+            lastError.message.includes('Receiving end does not exist') &&
             retryCount < maxRetries
           ) {
             // 增加等待时间，指数退避
@@ -90,7 +92,7 @@ window.addEventListener('StartPageAPI-Call', (event) => {
           const responseEvent = new CustomEvent('StartPageAPI-Response', {
             detail: {
               success: false,
-              error: chrome.runtime.lastError.message,
+              error: lastError.message,
               requestId,
             },
           })
@@ -110,7 +112,8 @@ window.addEventListener('StartPageAPI-Call', (event) => {
         window.dispatchEvent(responseEvent)
       })
     } catch (error) {
-      console.error('[Content Script] 发送消息到扩展异常:', error.message)
+      // 打印普通信息而不是错误
+      console.log('[Content Script] 发送消息到扩展异常:', error.message)
 
       // 发送错误响应回起始页
       const responseEvent = new CustomEvent('StartPageAPI-Response', {
@@ -194,7 +197,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       error: '未知消息类型',
     })
   } catch (error) {
-    console.error('[Content Script] 处理扩展后台消息异常:', error.message)
+    // 打印普通信息而不是错误
+    console.log('[Content Script] 处理扩展后台消息异常:', error.message)
     sendResponse({
       success: false,
       error: error.message,

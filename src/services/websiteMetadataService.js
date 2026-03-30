@@ -31,21 +31,51 @@ export async function isExtensionInstalled() {
  * 发送消息到扩展
  * @param {string} type - 消息类型
  * @param {Object} payload - 消息 payload
+ * @param {number} retryCount - 当前重试次数
+ * @param {number} maxRetries - 最大重试次数
  * @returns {Promise<Object>} 扩展的响应
  */
-export async function sendMessageToExtension(type, payload = {}) {
+export async function sendMessageToExtension(type, payload = {}, retryCount = 0, maxRetries = 3) {
+  // 先发送唤醒消息（PING），确保扩展从休眠状态中唤醒
+  try {
+    await checkExtensionReady();
+  } catch (error) {
+    // 唤醒失败不影响后续操作，继续发送实际消息
+  }
+
   return new Promise((resolve, reject) => {
     // 生成唯一的请求 ID
     const requestId = Date.now() + '-' + Math.random();
+    let isResolved = false;
 
     // 监听响应
     const handleResponse = (event) => {
       if (event.detail && event.detail.requestId === requestId) {
         window.removeEventListener('StartPageAPI-Response', handleResponse);
+        clearTimeout(timeoutId);
+        
+        // 避免重复 resolve/reject
+        if (isResolved) return;
+        isResolved = true;
+        
         if (event.detail.success) {
           resolve(event.detail);
         } else {
-          reject(new Error(event.detail.error || 'Request failed'));
+          // 如果失败且未达到最大重试次数，进行重试
+          if (retryCount < maxRetries) {
+            // 只在非 PING 消息时打印重试信息
+            if (type !== 'PING') {
+              console.log(`[sendMessageToExtension] 请求失败，正在重试 ${retryCount + 1}/${maxRetries}...`);
+            }
+            // 延迟 500ms 后重试
+            setTimeout(() => {
+              sendMessageToExtension(type, payload, retryCount + 1, maxRetries)
+                .then(resolve)
+                .catch(reject);
+            }, 500);
+          } else {
+            reject(new Error(event.detail.error || 'Request failed'));
+          }
         }
       }
     };
@@ -63,11 +93,27 @@ export async function sendMessageToExtension(type, payload = {}) {
 
     window.dispatchEvent(event);
 
-    // 超时处理
-    setTimeout(() => {
+    // 超时处理 - 缩短超时时间为 5 秒
+    const timeoutId = setTimeout(() => {
       window.removeEventListener('StartPageAPI-Response', handleResponse);
-      reject(new Error('Extension communication timeout'));
-    }, 30000);
+      
+      // 避免重复 resolve/reject
+      if (isResolved) return;
+      isResolved = true;
+      
+      // 如果超时且未达到最大重试次数，进行重试
+      if (retryCount < maxRetries) {
+        // 只在非 PING 消息时打印重试信息
+        if (type !== 'PING') {
+          console.log(`[sendMessageToExtension] 请求超时，正在重试 ${retryCount + 1}/${maxRetries}...`);
+        }
+        sendMessageToExtension(type, payload, retryCount + 1, maxRetries)
+          .then(resolve)
+          .catch(reject);
+      } else {
+        reject(new Error('Extension communication timeout'));
+      }
+    }, 5000);
   });
 }
 
@@ -111,6 +157,8 @@ export async function checkExtensionReady() {
       window.removeEventListener('StartPageAPI-Response', handleResponse);
       if (!resolved) {
         resolved = true;
+        // 打印普通信息而不是错误
+        console.log('[checkExtensionReady] 扩展可能处于休眠状态，正在唤醒...');
         resolve(false);
       }
     }, 2000);

@@ -318,22 +318,44 @@ onMounted(async () => {
     // ========== 4. 从扩展获取未同步的元数据 ==========
     let syncSuccess = false
     let syncAttempts = 0
-    const maxSyncAttempts = 10
+    const maxSyncAttempts = 3
+    let syncTimeoutId = null
 
     async function trySyncWithExtension() {
-      if (syncSuccess || syncAttempts >= maxSyncAttempts) {
+      // 如果已经同步成功，清除定时器并返回
+      if (syncSuccess) {
+        if (syncTimeoutId) {
+          clearTimeout(syncTimeoutId)
+          syncTimeoutId = null
+        }
+        return
+      }
+
+      // 如果超过最大尝试次数，停止重试
+      if (syncAttempts >= maxSyncAttempts) {
+        console.log('[App] 同步扩展数据达到最大尝试次数，停止重试')
         return
       }
 
       syncAttempts++
-      console.log(`[App] 第 ${syncAttempts}/${maxSyncAttempts} 次尝试同步扩展数据...`)
 
       try {
         // 直接发送同步请求，让 content.js 处理 Service Worker 未启动的情况
         const response = await sendMessageToExtension('START_PAGE_REQUEST_UNSYNCED_METAS')
+        
+        // 如果已经同步成功（可能由其他请求完成），直接返回
+        if (syncSuccess) return
+        
         if (response.success) {
           syncSuccess = true
           console.log('[App] ✓ 同步扩展数据成功！获取到数据:', response.data?.length || 0, '条')
+          
+          // 清除任何待执行的重试定时器
+          if (syncTimeoutId) {
+            clearTimeout(syncTimeoutId)
+            syncTimeoutId = null
+          }
+          
           if (response.data && response.data.length > 0) {
             const syncedWebsiteIds = []
             for (const meta of response.data) {
@@ -383,11 +405,15 @@ onMounted(async () => {
           }
         }
       } catch (error) {
-        console.log('[App] ✗ 同步扩展数据失败:', error.message)
-        // 失败后等待一段时间后重试，使用指数退避
-        const delay = Math.min(1000 * Math.pow(1.5, syncAttempts - 1), 5000)
-        console.log(`[App] 等待 ${delay}ms 后重试...`)
-        setTimeout(trySyncWithExtension, delay)
+        // 如果已经同步成功，不再处理错误
+        if (syncSuccess) return
+        
+        // 失败后等待一段时间后重试，使用固定延迟
+        const delay = 2000
+        syncTimeoutId = setTimeout(() => {
+          syncTimeoutId = null
+          trySyncWithExtension()
+        }, delay)
       }
     }
 
