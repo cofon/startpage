@@ -7,6 +7,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useWebsiteStore } from './website'
 import { useSettingStore } from './setting'
 import { updateDisplayResults, refreshCurrentDisplay } from '../utils/ui/displayModeManager'
+import { parseSearchQuery } from '../utils/search/searchParser.js'
 
 export const useSearchStore = defineStore('search', () => {
   // Stores
@@ -117,9 +118,9 @@ export const useSearchStore = defineStore('search', () => {
       return
     }
 
-    // 检查是否是命令模式（以 -- 开头）
+    // 检查是否是命令模式（以 - 开头）
     const trimmedQuery = query.value.trim()
-    if (trimmedQuery.startsWith('--')) {
+    if (trimmedQuery.startsWith('-')) {
       handleCommand(trimmedQuery)
       return
     }
@@ -132,11 +133,12 @@ export const useSearchStore = defineStore('search', () => {
 
   // 处理命令模式
   function handleCommand(command) {
-    const parsed = websiteStore.searchWebsites(command)
+    // 先解析命令，获取完整的解析结果
+    const parsedResult = parseSearchQuery(command)
 
     // 检查是否是页面命令
     const pageCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'batch']
-    const cmd = command.toLowerCase().substring(2).trim()
+    const cmd = command.toLowerCase().substring(1).trim()
     const mainCmd = cmd.split(/\s+/)[0]
 
     if (pageCommands.includes(mainCmd)) {
@@ -147,7 +149,13 @@ export const useSearchStore = defineStore('search', () => {
         setDisplayMode('settings')
       }
     } else {
+      // 检查是否有不完整的命令
+      if (parsedResult.hasIncompleteCommand) {
+        // 有不完整的命令，保持之前的搜索结果
+        return
+      }
       // 执行搜索
+      const parsed = websiteStore.searchWebsites(command)
       results.value = parsed
       setDisplayMode('search')
       commandMode.value = null

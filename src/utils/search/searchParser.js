@@ -30,10 +30,10 @@ export function parseSearchQuery(query) {
     }
   }
 
-  // 检查是否是特殊命令（以 -- 开头）
-  if (keyword.startsWith('--')) {
-    // 如果只有 "--" 两个字符，不显示任何网站
-    if (keyword === '--') {
+  // 检查是否是特殊命令（以 - 开头）
+  if (keyword.startsWith('-')) {
+    // 如果只有 "-" 一个字符，不显示任何网站
+    if (keyword === '-') {
       return {
         isAdvanced: true,
         filters: { noResults: true },
@@ -43,6 +43,12 @@ export function parseSearchQuery(query) {
     }
     // 命令模式：解析高级搜索命令
     return parseAdvancedSearch(keyword)
+  }
+
+  // 检查是否包含命令（包含 - 开头的部分）
+  if (keyword.includes(' -')) {
+    // 包含命令，按高级搜索处理
+    return parseAdvancedSearch('-' + keyword)
   }
 
   // 检查普通搜索中是否包含逻辑运算符
@@ -149,21 +155,19 @@ function parseNormalSearchWithOperators(query) {
 
 /**
  * 解析高级搜索命令
- * @param {string} command - 以 -- 开头的命令
+ * @param {string} command - 以 - 开头的命令
  * @returns {Object} 解析结果
  */
 function parseAdvancedSearch(command) {
-  // 移除开头的 --
-  const cmd = command.substring(2).trim()
+  // 移除开头的 -
+  const cmd = command.substring(1).trim()
   
   // 首先按 | 分割成多个 OR 组
   const orGroups = cmd.split('|').map(group => group.trim()).filter(group => group.length > 0)
   
   // 检查是否是页面命令（第一个部分）
   const pageCommands = ['theme', 'search', 'add', 'import', 'export', 'batch', 'help']
-  const firstPart = orGroups[0]?.split(/\s+/)[0]?.startsWith('--') 
-    ? orGroups[0].split(/\s+/)[0].substring(2) 
-    : orGroups[0]?.split(/\s+/)[0]
+  const firstPart = orGroups[0]?.split(/\s+/)[0]
   if (firstPart && pageCommands.includes(firstPart)) {
     return {
       isAdvanced: true,
@@ -172,6 +176,8 @@ function parseAdvancedSearch(command) {
       keywords: []
     }
   }
+  
+  let hasIncompleteCommand = false
   
   // 解析每个 OR 组
   const filterGroups = orGroups.map(orGroup => {
@@ -193,17 +199,34 @@ function parseAdvancedSearch(command) {
       while (i < parts.length) {
         let part = parts[i]
         
-        // 如果 part 以 -- 开头，移除 --
-        if (part.startsWith('--')) {
-          part = part.substring(2)
+        // 检查是否是完整的命令（以 - 开头）
+        if (part.startsWith('-')) {
+          // 移除 -
+          const cmd = part.substring(1)
+          
+          // 检查是否是状态命令
+          if (isStatusCommand(cmd)) {
+            handleStatusCommand(cmd, filter)
+            i++
+          }
+          // 检查是否是搜索命令
+          else if (isSearchCommand(cmd)) {
+            const { nextIndex, field, params } = parseSearchCommand(parts, i)
+            filter.searchFields[field] = params
+            i = nextIndex
+          }
+          // 不完整的命令（以 - 开头，但不是有效命令）
+          else {
+            hasIncompleteCommand = true
+            i++
+          }
         }
-        
-        // 检查是否是状态命令
-        if (isStatusCommand(part)) {
+        // 检查是否是状态命令（直接的命令，没有 - 前缀）
+        else if (isStatusCommand(part)) {
           handleStatusCommand(part, filter)
           i++
         }
-        // 检查是否是搜索命令
+        // 检查是否是搜索命令（直接的命令，没有 - 前缀）
         else if (isSearchCommand(part)) {
           const { nextIndex, field, params } = parseSearchCommand(parts, i)
           filter.searchFields[field] = params
@@ -247,7 +270,7 @@ function parseAdvancedSearch(command) {
     return group.isActive !== undefined || 
            group.isMarked !== undefined || 
            group.isHidden !== undefined || 
-           Object.keys(group.searchFields).length > 0 || 
+           Object.keys(group.searchFields).length > 0 ||
            group.keywords.length > 0
   })
   
@@ -264,7 +287,8 @@ function parseAdvancedSearch(command) {
     isAdvanced: true,
     filters: filterGroups.length === 1 ? filterGroups[0] : filterGroups,
     pageCommand: null,
-    keywords: []
+    keywords: [],
+    hasIncompleteCommand
   }
 }
 
@@ -315,7 +339,7 @@ function handleStatusCommand(command, filters) {
       filters.isHidden = false
       break
     case 'all':
-      // --all 命令显示除了 isActive === false 和 isHidden === true 之外的所有网站
+      // -all 命令显示除了 isActive === false 和 isHidden === true 之外的所有网站
       filters.isActive = true
       filters.isHidden = false
       break
@@ -329,9 +353,9 @@ function handleStatusCommand(command, filters) {
  * @returns {Object} 解析结果，包含下一个索引、字段名和参数
  */
 function parseSearchCommand(parts, startIndex) {
-  // 获取命令，移除 -- 前缀
-  const command = parts[startIndex].startsWith('--') 
-    ? parts[startIndex].substring(2) 
+  // 获取命令，移除 - 前缀
+  const command = parts[startIndex].startsWith('-') 
+    ? parts[startIndex].substring(1) 
     : parts[startIndex]
   const field = command
   const params = []
@@ -340,7 +364,7 @@ function parseSearchCommand(parts, startIndex) {
   // 收集参数，直到遇到命令边界
   while (i < parts.length) {
     const part = parts[i]
-    if (part === '&' || part === '|' || part.startsWith('--')) {
+    if (part === '&' || part === '|' || part.startsWith('-')) {
       break
     }
     params.push(part)
@@ -399,7 +423,7 @@ function applySingleFilter(website, filter, allTags = []) {
     if (params.length === 0) {
       // 没有参数的情况
       if (field === 'desc' || field === 'tag') {
-        // --desc 和 --tag 没有参数时不显示任何网站
+        // -desc 和 -tag 没有参数时不显示任何网站
         return false
       }
       // 其他字段没有参数时显示所有网站
