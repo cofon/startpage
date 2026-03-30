@@ -71,8 +71,8 @@ export const useWebsiteStore = defineStore('website', () => {
       visitCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isActive: true,
-      isHidden: false
+      isActive: website.isActive !== undefined ? website.isActive : true,
+      isHidden: website.isHidden !== undefined ? website.isHidden : false
     })
 
     // 检查是否需要生成 SVG 图标
