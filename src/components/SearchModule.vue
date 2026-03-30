@@ -100,7 +100,7 @@ function handleEscKey() {
   /* margin-bottom: 30px; */
   /* padding-bottom: 24px, 0; */
   padding: 24px 0;
-  /* background-color: white */
+  background-color: white
 }
 
 .search-container {
