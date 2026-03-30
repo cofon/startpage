@@ -32,7 +32,7 @@ async function initStorage() {
       await chrome.storage.local.set({ [STORAGE_KEYS.METAS]: [] })
     }
   } catch (error) {
-    console.error('初始化存储失败:', error)
+    console.log('初始化存储失败:', error)
   }
 }
 
@@ -42,7 +42,7 @@ async function getMetas() {
     const result = await chrome.storage.local.get(STORAGE_KEYS.METAS)
     return result[STORAGE_KEYS.METAS] || []
   } catch (error) {
-    console.error('获取元数据失败:', error)
+    console.log('获取元数据失败:', error)
     return []
   }
 }
@@ -53,7 +53,7 @@ async function saveMetas(metas) {
     await chrome.storage.local.set({ [STORAGE_KEYS.METAS]: metas })
     return true
   } catch (error) {
-    console.error('保存元数据失败:', error)
+    console.log('保存元数据失败:', error)
     return false
   }
 }
@@ -118,7 +118,7 @@ async function getMetadataFromCurrentTab() {
       }
     }
   } catch (error) {
-    console.error('从当前标签页获取元数据失败:', error)
+    console.log('从当前标签页获取元数据失败:', error)
   }
   return null
 }
@@ -201,7 +201,7 @@ async function getMetadataFromUrl(url) {
       return parseHtmlMetadata(html, url)
     }
   } catch (error) {
-    console.error('使用fetch获取元数据失败:', error)
+    console.log('使用fetch获取元数据失败:', error)
     // 尝试使用打开标签页的方式
     console.log('[Background] fetch失败，尝试使用标签页方式获取元数据')
     return await getMetadataFromNewTab(url)
@@ -506,7 +506,7 @@ async function getMetadataFromNewTab(url) {
     console.log('[getMetadataFromNewTab] 收到离屏文档响应:', response);
 
     if (response.error) {
-      console.error('[getMetadataFromNewTab] 离屏文档返回错误:', response.error);
+      console.log('[getMetadataFromNewTab] 离屏文档返回错误:', response.error);
       throw new Error(response.error);
     }
 
@@ -532,7 +532,7 @@ async function getMetadataFromNewTab(url) {
 
     return metadata;
   } catch (error) {
-    console.error('[getMetadataFromNewTab] 从离屏文档获取元数据失败:', error);
+    console.log('[getMetadataFromNewTab] 从离屏文档获取元数据失败:', error);
     return null;
   }
 }
@@ -563,7 +563,7 @@ async function fetchIconAsBase64(iconUrl, originalUrl) {
       }
     }
   } catch (error) {
-    console.error('生成原始 URL 域名 favicon.ico URL 失败:', error)
+    console.log('生成原始 URL 域名 favicon.ico URL 失败:', error)
   }
 
   return ''
@@ -581,13 +581,13 @@ async function tryFetchIcon(iconUrl) {
     
     // 验证 blob 是否是有效的图片
     if (!blob.type.startsWith('image/')) {
-      console.error('获取的图标不是有效的图片:', blob.type)
+      console.log('获取的图标不是有效的图片:', blob.type)
       return ''
     }
 
     // 验证 blob 大小是否合理（至少10字节）
     if (blob.size < 10) {
-      console.error('获取的图标大小不合理:', blob.size)
+      console.log('获取的图标大小不合理:', blob.size)
       return ''
     }
 
@@ -599,7 +599,7 @@ async function tryFetchIcon(iconUrl) {
       reader.readAsDataURL(blob)
     })
   } catch (error) {
-    console.error('获取图标失败:', error)
+    console.log('获取图标失败:', error)
     return ''
   }
 }
@@ -676,7 +676,7 @@ async function handleStartPageRequestWebsiteMeta(message, sendResponse) {
       })
     }
   } catch (error) {
-    console.error('处理起始页请求单个网站元数据失败:', error)
+    console.log('处理起始页请求单个网站元数据失败:', error)
     sendResponse({
       success: false,
       error: error.message,
@@ -705,7 +705,7 @@ async function handleStartPageBatchRequestMetas(message, sendResponse) {
       data: metas,
     })
   } catch (error) {
-    console.error('处理起始页批量请求元数据失败:', error)
+    console.log('处理起始页批量请求元数据失败:', error)
     sendResponse({
       success: false,
       error: error.message,
@@ -723,7 +723,7 @@ async function handleStartPageRequestUnsyncedMetas(sendResponse) {
       data: metas,
     })
   } catch (error) {
-    console.error('处理起始页请求未同步的元数据失败:', error)
+    console.log('处理起始页请求未同步的元数据失败:', error)
     sendResponse({
       success: false,
       error: error.message,
@@ -753,7 +753,7 @@ async function handleStartPageSyncComplete(message, sendResponse) {
       data: { deleted: syncedWebsiteIds.length },
     })
   } catch (error) {
-    console.error('处理起始页同步完成失败:', error)
+    console.log('处理起始页同步完成失败:', error)
     sendResponse({
       success: false,
       error: error.message,
@@ -777,7 +777,7 @@ async function handleGetCurrentPageMetadata(sendResponse) {
       })
     }
   } catch (error) {
-    console.error('处理获取当前页面元数据失败:', error)
+    console.log('处理获取当前页面元数据失败:', error)
     sendResponse({
       success: false,
       error: error.message,
@@ -807,7 +807,7 @@ async function checkStartPageInstance() {
     console.log('[checkStartPageInstance] 未找到起始页标签页')
     return null
   } catch (error) {
-    console.error('检测起始页实例失败:', error)
+    console.log('检测起始页实例失败:', error)
     return null
   }
 }
@@ -819,7 +819,7 @@ async function sendMessageToStartPage(tab, message) {
     const response = await chrome.tabs.sendMessage(tab.id, message)
     return response
   } catch (error) {
-    console.error('发送消息给起始页失败:', error)
+    console.log('发送消息给起始页失败:', error)
     return null
   }
 }
@@ -913,7 +913,7 @@ async function handleExtensionSubmitWebsiteMeta(message, sendResponse) {
       }
     }
   } catch (error) {
-    console.error('处理扩展提交网站元数据失败:', error)
+    console.log('处理扩展提交网站元数据失败:', error)
     sendResponse({
       success: false,
       error: error.message,

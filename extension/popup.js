@@ -90,7 +90,7 @@ async function submitWebsiteMeta(meta) {
     })
     return response
   } catch (error) {
-    console.error('提交网站元数据失败:', error)
+    console.log('提交网站元数据失败:', error)
     return null
   }
 }

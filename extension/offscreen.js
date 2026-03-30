@@ -70,7 +70,7 @@ async function fetchMetadata(url) {
       return parseHtmlMetadata(html, url);
     }
   } catch (error) {
-    console.error('获取元数据失败:', error);
+    console.log('获取元数据失败:', error);
     return { error: error.message };
   }
 }

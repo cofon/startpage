@@ -33,14 +33,17 @@ export async function isExtensionInstalled() {
  * @param {Object} payload - 消息 payload
  * @param {number} retryCount - 当前重试次数
  * @param {number} maxRetries - 最大重试次数
+ * @param {boolean} skipPing - 是否跳过 PING 唤醒
  * @returns {Promise<Object>} 扩展的响应
  */
-export async function sendMessageToExtension(type, payload = {}, retryCount = 0, maxRetries = 3) {
-  // 先发送唤醒消息（PING），确保扩展从休眠状态中唤醒
-  try {
-    await checkExtensionReady();
-  } catch (error) {
-    // 唤醒失败不影响后续操作，继续发送实际消息
+export async function sendMessageToExtension(type, payload = {}, retryCount = 0, maxRetries = 3, skipPing = false) {
+  // 只在第一次请求或重试时发送唤醒消息（PING）
+  if (retryCount === 0 && !skipPing) {
+    try {
+      await checkExtensionReady();
+    } catch (error) {
+      // 唤醒失败不影响后续操作，继续发送实际消息
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -67,9 +70,9 @@ export async function sendMessageToExtension(type, payload = {}, retryCount = 0,
             if (type !== 'PING') {
               console.log(`[sendMessageToExtension] 请求失败，正在重试 ${retryCount + 1}/${maxRetries}...`);
             }
-            // 延迟 500ms 后重试
+            // 延迟 500ms 后重试，跳过 PING 唤醒
             setTimeout(() => {
-              sendMessageToExtension(type, payload, retryCount + 1, maxRetries)
+              sendMessageToExtension(type, payload, retryCount + 1, maxRetries, true)
                 .then(resolve)
                 .catch(reject);
             }, 500);
@@ -93,7 +96,7 @@ export async function sendMessageToExtension(type, payload = {}, retryCount = 0,
 
     window.dispatchEvent(event);
 
-    // 超时处理 - 缩短超时时间为 5 秒
+    // 超时处理 - 缩短超时时间为 3 秒
     const timeoutId = setTimeout(() => {
       window.removeEventListener('StartPageAPI-Response', handleResponse);
       
@@ -107,13 +110,14 @@ export async function sendMessageToExtension(type, payload = {}, retryCount = 0,
         if (type !== 'PING') {
           console.log(`[sendMessageToExtension] 请求超时，正在重试 ${retryCount + 1}/${maxRetries}...`);
         }
-        sendMessageToExtension(type, payload, retryCount + 1, maxRetries)
+        // 重试时跳过 PING 唤醒
+        sendMessageToExtension(type, payload, retryCount + 1, maxRetries, true)
           .then(resolve)
           .catch(reject);
       } else {
         reject(new Error('Extension communication timeout'));
       }
-    }, 5000);
+    }, 3000);
   });
 }
 
