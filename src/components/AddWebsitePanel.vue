@@ -71,7 +71,6 @@ const urlInputFocused = ref(false)
 // 监听 name 输入框获得焦点，标记用户开始手动编辑
 function handleNameFocus() {
   userHasEditedName = true
-  console.log('[AddWebsitePanel] 用户在 name 输入框获得焦点，标记为已手动编辑')
 }
 
 // 监听 name 输入，检测第一个字符变化以重新生成 SVG
@@ -80,13 +79,11 @@ watch(
   (newVal) => {
     // 如果用户已手动编辑过，则保留其输入的值
     if (userHasEditedName && newVal) {
-      console.log('[AddWebsitePanel] 用户已手动编辑 name，保留值:', newVal)
     }
 
     // 检测 name 第一个字符是否变化，如果变化则重新生成 SVG
     const newFirstChar = newVal && newVal.trim() ? newVal.trim()[0] : ''
     if (newFirstChar !== lastNameFirstChar) {
-      console.log('[AddWebsitePanel] name 首字符变化:', lastNameFirstChar, '->', newFirstChar)
       lastNameFirstChar = newFirstChar
 
       // 重新生成 SVG
@@ -165,11 +162,7 @@ watch(
 
 // URL 变化时自动填充网站名称和图标（不再进行验证）
 async function processUrlChange(url) {
-  console.log('[processUrlChange] ========== URL 变化处理 ==========')
-  console.log('[processUrlChange] 输入 URL:', url)
-
   if (!url || url.trim() === '') {
-    console.log('[processUrlChange] URL 为空，清空表单')
     formData.value.name = ''
     formData.value.title = ''
     formData.value.description = ''
@@ -187,7 +180,6 @@ async function processUrlChange(url) {
   // ========== 严格的 URL 格式验证 ==========
   const validation = isValidUrl(url)
   if (!validation.valid) {
-    console.log('[processUrlChange] URL 格式验证失败:', validation.error)
     formData.value.name = ''
     formData.value.title = ''
     formData.value.description = ''
@@ -202,17 +194,12 @@ async function processUrlChange(url) {
     return
   }
 
-  // URL 格式有效，继续处理
-  console.log('[processUrlChange] ✓ URL 格式有效')
-
   // 提取主机名
   let hostname = ''
   try {
     const urlObj = new URL(url)
     hostname = urlObj.hostname.toLowerCase()
-    console.log('[processUrlChange] 解析的主机名:', hostname)
   } catch {
-    console.log('[processUrlChange] URL 解析失败，跳过处理')
     formData.value.name = ''
     formData.value.title = ''
     formData.value.description = ''
@@ -234,9 +221,7 @@ async function processUrlChange(url) {
     )
 
   // 如果是 localhost 或内网 IP，直接通过检查
-  if (isLocalHost || isPrivateIP) {
-    console.log('[processUrlChange] ✓ 检测到本地地址，继续处理')
-  } else {
+  if (!isLocalHost && !isPrivateIP) {
     // 对于普通域名，检查是否完整
     const parts = hostname.split('.')
     const hasValidDomain =
@@ -248,7 +233,6 @@ async function processUrlChange(url) {
       hostname.length > 4
 
     if (!hasValidDomain) {
-      console.log('[processUrlChange] 域名不完整，跳过处理')
       formData.value.name = ''
       formData.value.title = ''
       formData.value.description = ''
@@ -263,18 +247,10 @@ async function processUrlChange(url) {
     }
   }
 
-  console.log('[processUrlChange] ✓ 域名完整，开始智能填充...')
-
   // ========== 检查 URL 是否已存在（使用规范化后的 URL 比较） ==========
   const urlCheckResult = checkUrlExists(url, websiteStore.websites)
 
   if (urlCheckResult.exists) {
-    console.warn(
-      '[processUrlChange] ⚠️ URL 已存在，现有网站:',
-      urlCheckResult.websiteName,
-      'ID:',
-      urlCheckResult.websiteId,
-    )
     formData.value.name = ''
     formData.value.title = ''
     formData.value.description = ''
@@ -295,12 +271,10 @@ async function processUrlChange(url) {
     if (!userHasEditedName) {
       const siteName = extractSiteNameFromUrl(url)
       formData.value.name = siteName
-      console.log('[processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充:', siteName)
     }
 
     // 2. SVG 图标：优先复用已有网站的 SVG，没有才生成新的
     const rootDomain = extractRootDomain(hostname)
-    console.log('[processUrlChange] 提取的根域名:', rootDomain)
 
     if (rootDomain) {
       // 先找到相同根域名的网站（不需要图标数据）
@@ -319,10 +293,6 @@ async function processUrlChange(url) {
         const websiteWithIcon = await websiteStore.getWebsiteWithIcon(existingWebsiteWithSameRoot.id)
         if (websiteWithIcon?.iconGenerateData) {
           formData.value.iconGenerateData = websiteWithIcon.iconGenerateData
-          console.log(
-            '[processUrlChange] ✓ 找到相同根域名的网站，已复用 SVG:',
-            existingWebsiteWithSameRoot.name,
-          )
         } else {
           // 找到网站但没有图标数据，生成新的
           const normalizedData = normalizeWebsiteData({
@@ -333,7 +303,6 @@ async function processUrlChange(url) {
           formData.value.tags = Array.isArray(normalizedData.tags)
             ? normalizedData.tags.join(', ')
             : ''
-          console.log('[processUrlChange] - 找到相同根域名网站但无图标，已生成新 SVG')
         }
       } else {
         const normalizedData = normalizeWebsiteData({
@@ -345,8 +314,6 @@ async function processUrlChange(url) {
         formData.value.tags = Array.isArray(normalizedData.tags)
           ? normalizedData.tags.join(', ')
           : ''
-
-        console.log('[processUrlChange] - 未找到相同根域名的网站，已生成新 SVG')
       }
     } else {
       const normalizedData = normalizeWebsiteData({
@@ -356,8 +323,6 @@ async function processUrlChange(url) {
 
       formData.value.iconGenerateData = normalizedData.iconGenerateData
       formData.value.tags = Array.isArray(normalizedData.tags) ? normalizedData.tags.join(', ') : ''
-
-      console.log('[processUrlChange] - 无法提取根域名，已生成新 SVG')
     }
 
     // 3. 其他字段保持为空
@@ -368,13 +333,10 @@ async function processUrlChange(url) {
     // 更新提交按钮状态
     updateSubmitButtonState()
   }
-
-  console.log('[processUrlChange] ========== URL 变化处理完成 ==========')
 }
 
 // 处理 URL 输入事件（包括浏览器自动填充）
 function handleUrlInput(event) {
-  console.log('[handleUrlInput] 检测到输入事件:', event.target.value)
   // 使用 nextTick 确保 v-model 已更新
   setTimeout(() => {
     processUrlChange(formData.value.url)
@@ -392,7 +354,6 @@ function updateSubmitButtonState() {
   const hasTags = formData.value.tags && formData.value.tags.trim() !== ''
 
   isButtonEnabled.value.submit = urlValid && hasName && hasIconGenerateData && hasTags
-  console.log('[updateSubmitButtonState] 提交按钮状态:', isButtonEnabled.value.submit)
 }
 
 /**
@@ -400,10 +361,7 @@ function updateSubmitButtonState() {
  * @param {string} name - 网站名称
  */
 async function regenerateSvgFromName(name) {
-  console.log('[regenerateSvgFromName] 开始根据 name 重新生成 SVG，name:', name)
-
   if (!name || !name.trim()) {
-    console.log('[regenerateSvgFromName] name 为空，清空 SVG')
     formData.value.iconGenerateData = ''
     updateSubmitButtonState()
     return
@@ -413,7 +371,6 @@ async function regenerateSvgFromName(name) {
     // 使用当前的 URL 和新的 name 重新生成 SVG
     const url = formData.value.url
     if (!url) {
-      console.log('[regenerateSvgFromName] URL 为空，跳过 SVG 生成')
       return
     }
 
@@ -432,22 +389,19 @@ async function regenerateSvgFromName(name) {
       }
     }
 
-    console.log('[regenerateSvgFromName] ✓ SVG 重新生成成功')
     updateSubmitButtonState()
   } catch (error) {
-    console.error('[regenerateSvgFromName] ❌ SVG 重新生成失败:', error)
+    console.error('SVG 重新生成失败:', error)
   }
 }
 
 // 处理 URL 获得焦点事件
 function handleUrlFocus() {
-  console.log('[handleUrlFocus] URL 输入框获得焦点')
   urlInputFocused.value = true
 }
 
 // 处理 URL 失去焦点事件（只验证，不获取 meta）
 function handleUrlBlur() {
-  console.log('[handleUrlBlur] URL 输入框失去焦点')
   // 可以在这里添加失去焦点时的特殊处理
 }
 
@@ -487,11 +441,9 @@ async function handleFetchMetadata() {
 
       if (metadata.iconData) {
         formData.value.iconData = metadata.iconData
-        console.log('[handleFetchMetadata] ✓ 已填充 iconData，长度:', metadata.iconData.length)
       }
 
       notificationStore.success('✓ 获取成功！')
-      console.log('[handleFetchMetadata] ✓ Meta 数据获取成功')
     } else {
       // 获取失败：处理标签
       let currentTags = formData.value.tags
@@ -510,10 +462,9 @@ async function handleFetchMetadata() {
       formData.value.tags = currentTags.join(', ')
 
       notificationStore.error('✗ 获取失败，已添加 "meta_failed" 标签')
-      console.log('[handleFetchMetadata] ✗ Meta 数据获取失败')
     }
   } catch (error) {
-    console.error('[handleFetchMetadata] ❌ 获取元数据失败:', error)
+    console.error('获取元数据失败:', error)
 
     // 获取失败：处理标签
     let currentTags = formData.value.tags
@@ -541,8 +492,6 @@ async function handleFetchMetadata() {
 // 提交表单
 async function handleSubmit() {
   try {
-    console.log('[handleSubmit] ========== 开始提交验证 ==========')
-
     // 1. 验证 URL 格式
     const urlValidation = isValidUrl(formData.value.url)
     if (!urlValidation.valid) {
@@ -609,7 +558,6 @@ async function handleSubmit() {
     // 6. 如果 tags 为空，自动添加 'new'
     if (websiteData.tags.length === 0) {
       websiteData.tags = ['new']
-      console.log('[handleSubmit] ✓ tags 为空，已自动添加 "new"')
     }
 
     // 标准化数据
@@ -629,7 +577,7 @@ async function handleSubmit() {
     // 重置搜索框，回到主页
     searchStore.clearQuery()
   } catch (error) {
-    console.error('[handleSubmit] ❌ 添加网站失败:', error)
+    console.error('添加网站失败:', error)
     notificationStore.error('添加网站失败：' + (error.message || '未知错误'))
   }
 }

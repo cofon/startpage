@@ -333,7 +333,7 @@ function resetConditions() {
   } else if (exportMode.value === 'custom') {
     exportConfig.value.conditionGroups = JSON.parse(JSON.stringify(exportConfig.value.customConditionGroups))
   }
-  loadAllWebsites()
+  updateFilteredCount()
 }
 
 

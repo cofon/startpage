@@ -1,102 +1,319 @@
-知乎 -marked， 这两个是 and 关系，应该显示同时满足这两个条件的网站，但是显示的是 关键字知乎 的搜索结果，-marked好像没有生效；
-我测试了：-marked 知乎，搜索结果只有一个，
-而命令：知乎 -marked 的搜索结果跟关键字 知乎 的搜索结果是一样的，证明，-marked 根本就没有生效；
+控制台还有打印，调试代码删掉：
+命令模式解析: -
+searchService.js:78 命令模式解析结果: {type: 'command', keywords: Array(0), filters: {…}, pageCommand: null, hasIncompleteCommand: true}
+searchService.js:76 命令模式解析: --
+searchService.js:78 命令模式解析结果: {type: 'command', keywords: Array(0), filters: {…}, pageCommand: null, hasIncompleteCommand: true}
 
-我进行了更多的测试：
-关键字 + 状态搜索，状态搜索不生效；
-知乎 -marked；
-知乎 -unmarked；
-知乎 -active；
-知乎 -unactive；
-知乎 -hidden；
-知乎 -unhidden；
-以上这些都无效；
-就是说，关键字 + 状态搜索命令，都无效；
 
-关键字 + 搜索命令 是有效的，没有问题就，不用修改；
-知乎 -title keyword；
-知乎 -name keyword；
-知乎 -url keyword；
-知乎 -desc keyword；
-知乎 -tag tag；
-这几个搜索命令都有效；
 
-这是命令 ： 知乎 -marked 的控制台打印：
-searchService.js:101 普通搜索: 知乎 关键字: ['知乎']
-searchService.js:101 普通搜索: 知乎 关键字: ['知乎']
-searchService.js:85 包含命令的普通搜索: 知乎 -
-searchService.js:120 解析命令: 知乎 -
-searchService.js:124 OR 组: ['知乎 -']
-searchService.js:128 第一部分: 知乎
-searchService.js:172 AND 子组: ['知乎 -']
-searchService.js:177 AND 子组部分: (2) ['知乎', '-']
-searchService.js:189 处理部分: 知乎 索引: 0
-searchService.js:236 普通关键字: 知乎
-searchService.js:241 添加关键字: 知乎
-searchService.js:189 处理部分: - 索引: 1
-searchService.js:230 不完整命令: -
-searchService.js:249 AND 子组解析结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:275 OR 组合并结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:279 过滤器组: [{…}]
-searchService.js:280 是否有不完整命令: true
-searchService.js:281 是否有有效命令: true
-searchService.js:320 有不完整命令，返回结果
-searchService.js:323 是否有普通关键字: true
-searchService.js:87 包含命令的普通搜索解析结果: {type: 'command', keywords: Array(0), filters: {…}, pageCommand: null, hasIncompleteCommand: true}
-searchService.js:85 包含命令的普通搜索: 知乎 -mark
-searchService.js:120 解析命令: 知乎 -mark
-searchService.js:124 OR 组: ['知乎 -mark']
-searchService.js:128 第一部分: 知乎
-searchService.js:172 AND 子组: ['知乎 -mark']
-searchService.js:177 AND 子组部分: (2) ['知乎', '-mark']
-searchService.js:189 处理部分: 知乎 索引: 0
-searchService.js:236 普通关键字: 知乎
-searchService.js:241 添加关键字: 知乎
-searchService.js:189 处理部分: -mark 索引: 1
-searchService.js:230 不完整命令: -mark
-searchService.js:249 AND 子组解析结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:275 OR 组合并结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:279 过滤器组: [{…}]
-searchService.js:280 是否有不完整命令: true
-searchService.js:281 是否有有效命令: true
-searchService.js:320 有不完整命令，返回结果
-searchService.js:323 是否有普通关键字: true
-searchService.js:87 包含命令的普通搜索解析结果: {type: 'command', keywords: Array(0), filters: {…}, pageCommand: null, hasIncompleteCommand: true}
-searchService.js:85 包含命令的普通搜索: 知乎 -marke
-searchService.js:120 解析命令: 知乎 -marke
-searchService.js:124 OR 组: ['知乎 -marke']
-searchService.js:128 第一部分: 知乎
-searchService.js:172 AND 子组: ['知乎 -marke']
-searchService.js:177 AND 子组部分: (2) ['知乎', '-marke']
-searchService.js:189 处理部分: 知乎 索引: 0
-searchService.js:236 普通关键字: 知乎
-searchService.js:241 添加关键字: 知乎
-searchService.js:189 处理部分: -marke 索引: 1
-searchService.js:230 不完整命令: -marke
-searchService.js:249 AND 子组解析结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:275 OR 组合并结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:279 过滤器组: [{…}]
-searchService.js:280 是否有不完整命令: true
-searchService.js:281 是否有有效命令: true
-searchService.js:320 有不完整命令，返回结果
-searchService.js:323 是否有普通关键字: true
-searchService.js:87 包含命令的普通搜索解析结果: {type: 'command', keywords: Array(0), filters: {…}, pageCommand: null, hasIncompleteCommand: true}
-searchService.js:85 包含命令的普通搜索: 知乎 -marked
-searchService.js:120 解析命令: 知乎 -marked
-searchService.js:124 OR 组: ['知乎 -marked']
-searchService.js:128 第一部分: 知乎
-searchService.js:172 AND 子组: ['知乎 -marked']
-searchService.js:177 AND 子组部分: (2) ['知乎', '-marked']
-searchService.js:189 处理部分: 知乎 索引: 0
-searchService.js:236 普通关键字: 知乎
-searchService.js:241 添加关键字: 知乎
-searchService.js:189 处理部分: -marked 索引: 1
-searchService.js:230 不完整命令: -marked
-searchService.js:249 AND 子组解析结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:275 OR 组合并结果: {isActive: true, isMarked: undefined, isHidden: false, searchFields: {…}, keywords: Array(1)}
-searchService.js:279 过滤器组: [{…}]
-searchService.js:280 是否有不完整命令: true
-searchService.js:281 是否有有效命令: true
-searchService.js:320 有不完整命令，返回结果
-searchService.js:323 是否有普通关键字: true
-searchService.js:87 包含命令的普通搜索解析结果: {type: 'command', keywords: Array(0), filters: {…}, pageCommand: null, hasIncompleteCommand: true}
+还有添加网站面板的调试代码，也删掉，以下是添加网站页面的控制台打印：
+AddWebsitePanel.vue:444 [handleUrlFocus] URL 输入框获得焦点
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: h
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: h
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: h
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: ht
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: ht
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: ht
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: htt
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: htt
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: htt
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: http
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: http
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: http
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https:
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https:
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https:
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https:/
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https:/
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https:/
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: URL 格式不正确，无法解析
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://w
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://w
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://w
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://ww
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://ww
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://ww
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://www
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://www
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://www
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名格式不正确
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.k
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.k
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.k
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kj
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kj
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kj
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:89 [AddWebsitePanel] name 首字符变化:  -> w
+AddWebsitePanel.vue:403 [regenerateSvgFromName] 开始根据 name 重新生成 SVG，name: wwww
+AddWebsitePanel.vue:435 [regenerateSvgFromName] ✓ SVG 重新生成成功
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kj
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kj
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kj
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kj
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjk
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjk
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kjk
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjk
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjk
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjk
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kjk
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkj
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkj
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kjkj
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjkj
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkj
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkj
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kjkj
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkjl
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kjkjl
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjkjl
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkjl
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: wwww.kjkjl
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:89 [AddWebsitePanel] name 首字符变化: w -> 
+AddWebsitePanel.vue:403 [regenerateSvgFromName] 开始根据 name 重新生成 SVG，name: 
+AddWebsitePanel.vue:406 [regenerateSvgFromName] name 为空，清空 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjkjl.
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.c
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjkjl.c
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.c
+AddWebsitePanel.vue:190 [processUrlChange] URL 格式验证失败: 域名的顶级域名（TLD）必须至少包含2个字母
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: false
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.co
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkjl.co
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: kjkjl.co
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:89 [AddWebsitePanel] name 首字符变化:  -> w
+AddWebsitePanel.vue:403 [regenerateSvgFromName] 开始根据 name 重新生成 SVG，name: wwww
+AddWebsitePanel.vue:435 [regenerateSvgFromName] ✓ SVG 重新生成成功
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjkjl.co
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.co
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkjl.co
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: kjkjl.co
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.com
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkjl.com
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: kjkjl.com
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:377 [handleUrlInput] 检测到输入事件: https://wwww.kjkjl.com
+AddWebsitePanel.vue:168 [processUrlChange] ========== URL 变化处理 ==========
+AddWebsitePanel.vue:169 [processUrlChange] 输入 URL: https://wwww.kjkjl.com
+AddWebsitePanel.vue:206 [processUrlChange] ✓ URL 格式有效
+AddWebsitePanel.vue:213 [processUrlChange] 解析的主机名: wwww.kjkjl.com
+AddWebsitePanel.vue:266 [processUrlChange] ✓ 域名完整，开始智能填充...
+AddWebsitePanel.vue:298 [processUrlChange] ✓ name 需要填充（用户未编辑），已自动填充: wwww
+AddWebsitePanel.vue:303 [processUrlChange] 提取的根域名: kjkjl.com
+AddWebsitePanel.vue:349 [processUrlChange] - 未找到相同根域名的网站，已生成新 SVG
+AddWebsitePanel.vue:395 [updateSubmitButtonState] 提交按钮状态: true
+AddWebsitePanel.vue:372 [processUrlChange] ========== URL 变化处理完成 ==========
+AddWebsitePanel.vue:450 [handleUrlBlur] URL 输入框失去焦点
+
+
+export 导出数据的页面，默认条件导出界面，点击 “重置条件” 按钮，报错：
+runtime-core.esm-bundler.js:51 [Vue warn]: Unhandled error during execution of native event handler 
+  at <ExportDataPanel > 
+  at <DisplayModule onWebsiteClick=fn<handleWebsiteClick> onToggleMark=fn<toggleWebsiteMark> onEdit=fn<openEditWebsite>  ... > 
+  at <App>
+warn$1 @ runtime-core.esm-bundler.js:51
+logError @ runtime-core.esm-bundler.js:263
+handleError @ runtime-core.esm-bundler.js:255
+callWithErrorHandling @ runtime-core.esm-bundler.js:201
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+runtime-core.esm-bundler.js:268 Uncaught ReferenceError: loadAllWebsites is not defined
+    at resetConditions (ExportDataPanel.vue:336:3)
+    at callWithErrorHandling (runtime-core.esm-bundler.js:199:19)
+    at callWithAsyncErrorHandling (runtime-core.esm-bundler.js:206:17)
+    at HTMLButtonElement.invoker (runtime-dom.esm-bundler.js:730:5)
+resetConditions @ ExportDataPanel.vue:336
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:730
+自定义条件导出界面的重置按钮，也是同样的错误；

@@ -73,32 +73,25 @@ export function parseSearchQuery(query) {
   // 检查是否是命令模式（以 - 开头）
   if (trimmedQuery.startsWith('-')) {
     // 命令模式：解析命令
-    console.log('命令模式解析:', trimmedQuery)
     const result = parseCommand(trimmedQuery)
-    console.log('命令模式解析结果:', result)
     return result
   }
 
   // 检查是否包含命令（包含 - 开头的部分）
   if (trimmedQuery.includes(' -')) {
     // 包含命令，按命令模式处理
-    console.log('包含命令的普通搜索:', trimmedQuery)
     const result = parseCommand('-' + trimmedQuery)
-    console.log('包含命令的普通搜索解析结果:', result)
     return result
   }
 
   // 检查普通搜索中是否包含逻辑运算符
   if (trimmedQuery.includes('|') || trimmedQuery.includes('&')) {
-    console.log('包含逻辑运算符的普通搜索:', trimmedQuery)
     const result = parseNormalSearchWithOperators(trimmedQuery)
-    console.log('包含逻辑运算符的普通搜索解析结果:', result)
     return result
   }
 
   // 普通搜索：支持多个关键词（空格分隔，AND关系）
   const keywords = trimmedQuery.split(/\s+/).filter(k => k.length > 0)
-  console.log('普通搜索:', trimmedQuery, '关键字:', keywords)
 
   return {
     type: 'normal',
@@ -117,17 +110,13 @@ export function parseSearchQuery(query) {
 function parseCommand(command) {
   // 移除开头的 -
   const cmd = command.substring(1).trim()
-  console.log('解析命令:', cmd)
   
   // 首先按 | 分割成多个 OR 组
   const orGroups = cmd.split('|').map(group => group.trim()).filter(group => group.length > 0)
-  console.log('OR 组:', orGroups)
   
   // 检查是否是页面命令（第一个部分）
   const firstPart = orGroups[0]?.split(/\s+/)[0]
-  console.log('第一部分:', firstPart)
   if (firstPart && Object.values(PageCommands).includes(firstPart)) {
-    console.log('页面命令:', firstPart)
     return {
       type: 'command',
       keywords: [],
@@ -147,12 +136,11 @@ function parseCommand(command) {
       const parts = andGroups[0].split(/\s+/)
       if (parts.length === 1) {
         const part = parts[0]
-        console.log('检查单纯的 -xxx 形式命令:', part)
         // 检查是否是状态命令或搜索命令
         if (Object.values(StatusCommands).includes(part) || Object.values(SearchCommands).includes(part)) {
-          console.log('有效命令:', part)
+          // 有效命令，继续处理
         } else {
-          console.log('单纯的 -xxx 形式的不完整命令，返回 noResults: true')
+          // 单纯的 -xxx 形式的不完整命令，返回 noResults: true
           return {
             type: 'command',
             keywords: [],
@@ -169,12 +157,10 @@ function parseCommand(command) {
   const filterGroups = orGroups.map(orGroup => {
     // 按 & 分割成多个 AND 子组
     const andGroups = orGroup.split('&').map(group => group.trim()).filter(group => group.length > 0)
-    console.log('AND 子组:', andGroups)
     
     // 解析每个 AND 子组
     const andFilters = andGroups.map(andGroup => {
       const parts = andGroup.split(/\s+/)
-      console.log('AND 子组部分:', parts)
       const filter = {
         isActive: true,
         isMarked: undefined,
@@ -186,7 +172,6 @@ function parseCommand(command) {
       let i = 0
       while (i < parts.length) {
         let part = parts[i]
-        console.log('处理部分:', part, '索引:', i)
         
         // 检查是否是状态命令（支持带 - 前缀的情况）
         if (Object.values(StatusCommands).includes(part) || (part.startsWith('-') && Object.values(StatusCommands).includes(part.substring(1)))) {
@@ -194,7 +179,6 @@ function parseCommand(command) {
           if (part.startsWith('-')) {
             cmdName = part.substring(1)
           }
-          console.log('状态命令:', cmdName)
           handleStatusCommand(cmdName, filter)
           hasValidCommand = true
           i++
@@ -205,7 +189,6 @@ function parseCommand(command) {
           if (part.startsWith('-')) {
             cmdName = part.substring(1)
           }
-          console.log('搜索命令:', cmdName)
           // 提取搜索命令的参数
           const params = []
           i++
@@ -218,12 +201,10 @@ function parseCommand(command) {
             params.push(param)
             i++
           }
-          console.log('搜索命令参数:', params)
           filter.searchFields[cmdName] = params
           // 检查搜索命令是否有参数
           if (params.length === 0) {
             // 搜索命令没有参数，标记为不完整命令
-            console.log('搜索命令无参数，标记为不完整命令')
             hasIncompleteCommand = true
           } else {
             hasValidCommand = true
@@ -231,26 +212,20 @@ function parseCommand(command) {
         }
         // 检查是否是不完整的命令（以 - 开头，但不是有效命令）
         else if (part.startsWith('-')) {
-          console.log('不完整命令:', part)
           hasIncompleteCommand = true
           i++
         }
         // 普通关键字
         else {
-          console.log('普通关键字:', part)
           // 只有当没有不完整命令时，才将其视为关键字
           if (!hasIncompleteCommand) {
             filter.keywords.push(part)
             hasValidCommand = true
-            console.log('添加关键字:', part)
-          } else {
-            console.log('有不完整命令，忽略关键字:', part)
           }
           i++
         }
       }
       
-      console.log('AND 子组解析结果:', filter)
       return filter
     })
     
@@ -276,26 +251,18 @@ function parseCommand(command) {
       keywords: []
     })
     
-    console.log('OR 组合并结果:', combinedFilter)
     return combinedFilter
   })
   
-  console.log('过滤器组:', filterGroups)
-  console.log('是否有不完整命令:', hasIncompleteCommand)
-  console.log('是否有有效命令:', hasValidCommand)
-  
   // 检查是否有不完整的命令（单个 - 字符）
   if (cmd === '') {
-    console.log('单个 - 字符，标记为不完整命令')
     hasIncompleteCommand = true
   }
   
   // 检查是否有有效的命令（如果没有明确设置，检查过滤器组）
   if (!hasValidCommand) {
-    console.log('检查过滤器组是否有有效内容')
     // 如果没有有效的命令，且有不完整的命令，返回 noResults: true
     if (hasIncompleteCommand) {
-      console.log('没有有效命令且有不完整命令，返回 noResults: true')
       return {
         type: 'command',
         keywords: [],
@@ -312,19 +279,14 @@ function parseCommand(command) {
       const hasSearchCommand = Object.keys(group.searchFields).length > 0
       const hasKeywords = group.keywords.length > 0
       
-      console.log('过滤器组有效内容检查:', { hasStatusCommand, hasSearchCommand, hasKeywords })
       return hasStatusCommand || hasSearchCommand || hasKeywords
     })
-    
-    console.log('检查后是否有有效命令:', hasValidCommand)
   }
   
   // 如果有不完整的命令，返回 noResults: true
   if (hasIncompleteCommand) {
-    console.log('有不完整命令，返回结果')
     // 检查是否有普通关键字
     const hasKeywords = filterGroups.some(group => group.keywords.length > 0)
-    console.log('是否有普通关键字:', hasKeywords)
     return {
       type: 'command',
       keywords: [],
@@ -334,7 +296,6 @@ function parseCommand(command) {
     }
   }
   
-  console.log('完整命令，返回结果')
   return {
     type: 'command',
     keywords: [],
