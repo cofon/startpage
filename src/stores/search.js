@@ -182,8 +182,11 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   function searchByTag(tag) {
-    setQuery(tag)
-    results.value = websiteStore.searchByTag(tag)
+    // 填充命令格式 -tag item值
+    const commandQuery = `-tag ${tag}`
+    setQuery(commandQuery)
+    // 执行搜索
+    performSearch()
   }
 
   function setShowTagsList(show) {
