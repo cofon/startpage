@@ -38,7 +38,8 @@ export function parseSearchQuery(query) {
         isAdvanced: true,
         filters: { noResults: true },
         pageCommand: null,
-        keywords: []
+        keywords: [],
+        hasIncompleteCommand: true
       }
     }
     // 命令模式：解析高级搜索命令
@@ -213,6 +214,11 @@ function parseAdvancedSearch(command) {
           else if (isSearchCommand(cmd)) {
             const { nextIndex, field, params } = parseSearchCommand(parts, i)
             filter.searchFields[field] = params
+            // 检查搜索命令是否有参数
+            if (params.length === 0) {
+              // 搜索命令没有参数，标记为不完整命令
+              hasIncompleteCommand = true
+            }
             i = nextIndex
           }
           // 不完整的命令（以 - 开头，但不是有效命令）
@@ -220,17 +226,6 @@ function parseAdvancedSearch(command) {
             hasIncompleteCommand = true
             i++
           }
-        }
-        // 检查是否是状态命令（直接的命令，没有 - 前缀）
-        else if (isStatusCommand(part)) {
-          handleStatusCommand(part, filter)
-          i++
-        }
-        // 检查是否是搜索命令（直接的命令，没有 - 前缀）
-        else if (isSearchCommand(part)) {
-          const { nextIndex, field, params } = parseSearchCommand(parts, i)
-          filter.searchFields[field] = params
-          i = nextIndex
         }
         // 普通关键字
         else {
@@ -257,38 +252,59 @@ function parseAdvancedSearch(command) {
       
       return combinedFilter
     }, {
-      isActive: undefined,
+      isActive: true,
       isMarked: undefined,
-      isHidden: undefined,
+      isHidden: false,
       searchFields: {},
       keywords: []
     })
   })
   
+  // 检查是否有不完整的命令（单个 - 字符）
+  if (cmd === '') {
+    hasIncompleteCommand = true
+  }
+  
+  // 检查是否有不完整的命令（命令名不完整）
+  for (const orGroup of orGroups) {
+    const parts = orGroup.split(/\s+/)
+    for (const part of parts) {
+      if (part.startsWith('-')) {
+        const cmd = part.substring(1)
+        if (!isStatusCommand(cmd) && !isSearchCommand(cmd)) {
+          hasIncompleteCommand = true
+        }
+      }
+    }
+  }
+  
   // 检查是否有有效的命令
   const hasValidCommand = filterGroups.some(group => {
-    return group.isActive !== undefined || 
-           group.isMarked !== undefined || 
-           group.isHidden !== undefined || 
-           Object.keys(group.searchFields).length > 0 ||
-           group.keywords.length > 0
+    // 检查是否有明确的状态命令、搜索命令或关键字
+    const hasStatusCommand = group.isActive !== undefined || group.isMarked !== undefined || group.isHidden !== undefined
+    const hasSearchCommand = Object.keys(group.searchFields).length > 0
+    const hasKeywords = group.keywords.length > 0
+    
+    return hasStatusCommand || hasSearchCommand || hasKeywords
   })
   
-  if (!hasValidCommand) {
+  // 如果有不完整的命令，即使有普通关键字，也不显示搜索结果
+  if (hasIncompleteCommand) {
     return {
       isAdvanced: true,
       filters: { noResults: true },
       pageCommand: null,
-      keywords: []
+      keywords: [],
+      hasIncompleteCommand: true
     }
   }
   
   return {
     isAdvanced: true,
-    filters: filterGroups.length === 1 ? filterGroups[0] : filterGroups,
+    filters: hasValidCommand ? (filterGroups.length === 1 ? filterGroups[0] : filterGroups) : { noResults: true },
     pageCommand: null,
     keywords: [],
-    hasIncompleteCommand
+    hasIncompleteCommand: false
   }
 }
 

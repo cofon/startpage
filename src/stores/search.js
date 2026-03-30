@@ -7,7 +7,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useWebsiteStore } from './website'
 import { useSettingStore } from './setting'
 import { updateDisplayResults, refreshCurrentDisplay } from '../utils/ui/displayModeManager'
-import { parseSearchQuery } from '../utils/search/searchParser.js'
+import { parseSearchQuery } from '../utils/search/searchService.js'
 
 export const useSearchStore = defineStore('search', () => {
   // Stores
@@ -151,7 +151,18 @@ export const useSearchStore = defineStore('search', () => {
     } else {
       // 检查是否有不完整的命令
       if (parsedResult.hasIncompleteCommand) {
-        // 有不完整的命令，保持之前的搜索结果
+        // 检查是否有有效的过滤器
+        if (parsedResult.filters && parsedResult.filters.noResults) {
+          // 没有有效的命令或关键字，显示空结果
+          results.value = []
+          setDisplayMode('search')
+        } else if (parsedResult.filters) {
+          // 有有效的命令或关键字，执行搜索
+          const parsed = websiteStore.searchWebsites(command)
+          results.value = parsed
+          setDisplayMode('search')
+          commandMode.value = null
+        }
         return
       }
       // 执行搜索

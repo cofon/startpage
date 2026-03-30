@@ -5,7 +5,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { parseSearchQuery, applyFilters } from '../utils/search/searchParser.js'
+import { parseSearchQuery, executeSearch } from '../utils/search/searchService.js'
 import { createWebsiteObject, normalizeWebsiteData } from '../utils/website/websiteUtils'
 import db from '../utils/database'
 
@@ -196,31 +196,7 @@ export const useWebsiteStore = defineStore('website', () => {
 
   function searchWebsites(query) {
     const parsed = parseSearchQuery(query)
-
-    // 如果没有搜索词，返回所有非隐藏的网站
-    if (!parsed.isAdvanced && parsed.keywords.length === 0) {
-      return websites.value.filter(w => w.isActive && !w.isHidden)
-    }
-
-    // 如果是高级搜索（特殊命令）
-    if (parsed.isAdvanced) {
-      return applyFilters(websites.value, parsed.filters, allTags.value)
-    }
-
-    // 普通搜索：支持多个关键词（空格分隔，AND关系）
-    const filtered = websites.value.filter(w => {
-      // 检查是否匹配所有关键词
-      const matchesAllKeywords = parsed.keywords.every(kw => {
-        return (w.name && w.name.toLowerCase().includes(kw)) ||
-               (w.title && w.title.toLowerCase().includes(kw)) ||
-               (w.url && w.url.toLowerCase().includes(kw)) ||
-               (w.description && w.description.toLowerCase().includes(kw)) ||
-               (w.tags && w.tags.some(tag => tag.toLowerCase().includes(kw)))
-      })
-
-      return matchesAllKeywords && w.isActive && !w.isHidden
-    })
-    return filtered
+    return executeSearch(websites.value, parsed, allTags.value)
   }
 
   function searchByTag(tag) {
