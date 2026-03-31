@@ -68,7 +68,7 @@ export const useSearchStore = defineStore('search', () => {
     }
 
     // 检查是否包含 -tag 命令
-    const tagCommandPattern = /-tag\s+(.*)$/
+    const tagCommandPattern = /-tag\s*(.*)$/
     const match = trimmedQuery.match(tagCommandPattern)
     console.log('SearchStore - currentTags: tagCommandPattern match:', match)
     
@@ -145,7 +145,7 @@ export const useSearchStore = defineStore('search', () => {
     }
 
     // 检查是否包含 -tag 命令
-    const tagCommandPattern = /-tag\s+(.*)$/
+    const tagCommandPattern = /-tag\s*(.*)$/
     const match = trimmedQuery.match(tagCommandPattern)
     
     console.log('SearchStore - shouldShowTagsList: tagCommandPattern match:', match)
@@ -159,14 +159,33 @@ export const useSearchStore = defineStore('search', () => {
     // 提取 -tag 后面的所有内容
     const tagsInput = match[1].trim()
     console.log('SearchStore - shouldShowTagsList: tagsInput:', tagsInput)
+    console.log('SearchStore - shouldShowTagsList: tagsInput type:', typeof tagsInput)
+    console.log('SearchStore - shouldShowTagsList: tagsInput length:', tagsInput.length)
+    console.log('SearchStore - shouldShowTagsList: tagsInput === "":', tagsInput === '')
+    console.log('SearchStore - shouldShowTagsList: !tagsInput:', !tagsInput)
+
+    // 检查原始查询末尾是否有空格（表示tag输入结束）
+    const endsWithSpace = query.value.endsWith(' ')
+    console.log('SearchStore - shouldShowTagsList: endsWithSpace:', endsWithSpace)
+    console.log('SearchStore - shouldShowTagsList: query.value:', `"${query.value}"`)
+    console.log('SearchStore - shouldShowTagsList: query.value.length:', query.value.length)
 
 
 
-    // 如果 -tag 后面没有输入，不显示 tags（需要输入空格）
+    // 如果 -tag 后面没有输入，检查是否末尾有空格
+    console.log('SearchStore - shouldShowTagsList: checking if !tagsInput:', !tagsInput)
     if (!tagsInput) {
-      console.log('SearchStore - shouldShowTagsList: no tag input, not showing tags')
+      console.log('SearchStore - shouldShowTagsList: tagsInput is empty, checking endsWithSpace:', endsWithSpace)
+      if (endsWithSpace) {
+        // -tag 后面只有空格，显示所有 tags
+        console.log('SearchStore - shouldShowTagsList: -tag with space only, showing all tags')
+        return true
+      }
+      // -tag 后面没有输入也没有空格，不显示 tags
+      console.log('SearchStore - shouldShowTagsList: no tag input and no space, not showing tags')
       return false
     }
+    console.log('SearchStore - shouldShowTagsList: tagsInput is not empty, continuing...')
     
     // 分割 tags（按空格分割）
     const tags = tagsInput.split(/\s+/)
@@ -176,9 +195,7 @@ export const useSearchStore = defineStore('search', () => {
     const currentTagInput = tags[tags.length - 1].toLowerCase()
     console.log('SearchStore - shouldShowTagsList: currentTagInput:', currentTagInput)
 
-    // 检查原始查询末尾是否有空格（表示tag输入结束）
-    const endsWithSpace = query.value.endsWith(' ')
-    console.log('SearchStore - shouldShowTagsList: endsWithSpace:', endsWithSpace)
+
 
 
     
