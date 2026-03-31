@@ -34,8 +34,13 @@ watch(() => searchStore.showCommandList, (newValue, oldValue) => {
  */
 function handleInputFocus() {
   console.log('SearchModule - handleInputFocus')
-  if (isLocalSearchEngine.value && !searchStore.query.value) {
-    searchStore.setShowTagsList(true)
+  if (isLocalSearchEngine.value) {
+    if (!searchStore.query.value) {
+      // 输入框为空时，显示所有 tags
+      searchStore.setShowTagsList(true)
+    } else {
+      searchStore.setShowTagsList(searchStore.shouldShowTagsList)
+    }
   }
 }
 
@@ -47,7 +52,7 @@ function handleInputBlur() {
   console.log('SearchModule - handleInputBlur - showCommandList before:', searchStore.showCommandList)
   const queryValue = searchStore.query
   console.log('SearchModule - handleInputBlur - query:', queryValue)
-  searchStore.setShowTagsList(false)
+  // 只关闭命令列表，不关闭 tags-list
   searchStore.setShowCommandList(false)
   console.log('SearchModule - handleInputBlur - showCommandList after:', searchStore.showCommandList)
   console.log('SearchModule - handleInputBlur END')
@@ -66,21 +71,20 @@ function handleInput() {
   console.log('SearchModule - handleInput - currentCommands.length:', searchStore.currentCommands.length)
   
   if (isLocalSearchEngine.value) {
-    if (!queryValue) {
-      console.log('SearchModule - handleInput - query is empty, setting showCommandList to false')
-      searchStore.setShowTagsList(true)
-      searchStore.setShowCommandList(false)
-    } else {
-      console.log('SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList')
-      searchStore.setShowTagsList(false)
-      // 使用 nextTick 确保 shouldShowCommandList 的值已经更新
-      nextTick(() => {
-        console.log('SearchModule - handleInput - nextTick callback')
-        console.log('SearchModule - handleInput - shouldShowCommandList in nextTick:', searchStore.shouldShowCommandList)
-        searchStore.setShowCommandList(searchStore.shouldShowCommandList)
-        console.log('SearchModule - handleInput - showCommandList after nextTick:', searchStore.showCommandList)
-      })
-    }
+    console.log('SearchModule - handleInput - shouldShowTagsList:', searchStore.shouldShowTagsList)
+    console.log('SearchModule - handleInput - showTagsList:', searchStore.showTagsList)
+    console.log('SearchModule - handleInput - currentTags.length:', searchStore.currentTags.length)
+    // 使用 nextTick 确保 shouldShowCommandList 和 shouldShowTagsList 的值已经更新
+    nextTick(() => {
+      console.log('SearchModule - handleInput - nextTick callback')
+      console.log('SearchModule - handleInput - shouldShowCommandList in nextTick:', searchStore.shouldShowCommandList)
+      console.log('SearchModule - handleInput - shouldShowTagsList in nextTick:', searchStore.shouldShowTagsList)
+      console.log('SearchModule - handleInput - showTagsList before set:', searchStore.showTagsList)
+      searchStore.setShowCommandList(searchStore.shouldShowCommandList)
+      console.log('SearchModule - handleInput - showCommandList after nextTick:', searchStore.showCommandList)
+      console.log('SearchModule - handleInput - showTagsList after set:', searchStore.showTagsList)
+      console.log('SearchModule - handleInput - currentTags.length in nextTick:', searchStore.currentTags.length)
+    })
   }
   
   console.log('SearchModule - handleInput END')
@@ -139,15 +143,29 @@ function handleCommandClick(command) {
       <div
         v-if="searchStore.showTagsList && searchStore.currentTags.length > 0"
         class="tags-list"
+        @vue:mounted="console.log('[TagsList] Mounted - showTagsList:', searchStore.showTagsList, ', currentTags.length:', searchStore.currentTags.length)"
+        @vue:before-mount="console.log('[TagsList] Before Mount - showTagsList:', searchStore.showTagsList, ', currentTags.length:', searchStore.currentTags.length)"
+        @vue:before-unmount="console.log('[TagsList] Before Unmount')"
       >
+        <div style="position: absolute; top: -30px; left: 0; background: #2196f3; color: white; padding: 5px; font-size: 12px;">
+          [TagsList Visible] Tags: {{ searchStore.currentTags.length }}
+        </div>
         <div
           v-for="tag in searchStore.currentTags"
           :key="tag"
           class="tag-item"
           @mousedown="searchStore.searchByTag(tag)"
+          @vue:mounted="console.log('[TagItem] Mounted:', tag)"
         >
           {{ tag }}
         </div>
+      </div>
+      <!-- 标签列表调试信息 -->
+      <div v-else class="tags-debug-info" style="position: absolute; top: 70px; left: 0; background: #e3f2fd; padding: 10px; border: 2px solid #2196f3; z-index: 10001;">
+        <div style="font-weight: bold; color: #2196f3;">[TagsList NOT Visible]</div>
+        <div>showTagsList: {{ searchStore.showTagsList }}</div>
+        <div>currentTags.length: {{ searchStore.currentTags.length }}</div>
+        <div>shouldShowTagsList: {{ searchStore.shouldShowTagsList }}</div>
       </div>
       
       <!-- 命令列表 -->
@@ -265,7 +283,7 @@ function handleCommandClick(command) {
   background-color: transparent;
   border-radius: 0;
   box-shadow: none;
-  z-index: 100;
+  z-index: 10002;
   margin-top: 10px;
 }
 
