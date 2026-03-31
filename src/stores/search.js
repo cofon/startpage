@@ -536,8 +536,48 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   function searchByTag(tag) {
-    // 填充命令格式 -tag item值
-    const commandQuery = `-tag ${tag}`
+    // 获取当前查询
+    const currentQuery = query.value.trim()
+    console.log('SearchStore - searchByTag: currentQuery:', currentQuery)
+    console.log('SearchStore - searchByTag: tag:', tag)
+    
+    // 检查是否包含 -tag 命令
+    const tagCommandPattern = /-tag\s*(.*)$/
+    const match = currentQuery.match(tagCommandPattern)
+    console.log('SearchStore - searchByTag: tagCommandPattern match:', match)
+
+    let commandQuery
+    
+    if (match) {
+      // 提取 -tag 后面的所有内容
+      const tagsInput = match[1].trim()
+      console.log('SearchStore - searchByTag: tagsInput:', tagsInput)
+      
+      // 检查原始查询末尾是否有空格（表示tag输入结束）
+      const endsWithSpace = query.value.endsWith(' ')
+      console.log('SearchStore - searchByTag: endsWithSpace:', endsWithSpace)
+      
+      if (tagsInput) {
+        // -tag 后面有输入
+        if (endsWithSpace) {
+          // -tag 后面有输入且末尾有空格，添加 tag
+          commandQuery = `${currentQuery} ${tag}`
+        } else {
+          // -tag 后面有输入但末尾没有空格，替换最后一个 tag
+          const parts = currentQuery.split(/\s+/)
+          parts[parts.length - 1] = tag
+          commandQuery = parts.join(' ')
+        }
+      } else {
+        // -tag 后面没有输入，添加 tag
+        commandQuery = `${currentQuery} ${tag}`
+      }
+    } else {
+      // 没有 -tag 命令，创建新的 -tag 命令
+      commandQuery = `-tag ${tag}`
+    }
+    
+    console.log('SearchStore - searchByTag: commandQuery:', commandQuery)
     setQuery(commandQuery)
     // 执行搜索
     performSearch()
