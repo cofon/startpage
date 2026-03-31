@@ -7,7 +7,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useWebsiteStore } from './website'
 import { useSettingStore } from './setting'
 import { updateDisplayResults, refreshCurrentDisplay } from '../utils/ui/displayModeManager'
-import { parseSearchQuery } from '../utils/search/searchService.js'
+import { parseSearchQuery, SearchCommands, StatusCommands, PageCommands } from '../utils/search/searchService.js'
 
 export const useSearchStore = defineStore('search', () => {
   // Stores
@@ -18,6 +18,7 @@ export const useSearchStore = defineStore('search', () => {
   const query = ref('')
   const results = ref([])
   const showTagsList = ref(false)
+  const showCommandList = ref(false)
 
   // 显示模式 - 控制显示模块应该显示什么内容
   const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty' | 'settings' | 'help'
@@ -57,6 +58,119 @@ export const useSearchStore = defineStore('search', () => {
     return websiteStore.allTags
   })
 
+  // 所有可用的命令列表（排除 hidden, unhidden, unactive）
+  const allCommands = computed(() => {
+    const commands = []
+    
+    // 状态命令
+    Object.values(StatusCommands).forEach(cmd => {
+      if (!['hidden', 'unhidden', 'unactive'].includes(cmd)) {
+        commands.push(cmd)
+      }
+    })
+    
+    // 搜索命令
+    Object.values(SearchCommands).forEach(cmd => {
+      commands.push(cmd)
+    })
+    
+    // 页面命令
+    Object.values(PageCommands).forEach(cmd => {
+      commands.push(cmd)
+    })
+    
+    return commands
+  })
+
+  // 当前匹配的命令列表
+  const currentCommands = computed(() => {
+    console.log('SearchStore - currentCommands computed')
+    if (!isLocalSearch.value) {
+      console.log('SearchStore - currentCommands: isLocalSearch is false')
+      return []
+    }
+    
+    const trimmedQuery = query.value.trim()
+    console.log('SearchStore - currentCommands: trimmedQuery:', trimmedQuery)
+    if (!trimmedQuery || !trimmedQuery.startsWith('-')) {
+      console.log('SearchStore - currentCommands: query does not start with -')
+      return []
+    }
+    
+    // 提取当前正在输入的命令部分
+    const parts = trimmedQuery.split(/\s+/)
+    const lastPart = parts[parts.length - 1]
+    console.log('SearchStore - currentCommands: lastPart:', lastPart)
+    
+    if (!lastPart.startsWith('-')) {
+      console.log('SearchStore - currentCommands: last part does not start with -')
+      return []
+    }
+    
+    const commandPrefix = lastPart.substring(1).toLowerCase()
+    console.log('SearchStore - currentCommands: commandPrefix:', commandPrefix)
+    
+    // 过滤匹配的命令
+    const matchedCommands = allCommands.value.filter(cmd => {
+      return cmd.toLowerCase().startsWith(commandPrefix)
+    })
+    console.log('SearchStore - currentCommands: matchedCommands:', matchedCommands)
+    return matchedCommands
+  })
+
+  // 是否应该显示命令列表
+  const shouldShowCommandList = computed(() => {
+    console.log('SearchStore - shouldShowCommandList computed')
+    if (!isLocalSearch.value) {
+      console.log('SearchStore - shouldShowCommandList: isLocalSearch is false')
+      return false
+    }
+    
+    const trimmedQuery = query.value.trim()
+    console.log('SearchStore - shouldShowCommandList: trimmedQuery:', trimmedQuery)
+    if (!trimmedQuery || !trimmedQuery.startsWith('-')) {
+      console.log('SearchStore - shouldShowCommandList: query does not start with -')
+      return false
+    }
+    
+    // 提取当前正在输入的命令部分
+    const parts = trimmedQuery.split(/\s+/)
+    const lastPart = parts[parts.length - 1]
+    console.log('SearchStore - shouldShowCommandList: lastPart:', lastPart)
+    
+    if (!lastPart.startsWith('-')) {
+      console.log('SearchStore - shouldShowCommandList: last part does not start with -')
+      return false
+    }
+    
+    const commandPrefix = lastPart.substring(1).toLowerCase()
+    console.log('SearchStore - shouldShowCommandList: commandPrefix:', commandPrefix)
+    
+    // 检查命令是否已完成
+    const isCommandComplete = commandPrefix && allCommands.value.some(cmd => {
+      return cmd.toLowerCase() === commandPrefix
+    })
+    console.log('SearchStore - shouldShowCommandList: isCommandComplete:', isCommandComplete)
+    
+    // 如果命令已完成，关闭命令列表
+    if (isCommandComplete) {
+      console.log('SearchStore - shouldShowCommandList: command is complete, closing command list')
+      return false
+    }
+    
+    // 检查是否有匹配的命令
+    const hasMatches = currentCommands.value.length > 0
+    console.log('SearchStore - shouldShowCommandList: hasMatches:', hasMatches, 'currentCommands.length:', currentCommands.value.length)
+    
+    // 如果没有匹配的命令，关闭命令列表
+    if (!hasMatches) {
+      console.log('SearchStore - shouldShowCommandList: no matching commands, closing command list')
+      return false
+    }
+
+    return true
+  })
+
   // 可用的布局模式
   const availableLayoutModes = computed(() => {
     return [
@@ -84,16 +198,29 @@ export const useSearchStore = defineStore('search', () => {
 
   // 监听查询变化
   watch(query, () => {
+    console.log('SearchStore - query changed:', query.value)
+    console.log('SearchStore - isLocalSearch:', isLocalSearch.value)
+    console.log('SearchStore - shouldShowCommandList:', shouldShowCommandList.value)
+    
     if (isLocalSearch.value) {
       performSearch()
       // 如果不是命令模式且查询词为空，刷新当前显示
       if (!query.value.trim() && !commandMode.value) {
         refreshCurrentDisplay({ results, displayMode }, websiteStore)
       }
+      // 更新命令列表显示状态
+      setShowCommandList(shouldShowCommandList.value)
+      console.log('SearchStore - showCommandList after update:', showCommandList.value)
+      // 如果显示命令列表，隐藏标签列表
+      if (shouldShowCommandList.value) {
+        setShowTagsList(false)
+      }
     } else {
       // 网络搜索时，始终显示 marked list
       displayMode.value = 'marked'
       results.value = websiteStore.markedWebsites
+      // 网络搜索时，隐藏命令列表
+      setShowCommandList(false)
     }
   })
 
@@ -213,6 +340,14 @@ export const useSearchStore = defineStore('search', () => {
     showTagsList.value = !showTagsList.value
   }
 
+  function setShowCommandList(show) {
+    showCommandList.value = show
+  }
+
+  function toggleCommandList() {
+    showCommandList.value = !showCommandList.value
+  }
+
   function executeSearch() {
     if (isLocalSearch.value) {
       performSearch()
@@ -242,6 +377,7 @@ export const useSearchStore = defineStore('search', () => {
     query,
     results,
     showTagsList,
+    showCommandList,
     engineIcons,
     displayMode,
     commandMode,
@@ -249,6 +385,9 @@ export const useSearchStore = defineStore('search', () => {
     isLocalSearch,
     currentEngine,
     currentTags,
+    currentCommands,
+    allCommands,
+    shouldShowCommandList,
     currentEngineIcon,
     availableLayoutModes,
     currentLayoutMode,
@@ -260,6 +399,8 @@ export const useSearchStore = defineStore('search', () => {
     searchByTag,
     setShowTagsList,
     toggleTagsList,
+    setShowCommandList,
+    toggleCommandList,
     executeSearch,
     loadEngineIcons,
     setDisplayMode,

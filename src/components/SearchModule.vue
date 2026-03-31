@@ -3,7 +3,7 @@
  * 搜索模块组件
  * 包含搜索框、搜索引擎选择器和标签列表
  */
-import { computed } from 'vue'
+import { computed, watch, nextTick } from 'vue'
 import { useSearchStore } from '../stores/search'
 import { useSettingStore } from '../stores/setting'
 import SearchEngineSelector from './SearchEngineSelector.vue'
@@ -13,13 +13,27 @@ const settingStore = useSettingStore()
 
 // 计算属性：判断当前搜索引擎是否为本地搜索
 const isLocalSearchEngine = computed(() => {
-  return settingStore.selectedSearchEngineId === 'local'
+  const result = settingStore.selectedSearchEngineId === 'local'
+  console.log('SearchModule - isLocalSearchEngine:', result)
+  return result
+})
+
+// 监听showCommandList变化
+watch(() => searchStore.showCommandList, (newValue, oldValue) => {
+  console.log('SearchModule - showCommandList watch START')
+  console.log('SearchModule - showCommandList changed from:', oldValue, 'to:', newValue)
+  console.log('SearchModule - currentCommands length:', searchStore.currentCommands.length)
+  console.log('SearchModule - shouldShowCommandList:', searchStore.shouldShowCommandList)
+  const queryValue = searchStore.query
+  console.log('SearchModule - query:', queryValue)
+  console.log('SearchModule - showCommandList watch END')
 })
 
 /**
  * 处理输入框获得焦点
  */
 function handleInputFocus() {
+  console.log('SearchModule - handleInputFocus')
   if (isLocalSearchEngine.value && !searchStore.query.value) {
     searchStore.setShowTagsList(true)
   }
@@ -29,29 +43,75 @@ function handleInputFocus() {
  * 处理输入框失去焦点
  */
 function handleInputBlur() {
+  console.log('SearchModule - handleInputBlur START')
+  console.log('SearchModule - handleInputBlur - showCommandList before:', searchStore.showCommandList)
+  const queryValue = searchStore.query
+  console.log('SearchModule - handleInputBlur - query:', queryValue)
   searchStore.setShowTagsList(false)
+  searchStore.setShowCommandList(false)
+  console.log('SearchModule - handleInputBlur - showCommandList after:', searchStore.showCommandList)
+  console.log('SearchModule - handleInputBlur END')
 }
 
 /**
  * 处理输入框内容变化
  */
 function handleInput() {
+  console.log('SearchModule - handleInput START')
+  const queryValue = searchStore.query
+  console.log('SearchModule - handleInput - query:', queryValue)
+  console.log('SearchModule - handleInput - isLocalSearchEngine:', isLocalSearchEngine.value)
+  console.log('SearchModule - handleInput - showCommandList before:', searchStore.showCommandList)
+  console.log('SearchModule - handleInput - shouldShowCommandList:', searchStore.shouldShowCommandList)
+  console.log('SearchModule - handleInput - currentCommands.length:', searchStore.currentCommands.length)
+  
   if (isLocalSearchEngine.value) {
-    if (!searchStore.query.value) {
+    if (!queryValue) {
+      console.log('SearchModule - handleInput - query is empty, setting showCommandList to false')
       searchStore.setShowTagsList(true)
+      searchStore.setShowCommandList(false)
     } else {
+      console.log('SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList')
       searchStore.setShowTagsList(false)
+      // 使用 nextTick 确保 shouldShowCommandList 的值已经更新
+      nextTick(() => {
+        console.log('SearchModule - handleInput - nextTick callback')
+        console.log('SearchModule - handleInput - shouldShowCommandList in nextTick:', searchStore.shouldShowCommandList)
+        searchStore.setShowCommandList(searchStore.shouldShowCommandList)
+        console.log('SearchModule - handleInput - showCommandList after nextTick:', searchStore.showCommandList)
+      })
     }
+  }
+  
+  console.log('SearchModule - handleInput END')
+}
+
+/**
+ * 处理ESC按键，隐藏tags列表和命令列表
+ */
+function handleEscKey() {
+  console.log('SearchModule - handleEscKey')
+  if (searchStore.showTagsList) {
+    searchStore.setShowTagsList(false)
+  }
+  if (searchStore.showCommandList) {
+    searchStore.setShowCommandList(false)
   }
 }
 
 /**
- * 处理ESC按键，隐藏tags列表
+ * 处理命令点击
  */
-function handleEscKey() {
-  if (searchStore.showTagsList) {
-    searchStore.setShowTagsList(false)
-  }
+function handleCommandClick(command) {
+  console.log('SearchModule - handleCommandClick:', command)
+  const query = searchStore.query.value.trim()
+  const parts = query.split(/\s+/)
+  
+  // 替换最后一个部分为完整的命令
+  parts[parts.length - 1] = `-${command}`
+  
+  searchStore.setQuery(parts.join(' '))
+  searchStore.setShowCommandList(false)
 }
 </script>
 
@@ -89,6 +149,39 @@ function handleEscKey() {
           {{ tag }}
         </div>
       </div>
+      
+      <!-- 命令列表 -->
+      <div
+        v-if="searchStore.showCommandList && searchStore.currentCommands.length > 0"
+        class="commands-list"
+        @vue:mounted="console.log('[CommandList] Mounted - showCommandList:', searchStore.showCommandList, ', currentCommands.length:', searchStore.currentCommands.length)"
+        @vue:before-mount="console.log('[CommandList] Before Mount - showCommandList:', searchStore.showCommandList, ', currentCommands.length:', searchStore.currentCommands.length)"
+        @vue:before-unmount="console.log('[CommandList] Before Unmount')"
+      >
+        <div style="position: absolute; top: -30px; left: 0; background: #4caf50; color: white; padding: 5px; font-size: 12px;">
+          [CommandList Visible] Commands: {{ searchStore.currentCommands.length }}
+        </div>
+        <div
+          v-for="command in searchStore.currentCommands"
+          :key="command"
+          class="command-item"
+          @vue:mounted="console.log('[CommandItem] Mounted:', command)"
+        >
+          -{{ command }}
+        </div>
+      </div>
+      <!-- 命令列表调试信息 -->
+      <div v-else class="command-debug-info" style="position: absolute; top: 70px; left: 0; background: #ffeb3b; padding: 10px; border: 2px solid #ff9800; z-index: 10001;">
+        <div style="font-weight: bold; color: #f44336;">[CommandList NOT Visible]</div>
+        <div>[CommandList Debug] showCommandList: {{ searchStore.showCommandList }}</div>
+        <div>[CommandList Debug] currentCommands.length: {{ searchStore.currentCommands.length }}</div>
+        <div>[CommandList Debug] shouldShowCommandList: {{ searchStore.shouldShowCommandList }}</div>
+        <div>[CommandList Debug] query: {{ searchStore.query }}</div>
+        <div>[CommandList Debug] Condition 1 (showCommandList): {{ searchStore.showCommandList }} (should be true)</div>
+        <div>[CommandList Debug] Condition 2 (currentCommands.length > 0): {{ searchStore.currentCommands.length > 0 }} (should be true)</div>
+        <div>[CommandList Debug] Final Condition (showCommandList && currentCommands.length > 0): {{ searchStore.showCommandList && searchStore.currentCommands.length > 0 }} (should be true)</div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -186,6 +279,38 @@ function handleEscKey() {
 }
 
 .tag-item:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* 命令列表样式 */
+.commands-list {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  margin-top: 10px;
+  min-height: 50px;
+  border: 2px solid red;
+}
+
+.command-item {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.command-item:hover {
   background-color: var(--color-primary-hover);
 }
 </style>
