@@ -40,8 +40,9 @@ function handleInputFocus() {
  * 处理输入框失去焦点
  */
 function handleInputBlur() {
-  // 只关闭命令列表，不关闭 tags-list
+  // 关闭命令列表和 tags-list
   searchStore.setShowCommandList(false)
+  searchStore.setShowTagsList(false)
 }
 
 /**
@@ -99,6 +100,7 @@ function handleCommandClick(command) {
           name="search"
           class="search-input"
           placeholder="搜索..."
+          autocomplete="off"
           @focus="handleInputFocus"
           @blur="handleInputBlur"
           @keyup.enter="searchStore.executeSearch"
