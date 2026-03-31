@@ -36,10 +36,6 @@ async function loadIconData() {
       if (iconResult) {
         iconData.value = iconResult.iconData
         iconGenerateData.value = iconResult.iconGenerateData
-        console.log('SearchResultFull - 加载图标数据成功:', {
-          iconData: iconResult.iconData ? '存在' : '不存在',
-          iconGenerateData: iconResult.iconGenerateData ? '存在' : '不存在'
-        })
       }
     } catch (error) {
       console.error('SearchResultFull - 加载图标数据失败:', error)
