@@ -77,6 +77,28 @@ export const useSearchStore = defineStore('search', () => {
       const currentTagInput = (match[2] || '').toLowerCase()
       console.log('SearchStore - currentTags: currentTagInput:', currentTagInput)
       
+      // 检查原始查询末尾是否有空格（表示tag输入结束）
+      const endsWithSpace = query.value.endsWith(' ')
+      console.log('SearchStore - currentTags: endsWithSpace:', endsWithSpace)
+      
+      if (endsWithSpace && currentTagInput) {
+        // 如果有输入tag且末尾有空格，表示tag输入结束
+        // 检查是否是完整的tag
+        const isTagComplete = websiteStore.allTags.some(tag => 
+          tag.toLowerCase() === currentTagInput
+        )
+        console.log('SearchStore - currentTags: isTagComplete:', isTagComplete)
+        
+        if (isTagComplete) {
+          // tag 是完整的，显示除了已输入的 tag 之外的所有 tags
+          const filteredTags = websiteStore.allTags.filter(tag => 
+            tag.toLowerCase() !== currentTagInput
+          )
+          console.log('SearchStore - currentTags: filteredTags (excluding completed tag):', filteredTags)
+          return filteredTags
+        }
+      }
+      
       // 过滤匹配的 tags
       if (currentTagInput) {
         const filteredTags = websiteStore.allTags.filter(tag => 
