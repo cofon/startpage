@@ -1,21 +1,8 @@
-
-添加一个 .vue 文件，用来选择搜索结果布局
-布局模式有三个：
-1. 极简模式，simple，
-    只显示一个icon和一行文本，
-    文本显示title，
-    如果没有title显示desc，
-    如果没有desc显示name，
-    优先级为title > desc > name
-2. 现在使用的模式，default，
-    现在的搜索结果布局是：
-    左边 icon 
-    中间 title/desc/name url tags，三者上下结构
-    右边 actions
-3. 完整模式，full，
-    显示所有信息，
-    包括id、icon、title、desc、name、url、tags、actions等
-4. 我不确定以后会不会添加新的模式，写代码的时候要考虑到未来可能的扩展
-
-添加一个命令，在搜索框输入命令，显示模块显示这个搜索结果布局的vue页面；
-
+SearchResultFull.vue:7 SearchResultFull - website: Proxy(Object) {id: 371, name: '百度chat', title: '百度文心助手 - 办公学习一站解决', url: 'https://chat.baidu.com/', description: '百度文心助手，一站式解决复杂问题，激发PC端超级生产力！独有「灵感探索」功能深入剖析问题核心，智能文字创作、图片创作、AI阅读、智能体海量应用启迪无限创意，开启高效智能学习办公新篇章！', …}[[Handler]]: MutableReactiveHandler_isReadonly: false_isShallow: false[[Prototype]]: BaseReactiveHandler[[Target]]: ObjectcreatedAt: "2026-03-30T00:32:21.206Z"description: "百度文心助手，一站式解决复杂问题，激发PC端超级生产力！独有「灵感探索」功能深入剖析问题核心，智能文字创作、图片创作、AI阅读、智能体海量应用启迪无限创意，开启高效智能学习办公新篇章！"iconCanFetch: trueiconData: nulliconError: nulliconFetchAttempts: 0iconGenerateData: nulliconLastFetchTime: nulliconUrl: "https://chat.baidu.com/"id: 371isActive: trueisHidden: falseisMarked: truelastVisited: nullmarkOrder: 3name: "百度chat"tags: Array(2)0: "搜"1: "ai"length: 2[[Prototype]]: Array(0)title: "百度文心助手 - 办公学习一站解决"updatedAt: "2026-03-30T00:32:21.206Z"url: "https://chat.baidu.com/"visitCount: 0[[Prototype]]: Object[[IsRevoked]]: false
+SearchResultFull.vue:7 SearchResultFull - iconGenerateData: null
+SearchResultFull.vue:7 SearchResultFull - website: Proxy(Object) {id: 382, name: 'ai', title: '百度AI开放平台-全球领先的人工智能服务平台', url: 'https://ai.baidu.com/', description: '百度AI开放平台提供全球领先的语音、图像、NLP等多项人工智能技术，开放对话式人工智能系统、智能驾驶系统两大行业生态，共享AI领域最新的应用场景和解决方案，帮您提升竞争力，开创未来。', …}[[Handler]]: MutableReactiveHandler_isReadonly: false_isShallow: false[[Prototype]]: BaseReactiveHandler[[Target]]: ObjectcreatedAt: "2026-03-30T00:32:21.206Z"description: "百度AI开放平台提供全球领先的语音、图像、NLP等多项人工智能技术，开放对话式人工智能系统、智能驾驶系统两大行业生态，共享AI领域最新的应用场景和解决方案，帮您提升竞争力，开创未来。"iconCanFetch: trueiconData: nulliconError: nulliconFetchAttempts: 0iconGenerateData: nulliconLastFetchTime: nulliconUrl: "https://ai.baidu.com/"id: 382isActive: trueisHidden: falseisMarked: falselastVisited: nullmarkOrder: 0name: "ai"tags: Array(1)0: "ai"length: 1[[Prototype]]: Array(0)title: "百度AI开放平台-全球领先的人工智能服务平台"updatedAt: "2026-03-30T00:32:21.206Z"url: "https://ai.baidu.com/"visitCount: 0[[Prototype]]: Object[[IsRevoked]]: false
+SearchResultFull.vue:7 SearchResultFull - iconGenerateData: null
+SearchResultFull.vue:7 SearchResultFull - website: Proxy(Object) {id: 396, name: '豆包', title: '豆包', url: 'https://www.doubao.com/chat/', description: 'Seedance 2.0 视频生成模型现已全面接入豆包，现在登录即可免费使用！豆包 是你的 AI 聊…助手，写作文案翻译编程工具。豆包为你答疑解惑，提供灵感，辅助创作，也可以和你畅聊任何你感兴趣的话题', …}
+SearchResultFull.vue:7 SearchResultFull - iconGenerateData: null
+SearchResultFull.vue:7 SearchResultFull - website: Proxy(Object) {id: 442, name: '通义千问', title: '千问-Qwen最新模型体验-通义千问', url: 'https://www.qianwen.com/', description: '千问是阿里通义千问大模型打造的AI对话助手，通义千问支持问答、写作、代码、翻译、录音、PPT创作、文档处理、音视频速读。', …}[[Handler]]: MutableReactiveHandler_isReadonly: false_isShallow: false[[Prototype]]: BaseReactiveHandler[[Target]]: ObjectcreatedAt: Tue Mar 31 2026 15:35:36 GMT+0800 (中国标准时间)toTemporalInstant: (...)[[Prototype]]: Objectdescription: "千问是阿里通义千问大模型打造的AI对话助手，通义千问支持问答、写作、代码、翻译、录音、PPT创作、文档处理、音视频速读。"iconCanFetch: trueiconData: nulliconError: nulliconFetchAttempts: 0iconGenerateData: nulliconLastFetchTime: nulliconUrl: "https://www.qianwen.com/"id: 442isActive: trueisHidden: falseisMarked: truelastVisited: nullmarkOrder: 0name: "通义千问"tags: Array(2)0: "ai"1: "搜"length: 2[[Prototype]]: Array(0)title: "千问-Qwen最新模型体验-通义千问"updatedAt: Tue Mar 31 2026 15:35:36 GMT+0800 (中国标准时间)[[Prototype]]: Objecturl: "https://www.qianwen.com/"visitCount: 0[[Prototype]]: Object[[IsRevoked]]: false
+SearchResultFull.vue:7 SearchResultFull - iconGenerateData: null

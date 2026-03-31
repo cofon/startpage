@@ -9,7 +9,12 @@ import WebsiteActions from './WebsiteActions.vue'
 const props = defineProps({
   website: {
     type: Object,
-    required: true
+    required: true,
+    validator(value) {
+      console.log('SearchResultFull - website:', value);
+      console.log('SearchResultFull - iconGenerateData:', value.iconGenerateData);
+      return true;
+    }
   }
 })
 
@@ -95,292 +100,271 @@ function formatDate(dateString) {
 
 <template>
   <div class="website-item full-mode">
-    <!-- 头部：icon、名称、操作 -->
-    <div class="full-header">
-      <a
-        :href="website.url"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="website-link"
-        @mousedown="(event) => handleMouseDown(event)"
-        @click="(event) => handleWebsiteClick(website, event)"
-      >
-        <div class="website-icon-container">
-          <WebsiteIcon :website="website" />
-        </div>
-        <div class="website-header-info">
-          <h3 class="website-name" :title="website.name">{{ website.name }}</h3>
-          <span class="website-url" :title="website.url">{{ website.url }}</span>
-        </div>
-      </a>
-      <div class="actions-container">
-        <WebsiteActions
-          :website="website"
-          @toggle-mark="handleToggleMark"
-          @edit="handleEdit"
-          @delete="handleDelete"
-          @restore="handleRestore"
-        />
-      </div>
-    </div>
-    
-    <!-- 主体内容 -->
+    <!-- 主体内容：简单粗暴的字段列表 -->
     <div class="full-content">
-      <!-- 标题 -->
-      <div v-if="website.title" class="content-section">
-        <h4 class="section-title">标题</h4>
-        <p class="section-content" :title="website.title">{{ website.title }}</p>
-      </div>
-      
-      <!-- 描述 -->
-      <div v-if="website.description" class="content-section">
-        <h4 class="section-title">描述</h4>
-        <p class="section-content" :title="website.description">{{ website.description }}</p>
-      </div>
-      
-      <!-- 标签 -->
-      <div v-if="website.tags && website.tags.length > 0" class="content-section">
-        <h4 class="section-title">标签</h4>
-        <div class="tags-container">
-          <span v-for="tag in website.tags" :key="tag" class="tag">
-            {{ tag }}
+        <div class="field-row">
+          <span class="field-label">id:</span>
+          <span class="field-value">{{ website.id }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">icon:</span>
+          <div class="field-value icon-field">
+            <WebsiteIcon :website="website" />
+          </div>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">svg:</span>
+          <div class="field-value svg-field">
+            <div v-if="website.iconGenerateData" class="svg-preview">
+              <img :src="website.iconGenerateData" alt="SVG Preview" class="svg-image" />
+            </div>
+            <span v-else class="no-value">-</span>
+          </div>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">name:</span>
+          <span class="field-value">{{ website.name }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">url:</span>
+          <span class="field-value">
+            <a
+              :href="website.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="website-link"
+              @click="(event) => handleWebsiteClick(website, event)"
+            >
+              {{ website.url }}
+            </a>
           </span>
         </div>
-      </div>
-    </div>
-    
-    <!-- 元数据 -->
-    <div class="full-metadata">
-      <div class="metadata-item">
-        <span class="metadata-label">创建时间</span>
-        <span class="metadata-value">{{ formatDate(website.createdAt) }}</span>
-      </div>
-      <div class="metadata-item">
-        <span class="metadata-label">更新时间</span>
-        <span class="metadata-value">{{ formatDate(website.updatedAt) }}</span>
-      </div>
-      <div class="metadata-item">
-        <span class="metadata-label">访问次数</span>
-        <span class="metadata-value">{{ website.visitCount || 0 }}</span>
-      </div>
-      <div class="metadata-item">
-        <span class="metadata-label">ID</span>
-        <span class="metadata-value">{{ website.id }}</span>
-      </div>
+        
+        <div class="field-row">
+          <span class="field-label">title:</span>
+          <span class="field-value">{{ website.title || '-' }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">desc:</span>
+          <span class="field-value">{{ website.description || '-' }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">tags:</span>
+          <div class="field-value tags-field">
+            <span v-for="tag in website.tags" :key="tag" class="tag">
+              {{ tag }}
+            </span>
+            <span v-if="!website.tags || website.tags.length === 0" class="no-value">-</span>
+          </div>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">isMarked:</span>
+          <span class="field-value">{{ website.isMarked ? 'true' : 'false' }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">isActive:</span>
+          <span class="field-value">{{ website.isActive ? 'true' : 'false' }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">isHidden:</span>
+          <span class="field-value">{{ website.isHidden ? 'true' : 'false' }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">markOrder:</span>
+          <span class="field-value">{{ website.markOrder || 0 }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">visitCount:</span>
+          <span class="field-value">{{ website.visitCount || 0 }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">lastVisited:</span>
+          <span class="field-value">{{ website.lastVisited ? formatDate(website.lastVisited) : '-' }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">createdAt:</span>
+          <span class="field-value">{{ formatDate(website.createdAt) }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">updatedAt:</span>
+          <span class="field-value">{{ formatDate(website.updatedAt) }}</span>
+        </div>
+        
+        <div class="field-row">
+          <span class="field-label">actions:</span>
+          <div class="field-value actions-field">
+            <WebsiteActions
+              :website="website"
+              @toggle-mark="handleToggleMark"
+              @edit="handleEdit"
+              @delete="handleDelete"
+              @restore="handleRestore"
+            />
+          </div>
+        </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .website-item {
-  padding: 24px;
+  padding: 12px;
   background-color: var(--color-bg-card);
-  border-radius: 16px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
   user-select: none;
   overflow: visible;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: var(--shadow-light);
+  border: 1px solid var(--color-border);
 }
 
 .website-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-medium);
+  border-color: var(--color-primary);
 }
 
-/* 头部 */
-.full-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.website-link {
+/* 操作按钮字段 */
+.actions-field {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
-}
-
-.website-link:hover {
-  opacity: 0.9;
-}
-
-.website-icon-container {
-  flex-shrink: 0;
-}
-
-.website-icon-container :deep(.website-icon) {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-}
-
-.website-header-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.website-name {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text-main);
-  margin: 0 0 8px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.website-url {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.actions-container {
-  flex-shrink: 0;
+  gap: 8px;
 }
 
 /* 主体内容 */
 .full-content {
-  margin-bottom: 24px;
+  width: 100%;
 }
 
-.content-section {
-  margin-bottom: 20px;
+.website-link {
+  text-decoration: none;
+  color: var(--color-primary);
 }
 
-.content-section:last-child {
+.website-link:hover {
+  text-decoration: underline;
+}
+
+/* 字段行 */
+.field-row {
+  display: flex;
+  margin-bottom: 6px;
+  align-items: flex-start;
+}
+
+.field-row:last-child {
   margin-bottom: 0;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin: 0 0 8px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.section-content {
-  font-size: 16px;
-  color: var(--color-text-main);
-  margin: 0;
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-/* Tags 容器 */
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag {
-  padding: 6px 14px;
-  background-color: var(--color-bg-hover);
-  color: var(--color-text-secondary);
-  border-radius: 20px;
+.field-label {
+  width: 100px;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.tag:hover {
-  background-color: var(--color-primary);
-  color: var(--color-text-on-primary);
-  transform: translateY(-1px);
-}
-
-/* 元数据 */
-.full-metadata {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  padding-top: 20px;
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-bg-hover);
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 20px;
-}
-
-.metadata-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metadata-label {
-  font-size: 12px;
-  font-weight: 500;
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
-.metadata-value {
-  font-size: 14px;
+.field-value {
+  flex: 1;
+  font-size: 13px;
   color: var(--color-text-main);
+  word-break: break-word;
   font-family: monospace;
 }
 
-/* 链接 hover 效果 */
-.website-link:hover .website-name {
-  color: var(--color-primary);
+/* 图标字段 */
+.icon-field {
+  display: flex;
+  align-items: center;
 }
 
-.website-link:hover .website-url {
-  color: var(--color-primary);
+.icon-field :deep(.website-icon) {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
 }
+
+/* SVG字段 */
+.svg-field {
+  display: flex;
+  align-items: center;
+}
+
+.svg-preview {
+  margin-right: 8px;
+}
+
+.svg-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: white;
+  padding: 2px;
+}
+
+
+
+/* 标签字段 */
+.tags-field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.tag {
+  padding: 2px 8px;
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.no-value {
+  color: var(--color-text-disabled);
+}
+
+
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .website-item {
-    padding: 20px;
+    padding: 12px;
   }
   
-  .full-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+  .field-label {
+    width: 100px;
+    font-size: 13px;
   }
   
-  .website-link {
-    width: 100%;
-  }
-  
-  .full-metadata {
-    grid-template-columns: 1fr 1fr;
+  .field-value {
+    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
-  .full-metadata {
-    grid-template-columns: 1fr;
+  .field-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
   
-  .website-icon-container :deep(.website-icon) {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .website-name {
-    font-size: 18px;
+  .field-label {
+    width: 100%;
   }
 }
 </style>

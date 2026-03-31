@@ -18,7 +18,6 @@ export const useSearchStore = defineStore('search', () => {
   const query = ref('')
   const results = ref([])
   const showTagsList = ref(false)
-  const currentLayoutMode = ref('default')
 
   // 显示模式 - 控制显示模块应该显示什么内容
   const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty' | 'settings' | 'help'
@@ -65,6 +64,11 @@ export const useSearchStore = defineStore('search', () => {
       { id: 'default', name: '默认模式' },
       { id: 'full', name: '完整模式' }
     ]
+  })
+
+  // 当前布局模式（从 settingStore 获取）
+  const currentLayoutMode = computed(() => {
+    return settingStore.searchResultLayout || 'default'
   })
 
   // 监听搜索引擎切换
@@ -230,7 +234,7 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   function setLayoutMode(mode) {
-    currentLayoutMode.value = mode
+    settingStore.setSearchResultLayout(mode)
   }
 
   return {
@@ -241,13 +245,13 @@ export const useSearchStore = defineStore('search', () => {
     engineIcons,
     displayMode,
     commandMode,
-    currentLayoutMode,
     // Computed
     isLocalSearch,
     currentEngine,
     currentTags,
     currentEngineIcon,
     availableLayoutModes,
+    currentLayoutMode,
     // Actions
     init,
     setQuery,
