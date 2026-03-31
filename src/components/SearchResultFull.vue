@@ -3,27 +3,59 @@
  * 完整模式布局组件
  * 显示所有信息，多行布局
  */
+import { ref, onMounted, watch } from 'vue'
 import WebsiteIcon from './WebsiteIcon.vue'
 import WebsiteActions from './WebsiteActions.vue'
+import { useWebsiteStore } from '../stores/website'
+
+const websiteStore = useWebsiteStore()
 
 const props = defineProps({
   website: {
     type: Object,
-    required: true,
-    validator(value) {
-      console.log('SearchResultFull - website:', value);
-      console.log('SearchResultFull - iconGenerateData:', value.iconGenerateData);
-      return true;
-    }
+    required: true
   }
 })
 
 const emit = defineEmits(['click', 'toggle-mark', 'edit', 'delete', 'restore'])
 
+// 图标数据
+const iconData = ref(null)
+const iconGenerateData = ref(null)
+
 // 文字选择相关状态
 let mouseDownTime = 0
 let mouseDownPosition = { x: 0, y: 0 }
 let hadSelectionOnMouseDown = false
+
+// 加载图标数据
+async function loadIconData() {
+  if (props.website.id) {
+    try {
+      const iconResult = await websiteStore.loadWebsiteIcon(props.website.id)
+      if (iconResult) {
+        iconData.value = iconResult.iconData
+        iconGenerateData.value = iconResult.iconGenerateData
+        console.log('SearchResultFull - 加载图标数据成功:', {
+          iconData: iconResult.iconData ? '存在' : '不存在',
+          iconGenerateData: iconResult.iconGenerateData ? '存在' : '不存在'
+        })
+      }
+    } catch (error) {
+      console.error('SearchResultFull - 加载图标数据失败:', error)
+    }
+  }
+}
+
+// 监听 website 变化
+watch(() => props.website, () => {
+  loadIconData()
+}, { immediate: true })
+
+// 组件挂载时加载图标数据
+onMounted(() => {
+  loadIconData()
+})
 
 /**
  * 检测是否在选择文字
@@ -117,8 +149,8 @@ function formatDate(dateString) {
         <div class="field-row">
           <span class="field-label">svg:</span>
           <div class="field-value svg-field">
-            <div v-if="website.iconGenerateData" class="svg-preview">
-              <img :src="website.iconGenerateData" alt="SVG Preview" class="svg-image" />
+            <div v-if="iconGenerateData" class="svg-preview">
+              <img :src="iconGenerateData" alt="SVG Preview" class="svg-image" />
             </div>
             <span v-else class="no-value">-</span>
           </div>
