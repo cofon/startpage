@@ -67,50 +67,59 @@ export const useSearchStore = defineStore('search', () => {
       return websiteStore.allTags
     }
 
-    // 检查是否包含 -tag 命令（-tag 后面可以有空格也可以没有）
-    const tagCommandPattern = /-tag(\s+(\w*))?$/
+    // 检查是否包含 -tag 命令
+    const tagCommandPattern = /-tag\s+(.*)$/
     const match = trimmedQuery.match(tagCommandPattern)
     console.log('SearchStore - currentTags: tagCommandPattern match:', match)
     
     if (match) {
-      // 提取当前正在输入的 tag（如果没有空格则为空字符串）
-      const currentTagInput = (match[2] || '').toLowerCase()
-      console.log('SearchStore - currentTags: currentTagInput:', currentTagInput)
+      // 提取 -tag 后面的所有内容
+      const tagsInput = match[1].trim()
+      console.log('SearchStore - currentTags: tagsInput:', tagsInput)
       
       // 检查原始查询末尾是否有空格（表示tag输入结束）
       const endsWithSpace = query.value.endsWith(' ')
       console.log('SearchStore - currentTags: endsWithSpace:', endsWithSpace)
       
-      if (endsWithSpace && currentTagInput) {
-        // 如果有输入tag且末尾有空格，表示tag输入结束
+      if (!tagsInput) {
+        // -tag 后面没有输入，显示所有 tags
+        console.log('SearchStore - currentTags: no tag input, returning all tags')
+        return websiteStore.allTags
+      }
+      
+      // 分割 tags（按空格分割）
+      const tags = tagsInput.split(/\s+/)
+      console.log('SearchStore - currentTags: tags:', tags)
+      
+      // 获取最后一个 tag
+      const lastTag = tags[tags.length - 1].toLowerCase()
+      console.log('SearchStore - currentTags: lastTag:', lastTag)
+      
+      if (endsWithSpace) {
+        // 如果末尾有空格，表示最后一个 tag 输入结束
         // 检查是否是完整的tag
         const isTagComplete = websiteStore.allTags.some(tag => 
-          tag.toLowerCase() === currentTagInput
+          tag.toLowerCase() === lastTag
         )
         console.log('SearchStore - currentTags: isTagComplete:', isTagComplete)
         
         if (isTagComplete) {
-          // tag 是完整的，显示除了已输入的 tag 之外的所有 tags
+          // tag 是完整的，显示除了已输入的所有 tags 之外的所有 tags
+          const completedTags = tags.map(tag => tag.toLowerCase())
           const filteredTags = websiteStore.allTags.filter(tag => 
-            tag.toLowerCase() !== currentTagInput
+            !completedTags.includes(tag.toLowerCase())
           )
-          console.log('SearchStore - currentTags: filteredTags (excluding completed tag):', filteredTags)
+          console.log('SearchStore - currentTags: filteredTags (excluding completed tags):', filteredTags)
           return filteredTags
         }
       }
       
       // 过滤匹配的 tags
-      if (currentTagInput) {
-        const filteredTags = websiteStore.allTags.filter(tag => 
-          tag.toLowerCase().startsWith(currentTagInput)
-        )
-        console.log('SearchStore - currentTags: filteredTags:', filteredTags)
-        return filteredTags
-      }
-      
-      // -tag 后面没有输入，显示所有 tags
-      console.log('SearchStore - currentTags: no tag input, returning all tags')
-      return websiteStore.allTags
+      const filteredTags = websiteStore.allTags.filter(tag => 
+        tag.toLowerCase().startsWith(lastTag)
+      )
+      console.log('SearchStore - currentTags: filteredTags:', filteredTags)
+      return filteredTags
     }
 
     console.log('SearchStore - currentTags: no -tag command found, returning empty array')
@@ -135,8 +144,8 @@ export const useSearchStore = defineStore('search', () => {
       return true
     }
 
-    // 检查是否包含 -tag 命令（-tag 后面可以有空格也可以没有）
-    const tagCommandPattern = /-tag(\s+(\w*))?$/
+    // 检查是否包含 -tag 命令
+    const tagCommandPattern = /-tag\s+(.*)$/
     const match = trimmedQuery.match(tagCommandPattern)
     
     console.log('SearchStore - shouldShowTagsList: tagCommandPattern match:', match)
@@ -147,19 +156,33 @@ export const useSearchStore = defineStore('search', () => {
       return false
     }
     
-    // 提取当前正在输入的 tag（如果没有空格则为空字符串）
-    const currentTagInput = (match[2] || '').toLowerCase()
+    // 提取 -tag 后面的所有内容
+    const tagsInput = match[1].trim()
+    console.log('SearchStore - shouldShowTagsList: tagsInput:', tagsInput)
+
+
+
+    // 如果 -tag 后面没有输入，不显示 tags（需要输入空格）
+    if (!tagsInput) {
+      console.log('SearchStore - shouldShowTagsList: no tag input, not showing tags')
+      return false
+    }
+    
+    // 分割 tags（按空格分割）
+    const tags = tagsInput.split(/\s+/)
+    console.log('SearchStore - shouldShowTagsList: tags:', tags)
+    
+    // 获取最后一个 tag
+    const currentTagInput = tags[tags.length - 1].toLowerCase()
     console.log('SearchStore - shouldShowTagsList: currentTagInput:', currentTagInput)
 
     // 检查原始查询末尾是否有空格（表示tag输入结束）
     const endsWithSpace = query.value.endsWith(' ')
     console.log('SearchStore - shouldShowTagsList: endsWithSpace:', endsWithSpace)
+
+
     
-    // 如果 -tag 后面没有输入，显示所有 tags
-    if (!currentTagInput) {
-      console.log('SearchStore - shouldShowTagsList: no tag input, showing all tags')
-      return true
-    }
+
     
     if (endsWithSpace) {
       // 如果有输入tag且末尾有空格，表示tag输入结束
@@ -167,6 +190,8 @@ export const useSearchStore = defineStore('search', () => {
       const isTagComplete = websiteStore.allTags.some(tag => 
         tag.toLowerCase() === currentTagInput
       )
+      console.log('SearchStore - shouldShowTagsList: isTagComplete:', isTagComplete)
+      
       if (isTagComplete) {
         console.log('SearchStore - shouldShowTagsList: tag is complete, showing tags for next tag')
         return true
