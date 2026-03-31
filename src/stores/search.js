@@ -52,48 +52,39 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   const currentTags = computed(() => {
-    console.log('SearchStore - currentTags computed')
+
     if (!isLocalSearch.value) {
-      console.log('SearchStore - currentTags: isLocalSearch is false')
       return []
     }
     
     const trimmedQuery = query.value.trim()
-    console.log('SearchStore - currentTags: trimmedQuery:', trimmedQuery)
     
     if (!trimmedQuery) {
       // 输入框为空时显示所有 tags
-      console.log('SearchStore - currentTags: query is empty, returning all tags')
       return websiteStore.allTags
     }
 
     // 检查是否包含 -tag 命令
     const tagCommandPattern = /-tag\s*(.*)$/
     const match = trimmedQuery.match(tagCommandPattern)
-    console.log('SearchStore - currentTags: tagCommandPattern match:', match)
     
     if (match) {
       // 提取 -tag 后面的所有内容
       const tagsInput = match[1].trim()
-      console.log('SearchStore - currentTags: tagsInput:', tagsInput)
       
       // 检查原始查询末尾是否有空格（表示tag输入结束）
       const endsWithSpace = query.value.endsWith(' ')
-      console.log('SearchStore - currentTags: endsWithSpace:', endsWithSpace)
       
       if (!tagsInput) {
         // -tag 后面没有输入，显示所有 tags
-        console.log('SearchStore - currentTags: no tag input, returning all tags')
         return websiteStore.allTags
       }
       
       // 分割 tags（按空格分割）
       const tags = tagsInput.split(/\s+/)
-      console.log('SearchStore - currentTags: tags:', tags)
       
       // 获取最后一个 tag
       const lastTag = tags[tags.length - 1].toLowerCase()
-      console.log('SearchStore - currentTags: lastTag:', lastTag)
       
       if (endsWithSpace) {
         // 如果末尾有空格，表示最后一个 tag 输入结束
@@ -101,7 +92,6 @@ export const useSearchStore = defineStore('search', () => {
         const isTagComplete = websiteStore.allTags.some(tag => 
           tag.toLowerCase() === lastTag
         )
-        console.log('SearchStore - currentTags: isTagComplete:', isTagComplete)
         
         if (isTagComplete) {
           // tag 是完整的，显示除了已输入的所有 tags 之外的所有 tags
@@ -109,7 +99,6 @@ export const useSearchStore = defineStore('search', () => {
           const filteredTags = websiteStore.allTags.filter(tag => 
             !completedTags.includes(tag.toLowerCase())
           )
-          console.log('SearchStore - currentTags: filteredTags (excluding completed tags):', filteredTags)
           return filteredTags
         }
       }
@@ -118,29 +107,22 @@ export const useSearchStore = defineStore('search', () => {
       const filteredTags = websiteStore.allTags.filter(tag => 
         tag.toLowerCase().startsWith(lastTag)
       )
-      console.log('SearchStore - currentTags: filteredTags:', filteredTags)
       return filteredTags
     }
 
-    console.log('SearchStore - currentTags: no -tag command found, returning empty array')
     return []
   })
 
   // 是否应该显示标签列表
   const shouldShowTagsList = computed(() => {
-    console.log('SearchStore - shouldShowTagsList computed')
     if (!isLocalSearch.value) {
-      console.log('SearchStore - shouldShowTagsList: isLocalSearch is false')
       return false
     }
 
     const trimmedQuery = query.value.trim()
-    console.log('SearchStore - shouldShowTagsList: trimmedQuery:', trimmedQuery)
-    console.log('SearchStore - shouldShowTagsList: query.value:', query.value)
     
     if (!trimmedQuery) {
       // 输入框为空时显示 tags
-      console.log('SearchStore - shouldShowTagsList: query is empty, showing tags')
       return true
     }
 
@@ -148,52 +130,36 @@ export const useSearchStore = defineStore('search', () => {
     const tagCommandPattern = /-tag\s*(.*)$/
     const match = trimmedQuery.match(tagCommandPattern)
     
-    console.log('SearchStore - shouldShowTagsList: tagCommandPattern match:', match)
+
 
     if (!match) {
       // 没有 -tag 命令，不显示 tags
-      console.log('SearchStore - shouldShowTagsList: no -tag command found')
       return false
     }
     
     // 提取 -tag 后面的所有内容
     const tagsInput = match[1].trim()
-    console.log('SearchStore - shouldShowTagsList: tagsInput:', tagsInput)
-    console.log('SearchStore - shouldShowTagsList: tagsInput type:', typeof tagsInput)
-    console.log('SearchStore - shouldShowTagsList: tagsInput length:', tagsInput.length)
-    console.log('SearchStore - shouldShowTagsList: tagsInput === "":', tagsInput === '')
-    console.log('SearchStore - shouldShowTagsList: !tagsInput:', !tagsInput)
 
     // 检查原始查询末尾是否有空格（表示tag输入结束）
     const endsWithSpace = query.value.endsWith(' ')
-    console.log('SearchStore - shouldShowTagsList: endsWithSpace:', endsWithSpace)
-    console.log('SearchStore - shouldShowTagsList: query.value:', `"${query.value}"`)
-    console.log('SearchStore - shouldShowTagsList: query.value.length:', query.value.length)
 
 
 
     // 如果 -tag 后面没有输入，检查是否末尾有空格
-    console.log('SearchStore - shouldShowTagsList: checking if !tagsInput:', !tagsInput)
     if (!tagsInput) {
-      console.log('SearchStore - shouldShowTagsList: tagsInput is empty, checking endsWithSpace:', endsWithSpace)
       if (endsWithSpace) {
         // -tag 后面只有空格，显示所有 tags
-        console.log('SearchStore - shouldShowTagsList: -tag with space only, showing all tags')
         return true
       }
       // -tag 后面没有输入也没有空格，不显示 tags
-      console.log('SearchStore - shouldShowTagsList: no tag input and no space, not showing tags')
       return false
     }
-    console.log('SearchStore - shouldShowTagsList: tagsInput is not empty, continuing...')
     
     // 分割 tags（按空格分割）
     const tags = tagsInput.split(/\s+/)
-    console.log('SearchStore - shouldShowTagsList: tags:', tags)
     
     // 获取最后一个 tag
     const currentTagInput = tags[tags.length - 1].toLowerCase()
-    console.log('SearchStore - shouldShowTagsList: currentTagInput:', currentTagInput)
 
 
 
@@ -207,10 +173,8 @@ export const useSearchStore = defineStore('search', () => {
       const isTagComplete = websiteStore.allTags.some(tag => 
         tag.toLowerCase() === currentTagInput
       )
-      console.log('SearchStore - shouldShowTagsList: isTagComplete:', isTagComplete)
       
       if (isTagComplete) {
-        console.log('SearchStore - shouldShowTagsList: tag is complete, showing tags for next tag')
         return true
       }
     }
@@ -219,16 +183,13 @@ export const useSearchStore = defineStore('search', () => {
     const tagCommandIndex = trimmedQuery.lastIndexOf('-tag')
     const afterTagCommand = trimmedQuery.substring(tagCommandIndex + 4)
     if (afterTagCommand.includes(' -') || afterTagCommand.includes(' &') || afterTagCommand.includes(' |')) {
-      console.log('SearchStore - shouldShowTagsList: contains special characters after -tag, not showing tags')
       return false
     }
 
     // 检查是否有匹配的 tags
     const hasMatchingTags = currentTags.value.length > 0
-    console.log('SearchStore - shouldShowTagsList: hasMatchingTags:', hasMatchingTags, 'currentTags.length:', currentTags.value.length)
 
     if (!hasMatchingTags) {
-      console.log('SearchStore - shouldShowTagsList: no matching tags, not showing tags')
       return false
     }
 
@@ -237,15 +198,12 @@ export const useSearchStore = defineStore('search', () => {
       const isTagComplete = websiteStore.allTags.some(tag => 
         tag.toLowerCase() === currentTagInput
       )
-      console.log('SearchStore - shouldShowTagsList: isTagComplete:', isTagComplete)
 
       if (isTagComplete) {
-        console.log('SearchStore - shouldShowTagsList: tag is complete, not showing tags')
         return false
       }
     }
 
-    console.log('SearchStore - shouldShowTagsList: showing tags')
     return true
   })
 
@@ -275,101 +233,80 @@ export const useSearchStore = defineStore('search', () => {
 
   // 当前匹配的命令列表
   const currentCommands = computed(() => {
-    console.log('SearchStore - currentCommands computed')
     if (!isLocalSearch.value) {
-      console.log('SearchStore - currentCommands: isLocalSearch is false')
       return []
     }
     
     const trimmedQuery = query.value.trim()
-    console.log('SearchStore - currentCommands: trimmedQuery:', trimmedQuery)
     
     // 检查是否包含命令（以 - 开头或包含 空格-）
     const hasCommandPrefix = trimmedQuery.startsWith('-') || trimmedQuery.includes(' -')
     if (!trimmedQuery || !hasCommandPrefix) {
-      console.log('SearchStore - currentCommands: query does not contain command')
       return []
     }
     
     // 提取当前正在输入的命令部分
     const parts = trimmedQuery.split(/\s+/)
     const lastPart = parts[parts.length - 1]
-    console.log('SearchStore - currentCommands: lastPart:', lastPart)
     
     if (!lastPart.startsWith('-')) {
-      console.log('SearchStore - currentCommands: last part does not start with -')
       return []
     }
     
     const commandPrefix = lastPart.substring(1).toLowerCase()
-    console.log('SearchStore - currentCommands: commandPrefix:', commandPrefix)
     
     // 过滤匹配的命令
     const matchedCommands = allCommands.value.filter(cmd => {
       return cmd.toLowerCase().startsWith(commandPrefix)
     })
-    console.log('SearchStore - currentCommands: matchedCommands:', matchedCommands)
     return matchedCommands
   })
 
   // 是否应该显示命令列表
   const shouldShowCommandList = computed(() => {
-    console.log('SearchStore - shouldShowCommandList computed')
     if (!isLocalSearch.value) {
-      console.log('SearchStore - shouldShowCommandList: isLocalSearch is false')
       return false
     }
     
     const trimmedQuery = query.value.trim()
-    console.log('SearchStore - shouldShowCommandList: trimmedQuery:', trimmedQuery)
     
     // 检查是否包含命令（以 - 开头或包含 空格-）
     const hasCommandPrefix = trimmedQuery.startsWith('-') || trimmedQuery.includes(' -')
     if (!trimmedQuery || !hasCommandPrefix) {
-      console.log('SearchStore - shouldShowCommandList: query does not contain command')
       return false
     }
     
     // 检查原始查询末尾是否有空格（表示命令输入结束）
     const endsWithSpace = query.value.endsWith(' ')
-    console.log('SearchStore - shouldShowCommandList: endsWithSpace:', endsWithSpace)
     if (endsWithSpace) {
-      console.log('SearchStore - shouldShowCommandList: query ends with space, closing command list')
       return false
     }
 
     // 提取当前正在输入的命令部分
     const parts = trimmedQuery.split(/\s+/)
     const lastPart = parts[parts.length - 1]
-    console.log('SearchStore - shouldShowCommandList: lastPart:', lastPart)
     
     if (!lastPart.startsWith('-')) {
-      console.log('SearchStore - shouldShowCommandList: last part does not start with -')
       return false
     }
     
     const commandPrefix = lastPart.substring(1).toLowerCase()
-    console.log('SearchStore - shouldShowCommandList: commandPrefix:', commandPrefix)
     
     // 检查命令是否已完成
     const isCommandComplete = commandPrefix && allCommands.value.some(cmd => {
       return cmd.toLowerCase() === commandPrefix
     })
-    console.log('SearchStore - shouldShowCommandList: isCommandComplete:', isCommandComplete)
     
     // 如果命令已完成，关闭命令列表
     if (isCommandComplete) {
-      console.log('SearchStore - shouldShowCommandList: command is complete, closing command list')
       return false
     }
     
     // 检查是否有匹配的命令
     const hasMatches = currentCommands.value.length > 0
-    console.log('SearchStore - shouldShowCommandList: hasMatches:', hasMatches, 'currentCommands.length:', currentCommands.value.length)
     
     // 如果没有匹配的命令，关闭命令列表
     if (!hasMatches) {
-      console.log('SearchStore - shouldShowCommandList: no matching commands, closing command list')
       return false
     }
 
@@ -403,9 +340,6 @@ export const useSearchStore = defineStore('search', () => {
 
   // 监听查询变化
   watch(query, () => {
-    console.log('SearchStore - query changed:', query.value)
-    console.log('SearchStore - isLocalSearch:', isLocalSearch.value)
-    console.log('SearchStore - shouldShowCommandList:', shouldShowCommandList.value)
     
     if (isLocalSearch.value) {
       performSearch()
@@ -415,8 +349,6 @@ export const useSearchStore = defineStore('search', () => {
       }
       // 更新命令列表显示状态
       setShowCommandList(shouldShowCommandList.value)
-      console.log('SearchStore - showCommandList after update:', showCommandList.value)
-      console.log('SearchStore - shouldShowTagsList:', shouldShowTagsList.value)
       
       // 如果显示命令列表，隐藏标签列表
       if (shouldShowCommandList.value) {
@@ -424,7 +356,6 @@ export const useSearchStore = defineStore('search', () => {
       } else {
         // 否则根据 shouldShowTagsList 更新标签列表显示状态
         setShowTagsList(shouldShowTagsList.value)
-        console.log('SearchStore - showTagsList after update:', showTagsList.value)
       }
     } else {
       // 网络搜索时，始终显示 marked list
@@ -538,24 +469,19 @@ export const useSearchStore = defineStore('search', () => {
   function searchByTag(tag) {
     // 获取当前查询
     const currentQuery = query.value.trim()
-    console.log('SearchStore - searchByTag: currentQuery:', currentQuery)
-    console.log('SearchStore - searchByTag: tag:', tag)
     
     // 检查是否包含 -tag 命令
     const tagCommandPattern = /-tag\s*(.*)$/
     const match = currentQuery.match(tagCommandPattern)
-    console.log('SearchStore - searchByTag: tagCommandPattern match:', match)
 
     let commandQuery
     
     if (match) {
       // 提取 -tag 后面的所有内容
       const tagsInput = match[1].trim()
-      console.log('SearchStore - searchByTag: tagsInput:', tagsInput)
       
       // 检查原始查询末尾是否有空格（表示tag输入结束）
       const endsWithSpace = query.value.endsWith(' ')
-      console.log('SearchStore - searchByTag: endsWithSpace:', endsWithSpace)
       
       if (tagsInput) {
         // -tag 后面有输入
@@ -577,7 +503,6 @@ export const useSearchStore = defineStore('search', () => {
       commandQuery = `-tag ${tag}`
     }
     
-    console.log('SearchStore - searchByTag: commandQuery:', commandQuery)
     setQuery(commandQuery)
     // 执行搜索
     performSearch()

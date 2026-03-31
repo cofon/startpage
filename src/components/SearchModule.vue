@@ -13,27 +13,19 @@ const settingStore = useSettingStore()
 
 // 计算属性：判断当前搜索引擎是否为本地搜索
 const isLocalSearchEngine = computed(() => {
-  const result = settingStore.selectedSearchEngineId === 'local'
-  console.log('SearchModule - isLocalSearchEngine:', result)
-  return result
+  return settingStore.selectedSearchEngineId === 'local'
 })
 
 // 监听showCommandList变化
 watch(() => searchStore.showCommandList, (newValue, oldValue) => {
-  console.log('SearchModule - showCommandList watch START')
-  console.log('SearchModule - showCommandList changed from:', oldValue, 'to:', newValue)
-  console.log('SearchModule - currentCommands length:', searchStore.currentCommands.length)
-  console.log('SearchModule - shouldShowCommandList:', searchStore.shouldShowCommandList)
-  const queryValue = searchStore.query
-  console.log('SearchModule - query:', queryValue)
-  console.log('SearchModule - showCommandList watch END')
+  // 更新 showCommandList
+  searchStore.setShowCommandList(newValue)
 })
 
 /**
  * 处理输入框获得焦点
  */
 function handleInputFocus() {
-  console.log('SearchModule - handleInputFocus')
   if (isLocalSearchEngine.value) {
     if (!searchStore.query.value) {
       // 输入框为空时，显示所有 tags
@@ -48,53 +40,30 @@ function handleInputFocus() {
  * 处理输入框失去焦点
  */
 function handleInputBlur() {
-  console.log('SearchModule - handleInputBlur START')
-  console.log('SearchModule - handleInputBlur - showCommandList before:', searchStore.showCommandList)
-  const queryValue = searchStore.query
-  console.log('SearchModule - handleInputBlur - query:', queryValue)
   // 只关闭命令列表，不关闭 tags-list
   searchStore.setShowCommandList(false)
-  console.log('SearchModule - handleInputBlur - showCommandList after:', searchStore.showCommandList)
-  console.log('SearchModule - handleInputBlur END')
 }
 
 /**
  * 处理输入框内容变化
  */
 function handleInput() {
-  console.log('SearchModule - handleInput START')
-  const queryValue = searchStore.query
-  console.log('SearchModule - handleInput - query:', queryValue)
-  console.log('SearchModule - handleInput - isLocalSearchEngine:', isLocalSearchEngine.value)
-  console.log('SearchModule - handleInput - showCommandList before:', searchStore.showCommandList)
-  console.log('SearchModule - handleInput - shouldShowCommandList:', searchStore.shouldShowCommandList)
-  console.log('SearchModule - handleInput - currentCommands.length:', searchStore.currentCommands.length)
+
   
   if (isLocalSearchEngine.value) {
-    console.log('SearchModule - handleInput - shouldShowTagsList:', searchStore.shouldShowTagsList)
-    console.log('SearchModule - handleInput - showTagsList:', searchStore.showTagsList)
-    console.log('SearchModule - handleInput - currentTags.length:', searchStore.currentTags.length)
+
     // 使用 nextTick 确保 shouldShowCommandList 和 shouldShowTagsList 的值已经更新
     nextTick(() => {
-      console.log('SearchModule - handleInput - nextTick callback')
-      console.log('SearchModule - handleInput - shouldShowCommandList in nextTick:', searchStore.shouldShowCommandList)
-      console.log('SearchModule - handleInput - shouldShowTagsList in nextTick:', searchStore.shouldShowTagsList)
-      console.log('SearchModule - handleInput - showTagsList before set:', searchStore.showTagsList)
       searchStore.setShowCommandList(searchStore.shouldShowCommandList)
-      console.log('SearchModule - handleInput - showCommandList after nextTick:', searchStore.showCommandList)
-      console.log('SearchModule - handleInput - showTagsList after set:', searchStore.showTagsList)
-      console.log('SearchModule - handleInput - currentTags.length in nextTick:', searchStore.currentTags.length)
     })
   }
   
-  console.log('SearchModule - handleInput END')
 }
 
 /**
  * 处理ESC按键，隐藏tags列表和命令列表
  */
 function handleEscKey() {
-  console.log('SearchModule - handleEscKey')
   if (searchStore.showTagsList) {
     searchStore.setShowTagsList(false)
   }
@@ -107,7 +76,6 @@ function handleEscKey() {
  * 处理命令点击
  */
 function handleCommandClick(command) {
-  console.log('SearchModule - handleCommandClick:', command)
   const query = searchStore.query.value.trim()
   const parts = query.split(/\s+/)
   
@@ -143,61 +111,29 @@ function handleCommandClick(command) {
       <div
         v-if="searchStore.showTagsList && searchStore.currentTags.length > 0"
         class="tags-list"
-        @vue:mounted="console.log('[TagsList] Mounted - showTagsList:', searchStore.showTagsList, ', currentTags.length:', searchStore.currentTags.length)"
-        @vue:before-mount="console.log('[TagsList] Before Mount - showTagsList:', searchStore.showTagsList, ', currentTags.length:', searchStore.currentTags.length)"
-        @vue:before-unmount="console.log('[TagsList] Before Unmount')"
       >
-        <div style="position: absolute; top: -30px; left: 0; background: #2196f3; color: white; padding: 5px; font-size: 12px;">
-          [TagsList Visible] Tags: {{ searchStore.currentTags.length }}
-        </div>
         <div
           v-for="tag in searchStore.currentTags"
           :key="tag"
           class="tag-item"
           @mousedown="searchStore.searchByTag(tag)"
-          @vue:mounted="console.log('[TagItem] Mounted:', tag)"
         >
           {{ tag }}
         </div>
-      </div>
-      <!-- 标签列表调试信息 -->
-      <div v-else class="tags-debug-info" style="position: absolute; top: 70px; left: 0; background: #e3f2fd; padding: 10px; border: 2px solid #2196f3; z-index: 10001;">
-        <div style="font-weight: bold; color: #2196f3;">[TagsList NOT Visible]</div>
-        <div>showTagsList: {{ searchStore.showTagsList }}</div>
-        <div>currentTags.length: {{ searchStore.currentTags.length }}</div>
-        <div>shouldShowTagsList: {{ searchStore.shouldShowTagsList }}</div>
       </div>
       
       <!-- 命令列表 -->
       <div
         v-if="searchStore.showCommandList && searchStore.currentCommands.length > 0"
         class="commands-list"
-        @vue:mounted="console.log('[CommandList] Mounted - showCommandList:', searchStore.showCommandList, ', currentCommands.length:', searchStore.currentCommands.length)"
-        @vue:before-mount="console.log('[CommandList] Before Mount - showCommandList:', searchStore.showCommandList, ', currentCommands.length:', searchStore.currentCommands.length)"
-        @vue:before-unmount="console.log('[CommandList] Before Unmount')"
       >
-        <div style="position: absolute; top: -30px; left: 0; background: #4caf50; color: white; padding: 5px; font-size: 12px;">
-          [CommandList Visible] Commands: {{ searchStore.currentCommands.length }}
-        </div>
         <div
           v-for="command in searchStore.currentCommands"
           :key="command"
           class="command-item"
-          @vue:mounted="console.log('[CommandItem] Mounted:', command)"
         >
           -{{ command }}
         </div>
-      </div>
-      <!-- 命令列表调试信息 -->
-      <div v-else class="command-debug-info" style="position: absolute; top: 70px; left: 0; background: #ffeb3b; padding: 10px; border: 2px solid #ff9800; z-index: 10001;">
-        <div style="font-weight: bold; color: #f44336;">[CommandList NOT Visible]</div>
-        <div>[CommandList Debug] showCommandList: {{ searchStore.showCommandList }}</div>
-        <div>[CommandList Debug] currentCommands.length: {{ searchStore.currentCommands.length }}</div>
-        <div>[CommandList Debug] shouldShowCommandList: {{ searchStore.shouldShowCommandList }}</div>
-        <div>[CommandList Debug] query: {{ searchStore.query }}</div>
-        <div>[CommandList Debug] Condition 1 (showCommandList): {{ searchStore.showCommandList }} (should be true)</div>
-        <div>[CommandList Debug] Condition 2 (currentCommands.length > 0): {{ searchStore.currentCommands.length > 0 }} (should be true)</div>
-        <div>[CommandList Debug] Final Condition (showCommandList && currentCommands.length > 0): {{ searchStore.showCommandList && searchStore.currentCommands.length > 0 }} (should be true)</div>
       </div>
 
     </div>
