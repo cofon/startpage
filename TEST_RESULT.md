@@ -1,73 +1,211 @@
-刷新页面，搜索框下方显示了一个红色边框，黄色背景的方块，内容是：
-[CommandList NOT Visible]
-[CommandList Debug] showCommandList: false
-[CommandList Debug] currentCommands.length: 0
-[CommandList Debug] shouldShowCommandList: false
-[CommandList Debug] query:
-[CommandList Debug] Condition 1 (showCommandList): false (should be true)
-[CommandList Debug] Condition 2 (currentCommands.length > 0): false (should be true)
-[CommandList Debug] Final Condition (showCommandList && currentCommands.length > 0): false (should be true)
-
-
-搜索框输入 -， 控制台打印：
-SearchModule.vue:35 SearchModule - handleInputFocus
-search.js:196 SearchStore - query changed: -
-search.js:197 SearchStore - isLocalSearch: true
+SearchModule.vue:36 SearchModule - handleInputFocus
+SearchModule.vue:17 SearchModule - isLocalSearchEngine: true
+search.js:204 SearchStore - query changed: b
+search.js:205 SearchStore - isLocalSearch: true
 search.js:123 SearchStore - shouldShowCommandList computed
-search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: -
-search.js:139 SearchStore - shouldShowCommandList: lastPart: -
-search.js:147 SearchStore - shouldShowCommandList: commandPrefix: 
-search.js:153 SearchStore - shouldShowCommandList: isCommandComplete: 
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: b
+search.js:135 SearchStore - shouldShowCommandList: query does not contain command
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
 search.js:87 SearchStore - currentCommands computed
-search.js:94 SearchStore - currentCommands: trimmedQuery: -
-search.js:103 SearchStore - currentCommands: lastPart: -
-search.js:111 SearchStore - currentCommands: commandPrefix: 
-search.js:117 SearchStore - currentCommands: matchedCommands: (17) ['active', 'marked', 'unmarked', 'all', 'name', 'title', 'desc', 'url', 'tag', 'theme', 'search', 'add', 'import', 'export', 'batch', 'help', 'layout']
-search.js:165 SearchStore - shouldShowCommandList: hasMatches: true currentCommands.length: 17
-search.js:198 SearchStore - shouldShowCommandList: true
-search.js:208 SearchStore - showCommandList after update: true
-SearchModule.vue:23 SearchModule - showCommandList watch START
-SearchModule.vue:24 SearchModule - showCommandList changed from: false to: true
-SearchModule.vue:25 SearchModule - currentCommands length: 17
-SearchModule.vue:26 SearchModule - shouldShowCommandList: true
-SearchModule.vue:27 SearchModule - query: undefined
-SearchModule.vue:28 SearchModule - showCommandList watch END
-SearchModule.vue:155 [CommandList] Before Mount - showCommandList: true , currentCommands.length: 17
-SearchModule.vue:165 [CommandItem] Mounted: active
-SearchModule.vue:165 [CommandItem] Mounted: marked
-SearchModule.vue:165 [CommandItem] Mounted: unmarked
-SearchModule.vue:165 [CommandItem] Mounted: all
-SearchModule.vue:165 [CommandItem] Mounted: name
-SearchModule.vue:165 [CommandItem] Mounted: title
-SearchModule.vue:165 [CommandItem] Mounted: desc
-SearchModule.vue:165 [CommandItem] Mounted: url
-SearchModule.vue:165 [CommandItem] Mounted: tag
-SearchModule.vue:165 [CommandItem] Mounted: theme
-SearchModule.vue:165 [CommandItem] Mounted: search
-SearchModule.vue:165 [CommandItem] Mounted: add
-SearchModule.vue:165 [CommandItem] Mounted: import
-SearchModule.vue:165 [CommandItem] Mounted: export
-SearchModule.vue:165 [CommandItem] Mounted: batch
-SearchModule.vue:165 [CommandItem] Mounted: help
-SearchModule.vue:165 [CommandItem] Mounted: layout
-SearchModule.vue:154 [CommandList] Mounted - showCommandList: true , currentCommands.length: 17
-SearchModule.vue:58 SearchModule - handleInput START
-SearchModule.vue:59 SearchModule - handleInput - query: undefined
-SearchModule.vue:60 SearchModule - handleInput - isLocalSearchEngine: true
-SearchModule.vue:61 SearchModule - handleInput - showCommandList before: true
-SearchModule.vue:62 SearchModule - handleInput - shouldShowCommandList: true
-SearchModule.vue:63 SearchModule - handleInput - currentCommands.length: 17
-SearchModule.vue:67 SearchModule - handleInput - query is empty, setting showCommandList to false
-SearchModule.vue:83 SearchModule - handleInput END
-SearchModule.vue:23 SearchModule - showCommandList watch START
-SearchModule.vue:24 SearchModule - showCommandList changed from: true to: false
-SearchModule.vue:25 SearchModule - currentCommands length: 17
-SearchModule.vue:26 SearchModule - shouldShowCommandList: true
-SearchModule.vue:27 SearchModule - query: undefined
-SearchModule.vue:28 SearchModule - showCommandList watch END
-SearchModule.vue:156 [CommandList] Before Unmount
-SearchModule.vue:45 SearchModule - handleInputBlur START
-SearchModule.vue:46 SearchModule - handleInputBlur - showCommandList before: false
-SearchModule.vue:47 SearchModule - handleInputBlur - query: undefined
-SearchModule.vue:50 SearchModule - handleInputBlur - showCommandList after: false
-SearchModule.vue:51 SearchModule - handleInputBlur END
+search.js:94 SearchStore - currentCommands: trimmedQuery: b
+search.js:96 SearchStore - currentCommands: query does not start with -
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: b
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bi
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bi
+search.js:135 SearchStore - shouldShowCommandList: query does not contain command
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bi
+search.js:96 SearchStore - currentCommands: query does not start with -
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bi
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bil
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bil
+search.js:135 SearchStore - shouldShowCommandList: query does not contain command
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bil
+search.js:96 SearchStore - currentCommands: query does not start with -
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bil
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bili
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bili
+search.js:135 SearchStore - shouldShowCommandList: query does not contain command
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bili
+search.js:96 SearchStore - currentCommands: query does not start with -
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bili
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bili 
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bili
+search.js:135 SearchStore - shouldShowCommandList: query does not contain command
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bili
+search.js:96 SearchStore - currentCommands: query does not start with -
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bili 
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bili -
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bili -
+search.js:142 SearchStore - shouldShowCommandList: lastPart: -
+search.js:150 SearchStore - shouldShowCommandList: commandPrefix: 
+search.js:156 SearchStore - shouldShowCommandList: isCommandComplete: 
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bili -
+search.js:96 SearchStore - currentCommands: query does not start with -
+search.js:166 SearchStore - shouldShowCommandList: hasMatches: false currentCommands.length: 0
+search.js:170 SearchStore - shouldShowCommandList: no matching commands, closing command list
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bili -
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bili -u
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bili -u
+search.js:142 SearchStore - shouldShowCommandList: lastPart: -u
+search.js:150 SearchStore - shouldShowCommandList: commandPrefix: u
+search.js:156 SearchStore - shouldShowCommandList: isCommandComplete: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bili -u
+search.js:96 SearchStore - currentCommands: query does not start with -
+search.js:166 SearchStore - shouldShowCommandList: hasMatches: false currentCommands.length: 0
+search.js:170 SearchStore - shouldShowCommandList: no matching commands, closing command list
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bili -u
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bili -ur
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bili -ur
+search.js:142 SearchStore - shouldShowCommandList: lastPart: -ur
+search.js:150 SearchStore - shouldShowCommandList: commandPrefix: ur
+search.js:156 SearchStore - shouldShowCommandList: isCommandComplete: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bili -ur
+search.js:96 SearchStore - currentCommands: query does not start with -
+search.js:166 SearchStore - shouldShowCommandList: hasMatches: false currentCommands.length: 0
+search.js:170 SearchStore - shouldShowCommandList: no matching commands, closing command list
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bili -ur
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+search.js:204 SearchStore - query changed: bili -url
+search.js:205 SearchStore - isLocalSearch: true
+search.js:123 SearchStore - shouldShowCommandList computed
+search.js:130 SearchStore - shouldShowCommandList: trimmedQuery: bili -url
+search.js:142 SearchStore - shouldShowCommandList: lastPart: -url
+search.js:150 SearchStore - shouldShowCommandList: commandPrefix: url
+search.js:156 SearchStore - shouldShowCommandList: isCommandComplete: true
+search.js:160 SearchStore - shouldShowCommandList: command is complete, closing command list
+search.js:206 SearchStore - shouldShowCommandList: false
+search.js:216 SearchStore - showCommandList after update: false
+search.js:87 SearchStore - currentCommands computed
+search.js:94 SearchStore - currentCommands: trimmedQuery: bili -url
+search.js:96 SearchStore - currentCommands: query does not start with -
+SearchModule.vue:60 SearchModule - handleInput START
+SearchModule.vue:62 SearchModule - handleInput - query: bili -url
+SearchModule.vue:63 SearchModule - handleInput - isLocalSearchEngine: true
+SearchModule.vue:64 SearchModule - handleInput - showCommandList before: false
+SearchModule.vue:65 SearchModule - handleInput - shouldShowCommandList: false
+SearchModule.vue:66 SearchModule - handleInput - currentCommands.length: 0
+SearchModule.vue:74 SearchModule - handleInput - query is not empty, setting showCommandList to shouldShowCommandList
+SearchModule.vue:86 SearchModule - handleInput END
+SearchModule.vue:78 SearchModule - handleInput - nextTick callback
+SearchModule.vue:79 SearchModule - handleInput - shouldShowCommandList in nextTick: false
+SearchModule.vue:81 SearchModule - handleInput - showCommandList after nextTick: false
+SearchModule.vue:46 SearchModule - handleInputBlur START
+SearchModule.vue:47 SearchModule - handleInputBlur - showCommandList before: false
+SearchModule.vue:49 SearchModule - handleInputBlur - query: bili -url
+SearchModule.vue:52 SearchModule - handleInputBlur - showCommandList after: false
+SearchModule.vue:53 SearchModule - handleInputBlur END

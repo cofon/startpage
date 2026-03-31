@@ -92,8 +92,11 @@ export const useSearchStore = defineStore('search', () => {
     
     const trimmedQuery = query.value.trim()
     console.log('SearchStore - currentCommands: trimmedQuery:', trimmedQuery)
-    if (!trimmedQuery || !trimmedQuery.startsWith('-')) {
-      console.log('SearchStore - currentCommands: query does not start with -')
+    
+    // 检查是否包含命令（以 - 开头或包含 空格-）
+    const hasCommandPrefix = trimmedQuery.startsWith('-') || trimmedQuery.includes(' -')
+    if (!trimmedQuery || !hasCommandPrefix) {
+      console.log('SearchStore - currentCommands: query does not contain command')
       return []
     }
     
@@ -128,11 +131,22 @@ export const useSearchStore = defineStore('search', () => {
     
     const trimmedQuery = query.value.trim()
     console.log('SearchStore - shouldShowCommandList: trimmedQuery:', trimmedQuery)
-    if (!trimmedQuery || !trimmedQuery.startsWith('-')) {
-      console.log('SearchStore - shouldShowCommandList: query does not start with -')
+    
+    // 检查是否包含命令（以 - 开头或包含 空格-）
+    const hasCommandPrefix = trimmedQuery.startsWith('-') || trimmedQuery.includes(' -')
+    if (!trimmedQuery || !hasCommandPrefix) {
+      console.log('SearchStore - shouldShowCommandList: query does not contain command')
       return false
     }
     
+    // 检查原始查询末尾是否有空格（表示命令输入结束）
+    const endsWithSpace = query.value.endsWith(' ')
+    console.log('SearchStore - shouldShowCommandList: endsWithSpace:', endsWithSpace)
+    if (endsWithSpace) {
+      console.log('SearchStore - shouldShowCommandList: query ends with space, closing command list')
+      return false
+    }
+
     // 提取当前正在输入的命令部分
     const parts = trimmedQuery.split(/\s+/)
     const lastPart = parts[parts.length - 1]
