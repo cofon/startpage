@@ -14,6 +14,7 @@ import ImportDataPanel from './ImportDataPanel.vue'
 import ExportDataPanel from './ExportDataPanel.vue'
 import BatchEditPanel from './BatchEditPanel.vue'
 import HelpPanel from './HelpPanel.vue'
+import SearchResultLayoutSelector from './SearchResultLayoutSelector.vue'
 
 const searchStore = useSearchStore()
 // const settingStore = useSettingStore()
@@ -68,7 +69,7 @@ defineExpose({
     </div>
 
     <!-- 命令模式：设置面板 -->
-    <div v-if="searchStore.displayMode === 'settings'" class="settings-content">
+    <div v-if="searchStore.displayMode === 'settings' || searchStore.displayMode === 'layout'" class="settings-content">
       <!-- 主题设置面板 -->
       <div v-if="searchStore.commandMode === 'theme'" class="settings-panel-content">
         <ThemeSettings />
@@ -97,6 +98,11 @@ defineExpose({
       <!-- 批量编辑面板 -->
       <div v-else-if="searchStore.commandMode === 'batch'" class="settings-panel-content">
         <BatchEditPanel />
+      </div>
+
+      <!-- 布局选择面板 -->
+      <div v-else-if="searchStore.commandMode === 'layout'" class="settings-panel-content">
+        <SearchResultLayoutSelector />
       </div>
     </div>
 

@@ -18,6 +18,7 @@ export const useSearchStore = defineStore('search', () => {
   const query = ref('')
   const results = ref([])
   const showTagsList = ref(false)
+  const currentLayoutMode = ref('default')
 
   // 显示模式 - 控制显示模块应该显示什么内容
   const displayMode = ref('marked') // 'marked' | 'search' | 'history' | 'favorites' | 'empty' | 'settings' | 'help'
@@ -55,6 +56,15 @@ export const useSearchStore = defineStore('search', () => {
     // 只在输入框为空时显示 tags
     if (query.value.trim()) return []
     return websiteStore.allTags
+  })
+
+  // 可用的布局模式
+  const availableLayoutModes = computed(() => {
+    return [
+      { id: 'simple', name: '极简模式' },
+      { id: 'default', name: '默认模式' },
+      { id: 'full', name: '完整模式' }
+    ]
   })
 
   // 监听搜索引擎切换
@@ -137,7 +147,7 @@ export const useSearchStore = defineStore('search', () => {
     const parsedResult = parseSearchQuery(command)
 
     // 检查是否是页面命令
-    const pageCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'batch']
+    const pageCommands = ['theme', 'search', 'help', 'add', 'import', 'export', 'batch', 'layout']
     const cmd = command.toLowerCase().substring(1).trim()
     const mainCmd = cmd.split(/\s+/)[0]
 
@@ -145,6 +155,8 @@ export const useSearchStore = defineStore('search', () => {
       commandMode.value = mainCmd
       if (mainCmd === 'help') {
         setDisplayMode('help')
+      } else if (mainCmd === 'layout') {
+        setDisplayMode('layout')
       } else {
         setDisplayMode('settings')
       }
@@ -217,6 +229,10 @@ export const useSearchStore = defineStore('search', () => {
     return displayMode.value
   }
 
+  function setLayoutMode(mode) {
+    currentLayoutMode.value = mode
+  }
+
   return {
     // State
     query,
@@ -225,11 +241,13 @@ export const useSearchStore = defineStore('search', () => {
     engineIcons,
     displayMode,
     commandMode,
+    currentLayoutMode,
     // Computed
     isLocalSearch,
     currentEngine,
     currentTags,
     currentEngineIcon,
+    availableLayoutModes,
     // Actions
     init,
     setQuery,
@@ -242,6 +260,7 @@ export const useSearchStore = defineStore('search', () => {
     loadEngineIcons,
     setDisplayMode,
     getDisplayMode,
+    setLayoutMode,
     handleCommand,
     clearCommandMode,
   }

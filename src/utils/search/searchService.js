@@ -38,7 +38,8 @@ export const PageCommands = {
   IMPORT: 'import',
   EXPORT: 'export',
   BATCH: 'batch',
-  HELP: 'help'
+  HELP: 'help',
+  LAYOUT: 'layout'
 }
 
 /**

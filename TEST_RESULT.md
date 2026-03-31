@@ -1,36 +1,21 @@
-websiteMetadataService.js:174 [fetchMetadata] ========== 开始获取元数据 ==========
-websiteMetadataService.js:175 [fetchMetadata] 数据来源：扩展
-websiteMetadataService.js:176 [fetchMetadata] URL: https://www.google.com
-App.vue:216 [App] 收到扩展消息: PING {}
-websiteMetadataService.js:153 [Content Script] 收到起始页消息: PING {type: 'PING', payload: {…}, requestId: '1774870054568-0.23173369474687122'}
-websiteMetadataService.js:153 [Content Script] 收到 PING 消息，直接返回成功
-App.vue:216 [App] 收到扩展消息: START_PAGE_REQUEST_WEBSITE_META {url: 'https://www.google.com'}
-websiteMetadataService.js:94 [Content Script] 收到起始页消息: START_PAGE_REQUEST_WEBSITE_META {type: 'START_PAGE_REQUEST_WEBSITE_META', payload: {…}, requestId: '1774870054569-0.9139725621595882'}
-websiteMetadataService.js:108 [sendMessageToExtension] 请求超时，正在重试 1/3...
-App.vue:216 [App] 收到扩展消息: PING {}
-websiteMetadataService.js:153 [Content Script] 收到起始页消息: PING {type: 'PING', payload: {…}, requestId: '1774870059572-0.5918080698870668'}
-websiteMetadataService.js:153 [Content Script] 收到 PING 消息，直接返回成功
-App.vue:216 [App] 收到扩展消息: START_PAGE_REQUEST_WEBSITE_META {url: 'https://www.google.com'}
-websiteMetadataService.js:94 [Content Script] 收到起始页消息: START_PAGE_REQUEST_WEBSITE_META {type: 'START_PAGE_REQUEST_WEBSITE_META', payload: {…}, requestId: '1774870059574-0.430496007353111'}
-websiteMetadataService.js:108 [sendMessageToExtension] 请求超时，正在重试 2/3...
-App.vue:216 [App] 收到扩展消息: PING {}
-websiteMetadataService.js:153 [Content Script] 收到起始页消息: PING {type: 'PING', payload: {…}, requestId: '1774870064584-0.802959847597957'}
-websiteMetadataService.js:153 [Content Script] 收到 PING 消息，直接返回成功
-App.vue:216 [App] 收到扩展消息: START_PAGE_REQUEST_WEBSITE_META {url: 'https://www.google.com'}
-websiteMetadataService.js:94 [Content Script] 收到起始页消息: START_PAGE_REQUEST_WEBSITE_META {type: 'START_PAGE_REQUEST_WEBSITE_META', payload: {…}, requestId: '1774870064586-0.7456895859434564'}
-websiteMetadataService.js:108 [sendMessageToExtension] 请求超时，正在重试 3/3...
-App.vue:216 [App] 收到扩展消息: PING {}
-websiteMetadataService.js:153 [Content Script] 收到起始页消息: PING {type: 'PING', payload: {…}, requestId: '1774870069603-0.04368989464761974'}
-websiteMetadataService.js:153 [Content Script] 收到 PING 消息，直接返回成功
-App.vue:216 [App] 收到扩展消息: START_PAGE_REQUEST_WEBSITE_META {url: 'https://www.google.com'}
-websiteMetadataService.js:94 [Content Script] 收到起始页消息: START_PAGE_REQUEST_WEBSITE_META {type: 'START_PAGE_REQUEST_WEBSITE_META', payload: {…}, requestId: '1774870069605-0.5223034916922066'}
-websiteMetadataService.js:200 [fetchMetadata] ❌ 获取元数据失败: Extension communication timeout
-fetchMetadata @ websiteMetadataService.js:200
-await in fetchMetadata
-handleFetchMetadata @ AddWebsitePanel.vue:435
-callWithErrorHandling @ runtime-core.esm-bundler.js:199
-callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
-invoker @ runtime-dom.esm-bundler.js:730
-content.js:101 [Content Script] 扩展响应: {success: false, error: '获取元数据失败'}
-content.js:101 [Content Script] 扩展响应: {success: false, error: '获取元数据失败'}
-content.js:101 [Content Script] 扩展响应: {success: false, error: '获取元数据失败'}
+
+添加一个 .vue 文件，用来选择搜索结果布局
+布局模式有三个：
+1. 极简模式，simple，
+    只显示一个icon和一行文本，
+    文本显示title，
+    如果没有title显示desc，
+    如果没有desc显示name，
+    优先级为title > desc > name
+2. 现在使用的模式，default，
+    现在的搜索结果布局是：
+    左边 icon 
+    中间 title/desc/name url tags，三者上下结构
+    右边 actions
+3. 完整模式，full，
+    显示所有信息，
+    包括id、icon、title、desc、name、url、tags、actions等
+4. 我不确定以后会不会添加新的模式，写代码的时候要考虑到未来可能的扩展
+
+添加一个命令，在搜索框输入命令，显示模块显示这个搜索结果布局的vue页面；
+
