@@ -91,6 +91,52 @@ function closePanel() {
         </div>
 
         <div class="help-section">
+          <h3>排序命令</h3>
+          <p>输入 <code class="command">-sort</code> 命令可以对搜索结果进行排序：</p>
+          
+          <h4>排序字段</h4>
+          <div class="command-item">
+            <code class="command">访问次数</code>
+            <span class="description">visitcount、visits 或 v</span>
+          </div>
+          <div class="command-item">
+            <code class="command">最后访问时间</code>
+            <span class="description">lastvisited、last 或 l</span>
+          </div>
+          <div class="command-item">
+            <code class="command">创建时间</code>
+            <span class="description">createdat、created 或 c</span>
+          </div>
+          <div class="command-item">
+            <code class="command">更新时间</code>
+            <span class="description">updatedat、updated 或 u</span>
+          </div>
+          <div class="command-item">
+            <code class="command">名称</code>
+            <span class="description">name 或 n</span>
+          </div>
+          
+          <h4>排序顺序</h4>
+          <div class="command-item">
+            <code class="command">asc</code>
+            <span class="description">正序（默认）</span>
+          </div>
+          <div class="command-item">
+            <code class="command">desc</code>
+            <span class="description">倒序</span>
+          </div>
+          
+          <h4>示例</h4>
+          <div class="example">
+            按访问次数倒序：<code>-sort v desc</code><br>
+            按最后访问时间倒序：<code>-sort l desc</code><br>
+            按创建时间倒序：<code>-sort c desc</code><br>
+            按更新时间倒序：<code>-sort u desc</code><br>
+            按名称正序：<code>-sort n</code>
+          </div>
+        </div>
+
+        <div class="help-section">
           <h3>网站过滤命令</h3>
           <div class="command-item">
             <code class="command">-active</code>

@@ -91,6 +91,31 @@ npm run format
 
 布局模式会被保存，刷新页面后保持当前选择的布局。
 
+### 排序命令
+
+输入 `-sort` 命令可以对搜索结果进行排序：
+
+#### 排序字段
+
+- **访问次数**：`visitcount`、`visits` 或 `v`
+- **最后访问时间**：`lastvisited`、`last` 或 `l`
+- **创建时间**：`createdat`、`created` 或 `c`
+- **更新时间**：`updatedat`、`updated` 或 `u`
+- **名称**：`name` 或 `n`
+
+#### 排序顺序
+
+- **正序**：`asc`（默认）
+- **倒序**：`desc`
+
+#### 示例
+
+- 按访问次数倒序：`-sort v desc`
+- 按最后访问时间倒序：`-sort l desc`
+- 按创建时间倒序：`-sort c desc`
+- 按更新时间倒序：`-sort u desc`
+- 按名称正序：`-sort n`
+
 ### 主题设置
 
 输入 `-theme` 打开主题设置面板，支持以下功能：

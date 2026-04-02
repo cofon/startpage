@@ -103,51 +103,17 @@ function checkTextSelection(event) {
 
 // 处理网站点击
 async function handleWebsiteClick(website, event) {
-  console.log('[App] handleWebsiteClick被调用:', website.name, website.id)
-  
-  // 注意：文字选择检查在子组件中已经做过了，这里不需要重复检查
-  // if (checkTextSelection(event)) {
-  //   console.log('[App] 检测到文字选择，返回')
-  //   return
-  // }
-
-  console.log('[App] 开始处理网站点击:', {
-    websiteId: website.id,
-    websiteName: website.name,
-    websiteUrl: website.url,
-    currentVisitCount: website.visitCount,
-    currentLastVisited: website.lastVisited
-  })
-
-  // 1. 更新store中的访问次数和最后访问时间
-  console.log('[App] 1. 调用incrementVisitCount...')
+  // 更新store中的访问次数和最后访问时间
   websiteStore.incrementVisitCount(website.id)
-  console.log('[App] 1. incrementVisitCount完成')
 
-  // 2. 从store中获取更新后的网站对象
-  console.log('[App] 2. 从store获取更新后的网站对象...')
+  // 从store中获取更新后的网站对象
   const updatedWebsite = websiteStore.websites.find(w => w.id === website.id)
   if (updatedWebsite) {
-    console.log('[App] 2. 获取到更新后的网站对象:', {
-      websiteId: updatedWebsite.id,
-      websiteName: updatedWebsite.name,
-      updatedVisitCount: updatedWebsite.visitCount,
-      updatedLastVisited: updatedWebsite.lastVisited,
-      updatedUpdatedAt: updatedWebsite.updatedAt
-    })
-
-    // 3. 从数据库获取完整的网站数据（包括iconData和iconGenerateData）
-    console.log('[App] 3. 从数据库获取完整的网站数据...')
+    // 从数据库获取完整的网站数据（包括iconData和iconGenerateData）
     try {
       const fullWebsiteData = await db.getWebsiteById(updatedWebsite.id)
       if (fullWebsiteData) {
-        console.log('[App] 3. 获取到完整的网站数据:', {
-          hasIconData: !!fullWebsiteData.iconData,
-          hasIconGenerateData: !!fullWebsiteData.iconGenerateData
-        })
-
-        // 4. 只更新需要更新的字段
-        console.log('[App] 4. 更新字段...')
+        // 只更新需要更新的字段
         const websiteToUpdate = {
           ...fullWebsiteData,
           visitCount: updatedWebsite.visitCount,
@@ -155,30 +121,14 @@ async function handleWebsiteClick(website, event) {
           updatedAt: updatedWebsite.updatedAt
         }
 
-        // 5. 确保iconData和iconGenerateData被保留
-        console.log('[App] 4.1 确保图标数据被保留:', {
-          iconData: websiteToUpdate.iconData ? '存在' : '不存在',
-          iconGenerateData: websiteToUpdate.iconGenerateData ? '存在' : '不存在'
-        })
-
-        // 6. 更新数据库
-        console.log('[App] 5. 更新数据库...')
+        // 更新数据库
         await db.updateWebsite(websiteToUpdate)
-        console.log('[App] 5. 数据库更新成功:', updatedWebsite.id)
-      } else {
-        console.error('[App] 3. 未找到完整的网站数据')
       }
     } catch (error) {
-      console.error('[App] 数据库操作失败:', error)
+      console.error('数据库操作失败:', error)
     }
-  } else {
-    console.error('[App] 2. 未找到更新后的网站对象')
   }
-
-  // 6. 打开网站
-  console.log('[App] 6. 打开网站:', website.url)
   window.open(website.url, '_blank')
-  console.log('[App] 网站点击处理流程完成')
 }
 
 // 打开添加网站对话框

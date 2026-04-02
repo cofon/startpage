@@ -27,7 +27,8 @@ export const SearchCommands = {
   TITLE: 'title',
   DESC: 'desc',
   URL: 'url',
-  TAG: 'tag'
+  TAG: 'tag',
+  SORT: 'sort'
 }
 
 // 页面命令定义
@@ -502,6 +503,11 @@ export function applySingleFilter(website, filter, allTags = []) {
 
   // 检查搜索字段
   for (const [field, params] of Object.entries(filter.searchFields)) {
+    if (field === SearchCommands.SORT) {
+      // 排序命令不影响过滤，只影响排序
+      continue
+    }
+    
     if (params.length === 0) {
       // 没有参数的情况
       if (field === SearchCommands.DESC || field === SearchCommands.TAG) {
@@ -568,6 +574,8 @@ export function applyFilters(websites, filters, allTags = []) {
     return websites.filter(w => w.isActive && !w.isHidden)
   }
 
+  let filteredWebsites
+
   // 检查是否是过滤器组数组（OR 关系）
   if (Array.isArray(filters)) {
     // OR 逻辑：只要匹配任何一个过滤器组就通过
@@ -575,11 +583,69 @@ export function applyFilters(websites, filters, allTags = []) {
       .map(filter => websites.filter(website => applySingleFilter(website, filter, allTags)))
       .flat()
     // 使用 Set 去重
-    return [...new Set(matchedWebsites)]
+    filteredWebsites = [...new Set(matchedWebsites)]
   } else {
     // 单个过滤器（AND 关系）
-    return websites.filter(website => applySingleFilter(website, filters, allTags))
+    filteredWebsites = websites.filter(website => applySingleFilter(website, filters, allTags))
   }
+
+  // 处理排序
+  if (!Array.isArray(filters) && filters.searchFields && filters.searchFields[SearchCommands.SORT]) {
+    const sortParams = filters.searchFields[SearchCommands.SORT]
+    if (sortParams.length > 0) {
+      filteredWebsites = sortWebsites(filteredWebsites, sortParams)
+    }
+  }
+
+  return filteredWebsites
+}
+
+/**
+ * 排序网站列表
+ * @param {Array} websites - 网站列表
+ * @param {Array} sortParams - 排序参数
+ * @returns {Array} 排序后的网站列表
+ */
+function sortWebsites(websites, sortParams) {
+  const sortField = sortParams[0].toLowerCase()
+  const sortOrder = sortParams[1]?.toLowerCase() === 'desc' ? -1 : 1
+
+  return [...websites].sort((a, b) => {
+    let aValue, bValue
+
+    switch (sortField) {
+      case 'visitcount':
+      case 'visits':
+        aValue = a.visitCount || 0
+        bValue = b.visitCount || 0
+        break
+      case 'lastvisited':
+      case 'lastvisit':
+        aValue = a.lastVisited ? new Date(a.lastVisited).getTime() : 0
+        bValue = b.lastVisited ? new Date(b.lastVisited).getTime() : 0
+        break
+      case 'createdat':
+      case 'created':
+        aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        break
+      case 'updatedat':
+      case 'updated':
+        aValue = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
+        bValue = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
+        break
+      case 'name':
+        aValue = a.name?.toLowerCase() || ''
+        bValue = b.name?.toLowerCase() || ''
+        break
+      default:
+        return 0
+    }
+
+    if (aValue < bValue) return -1 * sortOrder
+    if (aValue > bValue) return 1 * sortOrder
+    return 0
+  })
 }
 
 /**

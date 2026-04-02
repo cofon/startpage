@@ -91,15 +91,6 @@ function handleMouseDown(event) {
  * 处理网站点击
  */
 function handleWebsiteClick(website, event) {
-  console.log('[SearchResultsList] 处理网站点击:', website.name, website.id)
-  
-  // 注意：文字选择检查在子组件中已经做过了，这里不需要重复检查
-  // if (checkTextSelection(event)) {
-  //   console.log('[SearchResultsList] 检测到文字选择，取消点击')
-  //   return
-  // }
-
-  console.log('[SearchResultsList] 触发click事件到父组件')
   emit('click', website, event)
 }
 

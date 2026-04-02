@@ -81,10 +81,7 @@ function handleMouseDown(event) {
  * 处理网站点击
  */
 function handleWebsiteClick(website, event) {
-  console.log('[SearchResultFull] 处理网站点击:', website.name, website.id)
-
   if (checkTextSelection(event)) {
-    console.log('[SearchResultFull] 检测到文字选择，取消点击')
     return
   }
 
@@ -92,10 +89,7 @@ function handleWebsiteClick(website, event) {
   event.preventDefault()
   event.stopPropagation()
 
-  console.log('[SearchResultFull] 触发click事件到父组件')
   emit('click', website, event)
-
-  // 注意：不在这里打开链接，让父组件(App.vue)来处理
 }
 
 /**
