@@ -256,12 +256,11 @@ function handleCommandClick(command) {
   flex-wrap: wrap;
   gap: 10px;
   padding: 15px;
-  background-color: var(--color-bg-card);
-  border-radius: 12px;
-  box-shadow: var(--shadow-medium);
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
   z-index: 10000;
   margin-top: 10px;
-  min-height: 50px;
 }
 
 .command-item {
