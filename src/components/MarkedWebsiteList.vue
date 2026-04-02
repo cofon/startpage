@@ -213,7 +213,7 @@ function handleAddWebsiteClick() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 32px;
   color: var(--color-text-secondary);
   border-radius: 6px;
   background-color: var(--color-bg-card);

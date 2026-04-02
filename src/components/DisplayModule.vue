@@ -82,7 +82,7 @@ defineExpose({
 
       <!-- 添加网站面板 -->
       <div v-else-if="searchStore.commandMode === 'add'" class="settings-panel-content">
-        <AddWebsitePanel />
+        <AddWebsitePanel @close="closePanel" />
       </div>
 
       <!-- 导入面板 -->

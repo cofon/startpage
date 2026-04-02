@@ -122,8 +122,8 @@ export const useSearchStore = defineStore('search', () => {
     const trimmedQuery = query.value.trim()
     
     if (!trimmedQuery) {
-      // 输入框为空时显示 tags
-      return true
+      // 输入框为空时不自动显示 tags，只在获得焦点时显示
+      return false
     }
 
     // 检查是否包含 -tag 命令
@@ -427,6 +427,8 @@ export const useSearchStore = defineStore('search', () => {
     query.value = ''
     displayMode.value = 'marked'
     results.value = websiteStore.markedWebsites
+    showTagsList.value = false
+    showCommandList.value = false
   }
 
   function performSearch() {

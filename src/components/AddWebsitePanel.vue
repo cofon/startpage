@@ -574,8 +574,8 @@ async function handleSubmit() {
     // 重置用户编辑标记
     userHasEditedName = false
 
-    // 重置搜索框，回到主页
-    searchStore.clearQuery()
+    // 直接关闭面板，回到marked list页面
+    emit('close')
   } catch (error) {
     console.error('添加网站失败:', error)
     notificationStore.error('添加网站失败：' + (error.message || '未知错误'))
@@ -584,8 +584,8 @@ async function handleSubmit() {
 
 // 取消
 function handleCancel() {
-  // 重置搜索框，回到主页
-  searchStore.clearQuery()
+  // 直接关闭面板，回到marked list页面
+  emit('close')
 }
 </script>
 
