@@ -77,14 +77,20 @@ function handleEscKey() {
  * 处理命令点击
  */
 function handleCommandClick(command) {
-  const query = searchStore.query.value.trim()
+
+  const queryValue = searchStore.query || ''
+  const query = queryValue.trim()
   const parts = query.split(/\s+/)
+
   
   // 替换最后一个部分为完整的命令
   parts[parts.length - 1] = `-${command}`
+  const newQuery = parts.join(' ')
+
   
-  searchStore.setQuery(parts.join(' '))
+  searchStore.setQuery(newQuery)
   searchStore.setShowCommandList(false)
+
 }
 </script>
 
@@ -128,11 +134,13 @@ function handleCommandClick(command) {
       <div
         v-if="searchStore.showCommandList && searchStore.currentCommands.length > 0"
         class="commands-list"
+        @mousedown.stop.prevent
       >
         <div
           v-for="command in searchStore.currentCommands"
           :key="command"
           class="command-item"
+          @click="handleCommandClick(command)"
         >
           -{{ command }}
         </div>
@@ -248,13 +256,12 @@ function handleCommandClick(command) {
   flex-wrap: wrap;
   gap: 10px;
   padding: 15px;
-  background-color: #ffffff;
+  background-color: var(--color-bg-card);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-medium);
   z-index: 10000;
   margin-top: 10px;
   min-height: 50px;
-  border: 2px solid red;
 }
 
 .command-item {
