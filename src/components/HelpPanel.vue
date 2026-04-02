@@ -45,6 +45,49 @@ function closePanel() {
             <code class="command">-help</code>
             <span class="description">显示此帮助信息</span>
           </div>
+          <div class="command-item">
+            <code class="command">-layout</code>
+            <span class="description">打开搜索结果布局模式选择面板</span>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>命令提示列表</h3>
+          <p>输入命令时，会自动显示命令提示列表，帮助您快速输入命令：</p>
+          <div class="command-item">
+            <code class="command">-</code>
+            <span class="description">显示所有可用命令列表</span>
+          </div>
+          <div class="command-item">
+            <code class="command">-a</code>
+            <span class="description">显示以 "a" 开头的命令列表</span>
+          </div>
+          <div class="command-item">
+            <code class="command">点击命令</code>
+            <span class="description">自动补全命令</span>
+          </div>
+          <div class="command-item">
+            <code class="command">ESC</code>
+            <span class="description">隐藏命令列表</span>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>搜索结果布局模式</h3>
+          <p>输入 <code class="command">-layout</code> 打开布局模式选择面板，支持以下布局模式：</p>
+          <div class="command-item">
+            <code class="command">极简模式</code>
+            <span class="description">一行显示图标、标题/描述/名称和操作按钮，布局紧凑</span>
+          </div>
+          <div class="command-item">
+            <code class="command">默认模式</code>
+            <span class="description">标准列表布局，显示图标、标题、描述和操作按钮</span>
+          </div>
+          <div class="command-item">
+            <code class="command">完整模式</code>
+            <span class="description">详细信息布局，显示所有字段，包括ID、URL、标签、创建时间、更新时间和访问次数</span>
+          </div>
+          <p>布局模式会被保存，刷新页面后保持当前选择的布局。</p>
         </div>
 
         <div class="help-section">
@@ -148,6 +191,20 @@ function closePanel() {
           <p>直接输入关键词即可搜索网站名称、URL、描述或标签。支持多个关键词（空格分隔，AND关系）。</p>
           <div class="example">
             例如：<code>谷歌 百度</code> 搜索同时包含"谷歌"和"百度"的网站
+          </div>
+          <h4>标签列表</h4>
+          <p>在本地搜索模式下，当搜索框为空时：</p>
+          <div class="command-item">
+            <code class="command">点击搜索框</code>
+            <span class="description">显示标签列表</span>
+          </div>
+          <div class="command-item">
+            <code class="command">双击搜索框</code>
+            <span class="description">显示标签列表</span>
+          </div>
+          <div class="command-item">
+            <code class="command">按Enter键</code>
+            <span class="description">显示标签列表</span>
           </div>
         </div>
     </div>
