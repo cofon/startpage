@@ -58,11 +58,21 @@ function handleMouseDown(event) {
  * 处理网站点击
  */
 function handleWebsiteClick(website, event) {
+  console.log('[MarkedWebsiteList] 处理网站点击:', website.name, website.id)
+  
   if (checkTextSelection(event)) {
+    console.log('[MarkedWebsiteList] 检测到文字选择，取消点击')
     return
   }
 
+  // 阻止a标签的默认行为
+  event.preventDefault()
+  event.stopPropagation()
+  
+  console.log('[MarkedWebsiteList] 触发click事件到父组件')
   emit('click', website, event)
+  
+  // 注意：不在这里打开链接，让父组件(App.vue)来处理
 }
 
 /**
@@ -81,8 +91,6 @@ function handleAddWebsiteClick() {
       class="website-item"
       :class="{ 'dragging': draggedIndex === index }"
       draggable="true"
-      @mousedown="(event) => handleMouseDown(event)"
-      @click="(event) => handleWebsiteClick(website, event)"
       @dragstart="(event) => handleDragStart(website, index)"
       @dragend="(event) => handleDragEnd(event)"
       @dragover.prevent
@@ -93,7 +101,8 @@ function handleAddWebsiteClick() {
         target="_blank"
         rel="noopener noreferrer"
         class="website-link-wrapper"
-        @click.stop
+        @mousedown="(event) => handleMouseDown(event)"
+        @click="(event) => handleWebsiteClick(website, event)"
       >
         <WebsiteIcon :website="website" />
         <div class="website-info">

@@ -27,6 +27,7 @@ const currentLayoutMode = computed(() => {
 
 // 处理网站点击
 function handleWebsiteClick(website, event) {
+  console.log('[SearchResult] 处理网站点击:', website.name, website.id)
   emit('click', website, event)
 }
 

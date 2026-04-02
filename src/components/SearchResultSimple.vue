@@ -48,11 +48,21 @@ function handleMouseDown(event) {
  * 处理网站点击
  */
 function handleWebsiteClick(website, event) {
+  console.log('[SearchResultSimple] 处理网站点击:', website.name, website.id)
+
   if (checkTextSelection(event)) {
+    console.log('[SearchResultSimple] 检测到文字选择，取消点击')
     return
   }
 
+  // 阻止a标签的默认行为
+  event.preventDefault()
+  event.stopPropagation()
+
+  console.log('[SearchResultSimple] 触发click事件到父组件')
   emit('click', website, event)
+
+  // 注意：不在这里打开链接，让父组件(App.vue)来处理
 }
 
 /**

@@ -36,14 +36,20 @@ defineExpose({
     <MarkedWebsiteList
       v-if="searchStore.displayMode === 'marked'"
       :websites="searchStore.results"
-      @click="(website, event) => $emit('website-click', website, event)"
+      @click="(website, event) => {
+        console.log('[DisplayModule] 收到marked list点击事件:', website.name, website.id)
+        $emit('website-click', website, event)
+      }"
     />
 
     <!-- 搜索结果 -->
     <SearchResultsList
       v-else-if="searchStore.displayMode === 'search'"
       :websites="searchStore.results"
-      @click="(website, event) => $emit('website-click', website, event)"
+      @click="(website, event) => {
+        console.log('[DisplayModule] 收到search results点击事件:', website.name, website.id)
+        $emit('website-click', website, event)
+      }"
       @toggle-mark="$emit('toggle-mark', $event)"
       @edit="$emit('edit', $event)"
       @delete="$emit('delete', $event)"
