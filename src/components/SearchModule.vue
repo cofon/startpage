@@ -74,6 +74,29 @@ function handleEscKey() {
 }
 
 /**
+ * 处理Enter按键
+ */
+function handleEnterKey() {
+  if (isLocalSearchEngine.value && !searchStore.query.value && !searchStore.showTagsList) {
+    // 输入为空且tags-list没有显示时，显示tags-list
+    searchStore.setShowTagsList(true)
+  } else {
+    // 否则执行搜索
+    searchStore.executeSearch()
+  }
+}
+
+/**
+ * 处理双击事件
+ */
+function handleDoubleClick() {
+  if (isLocalSearchEngine.value && !searchStore.query.value && !searchStore.showTagsList) {
+    // 输入为空且tags-list没有显示时，显示tags-list
+    searchStore.setShowTagsList(true)
+  }
+}
+
+/**
  * 处理命令点击
  */
 function handleCommandClick(command) {
@@ -109,9 +132,10 @@ function handleCommandClick(command) {
           autocomplete="off"
           @focus="handleInputFocus"
           @blur="handleInputBlur"
-          @keyup.enter="searchStore.executeSearch"
+          @keyup.enter="handleEnterKey"
           @keyup.esc="handleEscKey"
           @input="handleInput"
+          @dblclick="handleDoubleClick"
         >
       </div>
 
