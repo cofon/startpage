@@ -255,8 +255,40 @@ export const useSearchStore = defineStore('search', () => {
     
     const commandPrefix = lastPart.substring(1).toLowerCase()
     
+    // 检查是否已经输入了页面命令
+    const hasPageCommand = parts.some(part => {
+      const cmd = part.startsWith('-') ? part.substring(1).toLowerCase() : part.toLowerCase()
+      return Object.values(PageCommands).includes(cmd)
+    })
+
+    // 检查是否已经输入了搜索命令或状态命令
+    const hasSearchOrStatusCommand = parts.some(part => {
+      const cmd = part.startsWith('-') ? part.substring(1).toLowerCase() : part.toLowerCase()
+      return Object.values(SearchCommands).includes(cmd) || Object.values(StatusCommands).includes(cmd)
+    })
+
+    // 获取已经输入的命令列表（排除当前正在输入的命令）
+    const enteredCommands = parts.slice(0, -1).map(part => {
+      const cmd = part.startsWith('-') ? part.substring(1).toLowerCase() : part.toLowerCase()
+      return cmd
+    })
+
     // 过滤匹配的命令
     const matchedCommands = allCommands.value.filter(cmd => {
+      // 排除已经输入的命令
+      if (enteredCommands.includes(cmd.toLowerCase())) {
+        return false
+      }
+      
+      // 如果已经输入了页面命令，只显示页面命令
+      if (hasPageCommand) {
+        return Object.values(PageCommands).includes(cmd) && cmd.toLowerCase().startsWith(commandPrefix)
+      }
+      // 如果已经输入了搜索命令或状态命令，只显示搜索命令和状态命令
+      if (hasSearchOrStatusCommand) {
+        return (Object.values(SearchCommands).includes(cmd) || Object.values(StatusCommands).includes(cmd)) && cmd.toLowerCase().startsWith(commandPrefix)
+      }
+      // 默认情况下，显示所有匹配的命令
       return cmd.toLowerCase().startsWith(commandPrefix)
     })
     return matchedCommands
@@ -292,6 +324,18 @@ export const useSearchStore = defineStore('search', () => {
     
     const commandPrefix = lastPart.substring(1).toLowerCase()
     
+    // 检查是否已经输入了完整的页面命令
+    const hasCompletePageCommand = parts.some(part => {
+      const cmd = part.startsWith('-') ? part.substring(1).toLowerCase() : part.toLowerCase()
+      return Object.values(PageCommands).includes(cmd)
+    })
+
+    // 如果已经输入了完整的页面命令，则不显示命令列表
+    // 因为页面命令是打开一个页面，不能与其他命令组合使用
+    if (hasCompletePageCommand) {
+      return false
+    }
+
     // 检查命令是否已完成
     const isCommandComplete = commandPrefix && allCommands.value.some(cmd => {
       return cmd.toLowerCase() === commandPrefix

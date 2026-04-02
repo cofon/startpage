@@ -64,6 +64,13 @@ function handleWebsiteClick(website, event) {
 
   emit('click', website, event)
 }
+
+/**
+ * 处理添加网站点击
+ */
+function handleAddWebsiteClick() {
+  searchStore.setQuery('-add')
+}
 </script>
 
 <template>
@@ -95,6 +102,18 @@ function handleWebsiteClick(website, event) {
           </span>
         </div>
       </a>
+    </div>
+    <!-- 添加网站按钮 -->
+    <div
+      class="website-item add-website-item"
+      @click="handleAddWebsiteClick"
+    >
+      <div class="add-website-wrapper">
+        <div class="add-icon">+</div>
+        <div class="website-info">
+          <span class="website-name">添加</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -165,5 +184,44 @@ function handleWebsiteClick(website, event) {
 
 .website-link-wrapper:hover .website-name {
   color: var(--color-primary);
+}
+
+/* 添加网站按钮样式 */
+.add-website-item {
+  border: 2px dashed var(--color-border);
+  background-color: transparent;
+}
+
+.add-website-item:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-card-hover);
+}
+
+.add-website-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.add-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  border-radius: 6px;
+  background-color: var(--color-bg-card);
+  transition: all 0.3s ease;
+}
+
+.add-website-item:hover .add-icon {
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
 }
 </style>

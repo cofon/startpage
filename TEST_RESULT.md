@@ -1,6 +1,1 @@
-search.js:236 SearchStore - currentCommands computed
-search.js:236 SearchStore - currentCommands computed
-search.js:236 SearchStore - currentCommands computed
-search.js:236 SearchStore - currentCommands computed
-search.js:236 SearchStore - currentCommands computed
-search.js:236 SearchStore - currentCommands computed
+theme,search,add,import,export,batch,help,layou
