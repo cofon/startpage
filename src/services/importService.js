@@ -3,11 +3,13 @@
  * 统一处理起始页的数据导入逻辑
  *
  * 功能：
- * - 支持两种导入模式：websites（完整网站数据）和 urls（URL 列表）
+ * - 支持多种导入模式：full、edge收藏夹、websites、urls
  * - 数据验证和格式判断
  * - 数据完整性检查
  * - 批量补全元数据（通过插件）
  * - 进度管理和错误处理
+ * - 原数据导入选项
+ * - Edge收藏夹解析
  *
  * @module services/importService
  */
@@ -27,8 +29,11 @@ import { PerformanceMonitor, BatchProcessor, MemoryOptimizer } from '../utils/pe
  * 导入数据的主入口
  * @param {Object} jsonData - 解析后的 JSON 数据
  * @param {Object} options - 配置选项
- * @param {string} options.mode - 导入模式：'websites' | 'urls' | 'auto'
- * @param {string} options.onDuplicate - 重复数据处理：'skip' | 'update' | 'ask'
+ * @param {string} options.mode - 导入模式：'auto' | 'full' | 'websites' | 'urls' | 'edge'
+ * @param {boolean} options.originalImport - 原数据导入选项：true | false
+ * @param {string} options.onDuplicate - 重复数据处理：'skip' | 'overwrite'
+ * @param {boolean} options.addNewTag - 空标签处理：true | false（是否添加"new"标签）
+ * @param {boolean} options.addMetaFailedTag - 是否添加meta_failed标签：true | false
  * @param {string} options.onIncomplete - 不完整数据处理：'enrich' | 'skip' | 'use-default'
  * @param {number} options.batchSize - 每批处理数量
  * @param {number} options.timeout - 插件响应超时时间（毫秒）
@@ -44,7 +49,10 @@ export async function importData(jsonData, options = {}) {
   // 默认配置
   const config = {
     mode: options.mode || 'auto',
+    originalImport: options.originalImport || false,
     onDuplicate: options.onDuplicate || 'skip',
+    addNewTag: options.addNewTag || false,
+    addMetaFailedTag: options.addMetaFailedTag || true,
     onIncomplete: options.onIncomplete || 'enrich',
     batchSize: options.batchSize || 20,
     timeout: options.timeout || 10000,
@@ -78,19 +86,67 @@ export async function importData(jsonData, options = {}) {
     errors: [],
   }
 
-  // 优先处理 websites 数据
-  if (importType === 'websites' || importType === 'urls') {
-    if (importType === 'urls') {
-      jsonData.websites = urlsToWebsites(jsonData.urls)
+  // 原数据导入选项，优先级最高
+  if (config.originalImport) {
+    // 检查数据库websites表是否为空
+    const existingWebsites = await db.getAllWebsites()
+    if (existingWebsites && existingWebsites.length > 0) {
+      throw new Error('数据库中已存在网站数据，原数据导入选项要求数据库为空')
     }
-    result = await importWebsites(jsonData.websites, config, monitor)
+    
+    // 直接导入所有数据，不做任何修改
+    // 先导入websites数据
+    if (jsonData.websites && Array.isArray(jsonData.websites)) {
+      // 处理空标签
+      if (config.addNewTag) {
+        jsonData.websites = jsonData.websites.map(website => {
+          if (!website.tags || website.tags.length === 0) {
+            website.tags = ['new']
+          }
+          return website
+        })
+      }
+      result = await importWebsitesToDB(jsonData.websites, {
+        ...config,
+        onDuplicate: 'overwrite'
+      }, monitor)
+    }
+    
+    // 处理其他数据类型
+    await importOtherData(jsonData, config, monitor)
+  } else {
+    // 优先处理 websites 数据
+    if (jsonData.websites && Array.isArray(jsonData.websites)) {
+      // 处理空标签
+      if (config.addNewTag) {
+        jsonData.websites = jsonData.websites.map(website => {
+          if (!website.tags || website.tags.length === 0) {
+            website.tags = ['new']
+          }
+          return website
+        })
+      }
+      result = await importWebsites(jsonData.websites, config, monitor)
+    } else if (importType === 'urls' && jsonData.urls) {
+      jsonData.websites = urlsToWebsites(jsonData.urls)
+      // 处理空标签
+      if (config.addNewTag) {
+        jsonData.websites = jsonData.websites.map(website => {
+          if (!website.tags || website.tags.length === 0) {
+            website.tags = ['new']
+          }
+          return website
+        })
+      }
+      result = await importWebsites(jsonData.websites, config, monitor)
+    }
+    
+    // 处理其他数据类型
+    await importOtherData(jsonData, config, monitor)
   }
 
-  // 处理其他数据类型
-  await importOtherData(jsonData, config, monitor)
-
   // 如果没有 websites 数据，设置一个默认结果
-  if (importType === 'other') {
+  if (importType === 'other' && !config.originalImport) {
     result = {
       success: 0,
       failed: 0,
@@ -158,6 +214,33 @@ function urlsToWebsites(urls) {
 }
 
 /**
+ * 解析Edge收藏夹HTML文件
+ * @param {string} htmlContent - HTML文件内容
+ * @returns {Array} 网站对象数组
+ */
+export function parseEdgeFavorites(htmlContent) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(htmlContent, 'text/html')
+  const websites = []
+
+  // 查找所有A标签
+  const links = doc.querySelectorAll('a')
+  links.forEach(link => {
+    const url = link.getAttribute('href')
+    const title = link.textContent.trim()
+    if (url && title) {
+      websites.push({
+        url,
+        title,
+        // Edge收藏夹可能不包含icon信息，需要后续通过插件获取
+      })
+    }
+  })
+
+  return websites
+}
+
+/**
  * 判断导入类型
  * @param {Object} data - JSON 数据
  * @returns {string} 'websites' | 'urls' | 'unknown'
@@ -177,9 +260,9 @@ export function separateWebsites(websites) {
   const incomplete = []
 
   for (const website of websites) {
-    const isComplete = isWebsiteComplete(website)
-
-    if (isComplete) {
+    // 根据新逻辑：如果有title或desc，则认为不需要获取元数据
+    const hasTitleOrDesc = !!website.title || !!website.description
+    if (hasTitleOrDesc) {
       complete.push(website)
     } else {
       incomplete.push(website)
@@ -227,22 +310,25 @@ export async function enrichWebsites(websites, config, progressCallback) {
             }
           } else {
             // ❌ 失败：添加 meta_failed 标签
-            console.warn(`[ImportService] ⚠️ 无法获取元数据：${website.url}`)
+            // 根据新逻辑：如果用户选择添加meta_failed标签，且网站没有title和desc，则添加
+            if (config.addMetaFailedTag && !website.title && !website.description) {
+              console.warn(`[ImportService] ⚠️ 无法获取元数据：${website.url}`)
 
-            // 初始化 tags 数组
-            if (!website.tags) {
-              website.tags = []
-            } else if (typeof website.tags === 'string') {
-              website.tags = website.tags
-                .split(',')
-                .map((t) => t.trim())
-                .filter((t) => t)
-            }
+              // 初始化 tags 数组
+              if (!website.tags) {
+                website.tags = []
+              } else if (typeof website.tags === 'string') {
+                website.tags = website.tags
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter((t) => t)
+              }
 
-            // 添加标签（避免重复）
-            if (!website.tags.includes('meta_failed')) {
-              website.tags.push('meta_failed')
-              console.log(`[ImportService] ✗ 已添加 "meta_failed" 标签到：${website.url}`)
+              // 添加标签（避免重复）
+              if (!website.tags.includes('meta_failed')) {
+                website.tags.push('meta_failed')
+                console.log(`[ImportService] ✗ 已添加 "meta_failed" 标签到：${website.url}`)
+              }
             }
           }
         } catch (error) {
