@@ -34,6 +34,7 @@ import { PerformanceMonitor, BatchProcessor, MemoryOptimizer } from '../utils/pe
  * @param {string} options.onDuplicate - 重复数据处理：'skip' | 'overwrite'
  * @param {boolean} options.addNewTag - 空标签处理：true | false（是否添加"new"标签）
  * @param {boolean} options.addMetaFailedTag - 是否添加meta_failed标签：true | false
+ * @param {boolean} options.enrichData - 是否补全数据：true | false
  * @param {string} options.onIncomplete - 不完整数据处理：'enrich' | 'skip' | 'use-default'
  * @param {number} options.batchSize - 每批处理数量
  * @param {number} options.timeout - 插件响应超时时间（毫秒）
@@ -53,6 +54,7 @@ export async function importData(jsonData, options = {}) {
     onDuplicate: options.onDuplicate || 'skip',
     addNewTag: options.addNewTag || false,
     addMetaFailedTag: options.addMetaFailedTag || true,
+    enrichData: options.enrichData || true,
     onIncomplete: options.onIncomplete || 'enrich',
     batchSize: options.batchSize || 20,
     timeout: options.timeout || 10000,
@@ -638,8 +640,7 @@ async function importWebsites(websites, config, monitor) {
   let enrichedWebsites = []
   if (needImportWebsites.length > 0) {
     // 分离完整和不完整的网站
-    const { complete: needComplete, incomplete: needIncomplete } =
-      separateWebsites(needImportWebsites)
+    const { complete: needComplete, incomplete: needIncomplete } = separateWebsites(needImportWebsites)
 
     console.log(`\n========== 🔍 需要处理的网站分析 ==========`)
     console.log(`完整（无需插件补全）：${needComplete.length} 个`)
@@ -647,7 +648,7 @@ async function importWebsites(websites, config, monitor) {
     console.log('=========================================\n')
 
     // 补全不完整的网站
-    if (needIncomplete.length > 0 && config.onIncomplete !== 'skip') {
+    if (needIncomplete.length > 0 && config.onIncomplete !== 'skip' && config.enrichData) {
       // 开始补全阶段
       monitor.startPhase('enrichment')
 
@@ -664,6 +665,12 @@ async function importWebsites(websites, config, monitor) {
 
       // 结束补全阶段
       monitor.endPhase()
+    } else if (needIncomplete.length > 0 && !config.enrichData) {
+      // 如果用户选择不补全数据，直接使用不完整的网站数据
+      console.log(`\n========== ⚠️  跳过数据补全 ==========`)
+      console.log(`用户选择不补全数据，直接导入 ${needIncomplete.length} 个不完整的网站`)
+      console.log('=========================================\n')
+      enrichedWebsites = needIncomplete
     }
 
     // 合并需要导入的完整网站和补全后的网站
@@ -728,7 +735,18 @@ async function importOtherData(jsonData, config, monitor) {
     console.log(`[ImportService] 🎨 处理 ${jsonData.themes.length} 个主题`)
     try {
       for (const theme of jsonData.themes) {
-        await db.addTheme(theme)
+        try {
+          // 尝试添加主题
+          await db.addTheme(theme)
+        } catch (error) {
+          // 如果是键已存在错误，尝试更新
+          if (error.name === 'ConstraintError') {
+            console.log(`[ImportService] ⚠️ 主题已存在，尝试更新: ${theme.id}`)
+            await db.updateTheme(theme)
+          } else {
+            throw error
+          }
+        }
       }
       console.log(`[ImportService] ✅ 主题导入完成`)
     } catch (error) {
@@ -741,7 +759,18 @@ async function importOtherData(jsonData, config, monitor) {
     console.log(`[ImportService] 🔍 处理 ${jsonData.searchEngines.length} 个搜索引擎`)
     try {
       for (const engine of jsonData.searchEngines) {
-        await db.addSearchEngine(engine)
+        try {
+          // 尝试添加搜索引擎
+          await db.addSearchEngine(engine)
+        } catch (error) {
+          // 如果是键已存在错误，尝试更新
+          if (error.name === 'ConstraintError') {
+            console.log(`[ImportService] ⚠️ 搜索引擎已存在，尝试更新: ${engine.id}`)
+            await db.updateSearchEngine(engine)
+          } else {
+            throw error
+          }
+        }
       }
       console.log(`[ImportService] ✅ 搜索引擎导入完成`)
     } catch (error) {

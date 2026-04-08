@@ -12,7 +12,8 @@ const importOptions = reactive({
   originalImport: false,
   onDuplicate: 'skip',
   addNewTag: false,
-  addMetaFailedTag: true
+  addMetaFailedTag: true,
+  enrichData: true
 })
 
 // 导入状态
@@ -70,6 +71,7 @@ async function handleImport() {
           onDuplicate: importOptions.onDuplicate,
           addNewTag: importOptions.addNewTag,
           addMetaFailedTag: importOptions.addMetaFailedTag,
+          enrichData: importOptions.enrichData,
           onIncomplete: 'enrich',
           onProgress: (progress) => {
             console.log('[ImportDataPanel] 导入进度:', progress)
@@ -101,19 +103,25 @@ async function handleImport() {
         }
 
         setTimeout(async () => {
-          // 避免使用 window.location.reload()
           // 从数据库重新加载网站数据并更新 store
           const { useWebsiteStore } = await import('../stores/website')
           const websiteStore = useWebsiteStore()
+          const { useSettingStore } = await import('../stores/setting')
+          const settingStore = useSettingStore()
           const { default: db } = await import('../utils/database')
           
           try {
+            // 重新加载网站数据
             const websites = await db.getAllWebsites()
             websiteStore.setWebsites(websites)
+            
+            // 重新初始化所有设置
+            await settingStore.init()
+            
+            console.log('导入后缓存更新完成')
           } catch (error) {
-            console.error('重新加载网站数据失败:', error)
-            // 如果重新加载失败，回退到页面刷新
-            window.location.reload()
+            console.error('重新加载数据失败:', error)
+            // 只打印错误，不刷新页面
           }
         }, 1000)
       } catch (error) {
@@ -210,10 +218,20 @@ function triggerFileSelect() {
       <!-- meta_failed标签处理 -->
       <div class="option-item" v-if="!importOptions.originalImport">
         <label>
-          <input type="checkbox" v-model="importOptions.addMetaFailedTag" />
+          <input type="checkbox" v-model="importOptions.addMetaFailedTag" :disabled="!importOptions.enrichData" />
           当获取元数据失败时添加"meta_failed"标签
         </label>
         <p class="option-desc">只有当网站没有title和description时才会添加</p>
+        <p class="option-desc" v-if="!importOptions.enrichData" style="color: var(--color-text-secondary); font-style: italic;">（已禁用：不补全数据时无需添加此标签）</p>
+      </div>
+      
+      <!-- 数据补全处理 -->
+      <div class="option-item" v-if="!importOptions.originalImport">
+        <label>
+          <input type="checkbox" v-model="importOptions.enrichData" />
+          补全网站数据（获取title、description、icon）
+        </label>
+        <p class="option-desc">如果选择不补全，将直接导入原始数据，不通过扩展获取额外信息</p>
       </div>
       
       <!-- 确认导入按钮 -->
