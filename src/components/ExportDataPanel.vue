@@ -88,7 +88,7 @@ const exportConfig = ref({
   // 当前使用的条件组
   conditionGroups: [],
   
-  fields: ['name', 'url', 'title', 'description', 'iconData', 'iconGenerateData', 'tags', 'isMarked', 'isActive', 'isHidden'],
+  fields: ['name', 'url', 'title', 'description', 'iconData', 'iconGenerateData', 'tags', 'isMarked', 'isActive', 'isHidden', 'markOrder'],
   sortBy: 'createdAt',
   sortOrder: 'desc'
 })
@@ -108,6 +108,7 @@ const fieldOptions = [
   { value: 'isActive', label: '已激活' },
   { value: 'isHidden', label: '已隐藏' },
   { value: 'visitCount', label: '访问次数' },
+  { value: 'markOrder', label: '标记顺序' },
   { value: 'createdAt', label: '创建时间' },
   { value: 'updatedAt', label: '更新时间' }
 ]
@@ -577,6 +578,14 @@ function generateCSV(websites) {
         <!-- 字段选择 -->
         <div class="config-section">
           <h4>导出字段</h4>
+          <div class="field-actions">
+            <button @click="() => exportConfig.fields = fieldOptions.map(f => f.value)" class="field-action-button">
+              全选
+            </button>
+            <button @click="() => exportConfig.fields = []" class="field-action-button">
+              清空
+            </button>
+          </div>
           <div class="field-checkboxes">
             <label v-for="field in fieldOptions" :key="field.value" class="field-checkbox">
               <input 
@@ -879,6 +888,26 @@ function generateCSV(websites) {
 
 .config-section {
   margin-bottom: 16px;
+}
+
+.field-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.field-action-button {
+  padding: 6px 12px;
+  background-color: var(--color-bg-hover);
+  border: 1px solid var(--color-border-base);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.field-action-button:hover {
+  background-color: var(--color-bg-active);
 }
 
 .field-checkboxes {
