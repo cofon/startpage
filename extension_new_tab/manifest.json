@@ -30,5 +30,8 @@
       },
       "description": "打开添加网站面板"
     }
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
   }
 }
