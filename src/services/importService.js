@@ -230,12 +230,27 @@ export function parseEdgeFavorites(htmlContent) {
   links.forEach(link => {
     const url = link.getAttribute('href')
     const title = link.textContent.trim()
+    const addDate = link.getAttribute('ADD_DATE')
+    const icon = link.getAttribute('ICON')
+    
     if (url && title) {
-      websites.push({
+      const website = {
         url,
-        title,
-        // Edge收藏夹可能不包含icon信息，需要后续通过插件获取
-      })
+        title
+      }
+      
+      // 添加iconData（如果存在）
+      if (icon) {
+        website.iconData = icon
+      }
+      
+      // 添加createdAt（如果存在）
+      if (addDate) {
+        // 将Unix时间戳转换为ISO日期字符串
+        website.createdAt = new Date(parseInt(addDate) * 1000).toISOString()
+      }
+      
+      websites.push(website)
     }
   })
 
@@ -262,13 +277,9 @@ export function separateWebsites(websites) {
   const incomplete = []
 
   for (const website of websites) {
-    // 根据新逻辑：如果有title或desc，则认为不需要获取元数据
-    const hasTitleOrDesc = !!website.title || !!website.description
-    if (hasTitleOrDesc) {
-      complete.push(website)
-    } else {
-      incomplete.push(website)
-    }
+    // 对于Edge收藏夹导入的网站，即使有title，也需要获取元数据以获取更好的icon和description
+    // 因此所有网站都需要处理
+    incomplete.push(website)
   }
 
   return { complete, incomplete }
@@ -297,16 +308,19 @@ export async function enrichWebsites(websites, config, progressCallback) {
           const metadata = await fetchMetadata(website.url)
 
           if (metadata) {
-            // ✅ 成功：只补全插件负责的 3 个字段（title、description、iconData）
+            // ✅ 成功：补全插件负责的字段
+            // title：优先使用edge收藏夹提供的，只有在没有时才使用扩展获取的
             if (!website.title && metadata.title) {
               website.title = metadata.title
               console.log(`[ImportService] ✓ 已补全 title: ${metadata.title}`)
             }
-            if (!website.description && metadata.description) {
+            // description：edge收藏夹没有提供，使用扩展获取的
+            if (metadata.description) {
               website.description = metadata.description
               console.log(`[ImportService] ✓ 已补全 description`)
             }
-            if (!website.iconData && metadata.iconData) {
+            // iconData：优先使用扩展获取的，覆盖edge收藏夹提供的（因为edge的icon太小）
+            if (metadata.iconData) {
               website.iconData = metadata.iconData
               console.log(`[ImportService] ✓ 已补全 iconData (长度：${metadata.iconData.length})`)
             }
